@@ -1,11 +1,12 @@
 /**
  * auth.controller.ts — Controller layer
  *
- * Business logic and orchestration for User Authentication and Sessions.
- * Handles password hashing, verification, session issuance, and event emission.
+ * Business logic and orchestration for User Authentication, Sessions, and
+ * Role-Based Access Control (RBAC / Authorization).
  */
 
 import crypto from "crypto";
+import { cookies } from "next/headers";
 import {
   createUser,
   findUserByEmail,
@@ -18,6 +19,66 @@ import { EVENTS } from "@/events/events";
 
 export const SESSION_COOKIE_NAME = "testforge_session";
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
+// ─── Role-Based Access Control (RBAC) ────────────────────────────────────────
+
+export const VALID_ROLES = ["student", "educator", "admin"] as const;
+export type Role = (typeof VALID_ROLES)[number];
+
+export type Permission =
+  | "test:view"
+  | "test:take"
+  | "test:practice"
+  | "bank:read"
+  | "test:generate"
+  | "test:batch"
+  | "test:save"
+  | "test:delete"
+  | "analytics:view"
+  | "admin:manage";
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  student: ["test:view", "test:take", "test:practice", "bank:read", "test:generate"],
+  educator: [
+    "test:view",
+    "test:take",
+    "test:practice",
+    "bank:read",
+    "test:generate",
+    "test:batch",
+    "test:save",
+    "test:delete",
+    "analytics:view",
+  ],
+  admin: [
+    "test:view",
+    "test:take",
+    "test:practice",
+    "bank:read",
+    "test:generate",
+    "test:batch",
+    "test:save",
+    "test:delete",
+    "analytics:view",
+    "admin:manage",
+  ],
+};
+
+export function getPermissionsForRole(role: string): Permission[] {
+  if (VALID_ROLES.includes(role as Role)) {
+    return ROLE_PERMISSIONS[role as Role];
+  }
+  return ROLE_PERMISSIONS.student;
+}
+
+export class AuthError extends Error {
+  status: number;
+  constructor(message: string, status: 401 | 403 = 401) {
+    super(message);
+    this.name = "AuthError";
+    this.status = status;
+  }
+}
 
 // ─── Cryptographic Password Hashing ──────────────────────────────────────────
 
@@ -69,13 +130,23 @@ function validatePassword(password: string): void {
   }
 }
 
+function validateRole(role?: string): Role {
+  if (!role) return "student";
+  const normalized = role.trim().toLowerCase();
+  if (!VALID_ROLES.includes(normalized as Role)) {
+    throw new Error(`Invalid role "${role}". Allowed roles: ${VALID_ROLES.join(", ")}.`);
+  }
+  return normalized as Role;
+}
+
 // ─── Controller Methods ──────────────────────────────────────────────────────
 
 export type SanitizedUser = {
   id: string;
   email: string;
   name: string | null;
-  role: string;
+  role: Role;
+  permissions: Permission[];
 };
 
 export type AuthResult = {
@@ -85,7 +156,7 @@ export type AuthResult = {
 };
 
 /**
- * Registers a new user account, creates an initial active session,
+ * Registers a new user account (student, educator, or admin), creates an active session,
  * and emits the USER_REGISTERED background event.
  */
 export async function register(data: {
@@ -96,6 +167,7 @@ export async function register(data: {
 }): Promise<AuthResult> {
   const email = validateEmail(data.email);
   validatePassword(data.password);
+  const role = validateRole(data.role);
 
   const existing = await findUserByEmail(email);
   if (existing) {
@@ -107,7 +179,7 @@ export async function register(data: {
     email,
     name: data.name,
     passwordHash,
-    role: data.role || "educator",
+    role,
   });
 
   const token = generateToken();
@@ -122,7 +194,8 @@ export async function register(data: {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
+    role: user.role as Role,
+    permissions: getPermissionsForRole(user.role),
   };
 
   // Emit event for background audit / telemetry
@@ -166,7 +239,8 @@ export async function login(data: {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
+    role: user.role as Role,
+    permissions: getPermissionsForRole(user.role),
   };
 
   // Emit event for background audit / telemetry
@@ -190,12 +264,66 @@ export async function authenticateSession(token?: string | null): Promise<Saniti
   if (!session) return null;
 
   if (session.expiresAt < new Date()) {
-    // Session expired; clean up
     await deleteSession(token);
     return null;
   }
 
-  return session.user;
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    role: session.user.role as Role,
+    permissions: getPermissionsForRole(session.user.role),
+  };
+}
+
+/**
+ * Extracts session token from HTTP cookies or Authorization Bearer header.
+ */
+export async function extractTokenFromRequest(request: Request): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  let token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    }
+  }
+  return token;
+}
+
+/**
+ * Role-Based Access Control (RBAC) Guard for API endpoints.
+ * Verifies authentication (401) and role authorization (403).
+ */
+export async function authorizeRequest(
+  request: Request,
+  allowedRoles: Role[],
+  resourceName: string
+): Promise<SanitizedUser> {
+  const token = await extractTokenFromRequest(request);
+  const user = await authenticateSession(token);
+
+  if (!user) {
+    throw new AuthError("Authentication required. Please sign in to continue.", 401);
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    eventBus.emit(EVENTS.AUTH_ACCESS_DENIED, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      requiredRoles: allowedRoles,
+      resource: resourceName,
+    });
+    throw new AuthError(
+      `Access denied: role "${user.role}" is not authorized to ${resourceName}. Required role: ${allowedRoles.join(" or ")}.`,
+      403
+    );
+  }
+
+  return user;
 }
 
 /**

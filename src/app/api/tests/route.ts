@@ -1,14 +1,15 @@
 /**
- * GET  /api/tests   — list saved tests
- * POST /api/tests   — persist a generated test
+ * GET  /api/tests   — list saved tests (open to students, educators, admins)
+ * POST /api/tests   — persist a generated test (RBAC: educator | admin only)
  *
- * Thin route — delegates to TestModel for DB operations.
+ * Thin route — delegates to TestModel for DB operations and AuthController for RBAC.
  * Emits TEST_SAVED event after a successful save.
  */
 
 import { NextResponse } from "next/server";
 import { bootstrap } from "@/lib/bootstrap";
 import { findAllTests, createTest } from "@/models/test.model";
+import { authorizeRequest, AuthError } from "@/controllers/auth.controller";
 import { eventBus } from "@/events/event-bus";
 import { EVENTS } from "@/events/events";
 import type { GeneratedTest } from "@/lib/types";
@@ -31,6 +32,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    // ── RBAC Authorization: only educator or admin can persist official tests ──
+    await authorizeRequest(request, ["educator", "admin"], "save test papers");
+
     const body = (await request.json()) as { test: GeneratedTest; source?: string };
 
     if (!body.test) {
@@ -50,8 +54,11 @@ export async function POST(request: Request) {
       subjectName: created.subjectName,
     });
 
-    return NextResponse.json({ test: created });
+    return NextResponse.json({ test: created }, { status: 201 });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
       { status: 500 }

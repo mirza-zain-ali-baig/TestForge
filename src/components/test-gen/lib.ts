@@ -311,14 +311,37 @@ export function fmtDate(iso: string) {
   }
 }
 
-/* --------------------------- Authentication ----------------------------- */
+/* ----------------------- Authentication & RBAC -------------------------- */
+
+export type UserRole = "student" | "educator" | "admin";
 
 export type AuthUser = {
   id: string;
   email: string;
   name: string | null;
-  role: string;
+  role: UserRole;
+  permissions?: string[];
 };
+
+export function hasPermission(user: AuthUser | null, perm: string): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  if (user.permissions) return user.permissions.includes(perm);
+  if (user.role === "educator") {
+    return [
+      "test:view",
+      "test:take",
+      "test:practice",
+      "bank:read",
+      "test:generate",
+      "test:batch",
+      "test:save",
+      "test:delete",
+      "analytics:view",
+    ].includes(perm);
+  }
+  return ["test:view", "test:take", "test:practice", "bank:read", "test:generate"].includes(perm);
+}
 
 export async function fetchCurrentUser(): Promise<AuthUser | null> {
   try {
@@ -331,7 +354,12 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
   }
 }
 
-export async function registerApi(data: { email: string; password: string; name?: string }) {
+export async function registerApi(data: {
+  email: string;
+  password: string;
+  name?: string;
+  role?: UserRole;
+}) {
   const res = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

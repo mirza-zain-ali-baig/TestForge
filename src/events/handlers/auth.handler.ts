@@ -1,10 +1,11 @@
 /**
  * auth.handler.ts — Event-Driven layer / Handler
  *
- * Listens for authentication lifecycle events:
+ * Listens for authentication and authorization lifecycle events:
  *  - USER_REGISTERED: logs registration audit telemetry
  *  - USER_LOGIN: logs login audit telemetry
  *  - USER_LOGOUT: logs logout audit telemetry
+ *  - AUTH_ACCESS_DENIED: logs security warnings when RBAC blocks an action
  */
 
 import { eventBus } from "@/events/event-bus";
@@ -13,6 +14,7 @@ import type {
   UserRegisteredPayload,
   UserLoginPayload,
   UserLogoutPayload,
+  AuthAccessDeniedPayload,
 } from "@/events/events";
 
 let registered = false;
@@ -48,6 +50,16 @@ export function registerAuthHandler(): void {
       );
     } catch (err) {
       console.error("[AuthHandler] Error handling USER_LOGOUT:", err);
+    }
+  });
+
+  eventBus.on(EVENTS.AUTH_ACCESS_DENIED, (payload: AuthAccessDeniedPayload) => {
+    try {
+      console.warn(
+        `[RBAC Security] Access denied to "${payload.resource}" for user="${payload.email}" (role="${payload.role}"). Required: [${payload.requiredRoles.join(", ")}]`
+      );
+    } catch (err) {
+      console.error("[AuthHandler] Error handling AUTH_ACCESS_DENIED:", err);
     }
   });
 }

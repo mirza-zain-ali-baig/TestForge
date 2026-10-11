@@ -33,6 +33,9 @@ export const EVENTS = {
 
   /** Fired when a user logs out. */
   USER_LOGOUT: "user:logout",
+
+  /** Fired when an unauthorized role attempts a restricted action. */
+  AUTH_ACCESS_DENIED: "auth:access:denied",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
@@ -76,6 +79,14 @@ export type UserLogoutPayload = {
   userId: string;
 };
 
+export type AuthAccessDeniedPayload = {
+  userId: string;
+  email: string;
+  role: string;
+  requiredRoles: string[];
+  resource: string;
+};
+
 /** Union map of event name → payload type (for type-safe listeners). */
 export type EventPayloads = {
   [EVENTS.TEST_GENERATION_COMPLETED]: TestGenerationCompletedPayload;
@@ -84,4 +95,5 @@ export type EventPayloads = {
   [EVENTS.USER_REGISTERED]: UserRegisteredPayload;
   [EVENTS.USER_LOGIN]: UserLoginPayload;
   [EVENTS.USER_LOGOUT]: UserLogoutPayload;
+  [EVENTS.AUTH_ACCESS_DENIED]: AuthAccessDeniedPayload;
 };

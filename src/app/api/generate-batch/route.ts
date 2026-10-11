@@ -1,13 +1,14 @@
 /**
  * POST /api/generate-batch
  *
- * Thin route — delegates entirely to TestController.
- * Validates count range; all orchestration lives in the controller.
+ * Thin route — delegates entirely to TestController and AuthController.
+ * RBAC: Multi-variant batch exam generation is restricted to educator | admin.
  */
 
 import { NextResponse } from "next/server";
 import { bootstrap } from "@/lib/bootstrap";
 import { generateBatch } from "@/controllers/test.controller";
+import { authorizeRequest, AuthError } from "@/controllers/auth.controller";
 import type { GenerateTestRequest } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ bootstrap();
 
 export async function POST(request: Request) {
   try {
+    // ── RBAC Authorization: only educator or admin can generate multi-variant exam sets ──
+    await authorizeRequest(request, ["educator", "admin"], "generate batch exam variants");
+
     const body = (await request.json()) as {
       request: GenerateTestRequest;
       variantCount: number;
@@ -46,6 +50,9 @@ export async function POST(request: Request) {
     const variants = await generateBatch(body.request, variantCount);
     return NextResponse.json({ variants });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
       { status: 500 }
