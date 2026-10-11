@@ -348,7 +348,104 @@ async function runTests() {
     assert(false, "Test 17", String(err));
   }
 
-  // Test 18: Logout revokes session
+  // Test 18: Unauthenticated user CANNOT generate a test (POST /api/generate-test -> 401)
+  try {
+    const res = await fetch(`${BASE_URL}/api/generate-test`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        classId: "c1",
+        subjectId: "s1",
+        blueprint: {
+          MCQ: { marksPerQuestion: 1, difficulties: { Easy: 1, Medium: 0, Hard: 0 } },
+          Short: { marksPerQuestion: 3, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+          Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+        },
+      }),
+    });
+    assert(
+      res.status === 401,
+      "Test 18: Unauthenticated user is blocked from generating tests (401 Unauthorized)"
+    );
+  } catch (err) {
+    assert(false, "Test 18", String(err));
+  }
+
+  // Test 19: Unauthenticated user CANNOT regenerate a question or suggest blueprint (401)
+  try {
+    const regenRes = await fetch(`${BASE_URL}/api/regenerate-question`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subjectName: "CS",
+        className: "10",
+        typeName: "MCQ",
+        difficultyName: "Easy",
+        marks: 1,
+      }),
+    });
+    const bpRes = await fetch(`${BASE_URL}/api/suggest-blueprint`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        totalMarks: 25,
+        difficultyTarget: "balanced",
+        className: "10",
+        subjectName: "CS",
+      }),
+    });
+    assert(
+      regenRes.status === 401 && bpRes.status === 401,
+      "Test 19: Unauthenticated user is blocked from question regeneration & blueprint suggestion (401)"
+    );
+  } catch (err) {
+    assert(false, "Test 19", String(err));
+  }
+
+  // Test 20: Signed-in Student or Educator CAN generate a test (POST /api/generate-test -> 200)
+  try {
+    // Fetch curriculum first to get valid classId and subjectId
+    const currRes = await fetch(`${BASE_URL}/api/curriculum`);
+    const currJson = await currRes.json();
+    const firstClass = currJson.tree?.[0];
+    const firstSubject = firstClass?.subjects?.[0];
+    const chapterIds = (firstSubject?.chapters || []).map((c: { id: string }) => c.id);
+
+    const genRes = await fetch(`${BASE_URL}/api/generate-test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: studentCookie,
+      },
+      body: JSON.stringify({
+        classId: firstClass?.id || "c1",
+        className: firstClass?.class_name || "Class 9",
+        subjectId: firstSubject?.id || "s1",
+        subjectName: firstSubject?.subject_name || "Computer Science",
+        title: "Student Practice Quiz",
+        durationMins: 30,
+        instructions: "Attempt all questions.",
+        chapterIds,
+        topicIds: [],
+        source: "bank",
+        shuffle: true,
+        blueprint: {
+          MCQ: { marksPerQuestion: 1, difficulties: { Easy: 2, Medium: 0, Hard: 0 } },
+          Short: { marksPerQuestion: 3, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+          Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+        },
+      }),
+    });
+    const genBody = await genRes.json();
+    assert(
+      genRes.status === 200 && Boolean(genBody.test),
+      "Test 20: Signed-in registered user CAN generate a test (200 OK)"
+    );
+  } catch (err) {
+    assert(false, "Test 20", String(err));
+  }
+
+  // Test 21: Logout revokes session and blocks subsequent test generation
   try {
     const logoutRes = await fetch(`${BASE_URL}/api/auth/logout`, {
       method: "POST",
@@ -357,12 +454,30 @@ async function runTests() {
     const meRes = await fetch(`${BASE_URL}/api/auth/me`, {
       headers: { Cookie: studentCookie },
     });
+    const genAfterLogoutRes = await fetch(`${BASE_URL}/api/generate-test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: studentCookie,
+      },
+      body: JSON.stringify({
+        classId: "c1",
+        subjectId: "s1",
+        blueprint: {
+          MCQ: { marksPerQuestion: 1, difficulties: { Easy: 1, Medium: 0, Hard: 0 } },
+          Short: { marksPerQuestion: 3, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+          Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+        },
+      }),
+    });
     assert(
-      logoutRes.status === 200 && meRes.status === 401,
-      "Test 18: Logout clears cookie and revokes session token in database"
+      logoutRes.status === 200 &&
+        meRes.status === 401 &&
+        genAfterLogoutRes.status === 401,
+      "Test 21: Logout clears cookie, revokes session, and blocks test generation (401)"
     );
   } catch (err) {
-    assert(false, "Test 18", String(err));
+    assert(false, "Test 21", String(err));
   }
 
   console.log("\n==========================================");

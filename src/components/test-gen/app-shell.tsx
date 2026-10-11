@@ -440,7 +440,14 @@ export function TestGeneratorApp() {
               />
             </>
           ) : (
-            <GeneratorWizard onGenerated={handleGenerated} />
+            <GeneratorWizard
+              onGenerated={handleGenerated}
+              user={user}
+              onRequireAuth={(tab = "login") => {
+                setAuthDefaultTab(tab);
+                setAuthOpen(true);
+              }}
+            />
           ))}
         {view === "bank" && <QuestionBank />}
         {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}

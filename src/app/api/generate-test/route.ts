@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { bootstrap } from "@/lib/bootstrap";
 import { generateTest } from "@/controllers/test.controller";
+import { authorizeRequest, AuthError } from "@/controllers/auth.controller";
 import type { GenerateTestRequest } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,13 @@ bootstrap();
 
 export async function POST(request: Request) {
   try {
+    // ── Authentication & Authorization: Only registered/signed-in users can generate tests ──
+    await authorizeRequest(
+      request,
+      ["student", "educator", "admin"],
+      "generate a test"
+    );
+
     const body = (await request.json()) as GenerateTestRequest;
 
     // ── Validation ────────────────────────────────────────────────────────
@@ -51,6 +59,9 @@ export async function POST(request: Request) {
     const test = await generateTest(body);
     return NextResponse.json({ test });
   } catch (e) {
+    if (e instanceof AuthError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },
       { status: 500 }

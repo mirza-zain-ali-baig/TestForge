@@ -22,6 +22,9 @@ import {
   Filter,
   SquareStack,
   Settings2,
+  Lock,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +59,7 @@ import {
   DIFF_NAMES,
   TYPE_META,
   type CurriculumNode,
+  type AuthUser,
 } from "./lib";
 import type {
   GenerateTestRequest,
@@ -176,8 +180,12 @@ function distributeEvenly(total: number): Record<DifficultyName, number> {
 
 export function GeneratorWizard({
   onGenerated,
+  user,
+  onRequireAuth,
 }: {
   onGenerated: (variants: GeneratedTest[]) => void;
+  user?: AuthUser | null;
+  onRequireAuth?: (tab?: "login" | "register") => void;
 }) {
   const [tree, setTree] = useState<CurriculumNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -364,8 +372,13 @@ export function GeneratorWizard({
     }, 120);
   };
 
-  /* -------------------- Generate (existing logic, unchanged) -------------------- */
+  /* -------------------- Generate (requires signed-in user) -------------------- */
   const handleGenerate = async () => {
+    if (!user) {
+      toast.error("Please sign in or register an account to generate tests.");
+      onRequireAuth?.("login");
+      return;
+    }
     if (!currentClass || !currentSubject) return;
     setGenerating(true);
     try {
@@ -415,6 +428,42 @@ export function GeneratorWizard({
 
   return (
     <div className="space-y-5">
+      {!user && (
+        <Card className="border-amber-300 bg-amber-50/70 dark:border-amber-800/70 dark:bg-amber-950/30">
+          <CardContent className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                <Lock className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-amber-950 dark:text-amber-100">
+                  Sign In Required to Generate Tests
+                </div>
+                <div className="text-xs text-amber-800/90 dark:text-amber-200/80">
+                  Only registered and signed-in users (Students, Educators, or Admins) can generate test papers.
+                </div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onRequireAuth?.("register")}
+                className="border-amber-400 bg-background text-xs hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900/40"
+              >
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Register
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => onRequireAuth?.("login")}
+                className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+              >
+                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {loading ? (
         <Card>
           <CardContent className="space-y-4 p-6">
@@ -1014,9 +1063,14 @@ export function GeneratorWizard({
                   size="lg"
                   className="h-14 w-full bg-emerald-600 text-base hover:bg-emerald-700"
                   onClick={handleGenerate}
-                  disabled={generating || !canGenerate}
+                  disabled={generating || (!!user && !canGenerate)}
                 >
-                  {generating ? (
+                  {!user ? (
+                    <>
+                      <Lock className="mr-2 h-5 w-5" />
+                      Sign In or Register to Generate Test
+                    </>
+                  ) : generating ? (
                     <>
                       <span className="mr-2 inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                       {variantCount > 1
