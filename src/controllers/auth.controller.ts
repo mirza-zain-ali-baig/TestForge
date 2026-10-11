@@ -13,12 +13,18 @@ import {
   createSession,
   findSessionWithUser,
   deleteSession,
+  revokedTokens,
 } from "@/models/user.model";
 import { eventBus } from "@/events/event-bus";
 import { EVENTS } from "@/events/events";
 
 export const SESSION_COOKIE_NAME = "testforge_session";
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
+const SESSION_SIGNING_SECRET =
+  process.env.AUTH_SECRET ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "testforge-hybrid-hmac-secret-key-2026";
 
 // ─── Role-Based Access Control (RBAC) ────────────────────────────────────────
 
@@ -80,7 +86,7 @@ export class AuthError extends Error {
   }
 }
 
-// ─── Cryptographic Password Hashing ──────────────────────────────────────────
+// ─── Cryptographic Password Hashing & Signed Session Tokens ──────────────────
 
 /**
  * Derives a secure password hash using scrypt + 16-byte cryptographically secure salt.
@@ -107,9 +113,54 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   }
 }
 
-/** Generates a 256-bit cryptographically secure session token. */
-export function generateToken(): string {
-  return crypto.randomBytes(32).toString("hex");
+/**
+ * Generates a cryptographically signed session token that is both stored in SQLite
+ * and self-verifiable across stateless Vercel Serverless Function instances.
+ */
+export function generateToken(payload?: {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  exp: number;
+}): string {
+  const nonce = crypto.randomBytes(16).toString("hex");
+  if (!payload) return nonce;
+  const encoded = Buffer.from(JSON.stringify({ ...payload, jti: nonce })).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", SESSION_SIGNING_SECRET)
+    .update(encoded)
+    .digest("base64url");
+  return `${encoded}.${sig}`;
+}
+
+function verifySignedToken(token: string): {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  exp: number;
+} | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [encoded, sig] = parts;
+    const expectedSig = crypto
+      .createHmac("sha256", SESSION_SIGNING_SECRET)
+      .update(encoded)
+      .digest("base64url");
+    if (
+      sig.length !== expectedSig.length ||
+      !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))
+    ) {
+      return null;
+    }
+    const decoded = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    if (!decoded.exp || Date.now() > decoded.exp) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
 }
 
 // ─── Validation Helpers ──────────────────────────────────────────────────────
@@ -182,12 +233,26 @@ export async function register(data: {
     role,
   });
 
-  const token = generateToken();
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+  const token = generateToken({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    exp: expiresAt.getTime(),
+  });
+
   await createSession({
     userId: user.id,
     token,
     expiresAt,
+    userSnapshot: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt,
+    },
   });
 
   const sanitized: SanitizedUser = {
@@ -227,12 +292,26 @@ export async function login(data: {
     throw new Error("Invalid email or password.");
   }
 
-  const token = generateToken();
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+  const token = generateToken({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    exp: expiresAt.getTime(),
+  });
+
   await createSession({
     userId: user.id,
     token,
     expiresAt,
+    userSnapshot: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt,
+    },
   });
 
   const sanitized: SanitizedUser = {
@@ -258,22 +337,34 @@ export async function login(data: {
  * Returns null if token is missing, invalid, or expired.
  */
 export async function authenticateSession(token?: string | null): Promise<SanitizedUser | null> {
-  if (!token) return null;
+  if (!token || revokedTokens.has(token)) return null;
 
   const session = await findSessionWithUser(token);
-  if (!session) return null;
+  if (session) {
+    if (session.expiresAt < new Date()) {
+      await deleteSession(token);
+      return null;
+    }
 
-  if (session.expiresAt < new Date()) {
-    await deleteSession(token);
-    return null;
+    return {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      role: session.user.role as Role,
+      permissions: getPermissionsForRole(session.user.role),
+    };
   }
 
+  // Fallback for multi-instance Vercel Serverless containers: verify HMAC-signed token
+  const signedPayload = verifySignedToken(token);
+  if (!signedPayload) return null;
+
   return {
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-    role: session.user.role as Role,
-    permissions: getPermissionsForRole(session.user.role),
+    id: signedPayload.id,
+    email: signedPayload.email,
+    name: signedPayload.name,
+    role: signedPayload.role as Role,
+    permissions: getPermissionsForRole(signedPayload.role),
   };
 }
 

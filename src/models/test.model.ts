@@ -5,7 +5,7 @@
  * The Supabase question bank is read-only; generated test papers are stored here.
  */
 
-import { db } from "@/lib/db";
+import { db, ensureDbInitialized } from "@/lib/db";
 import type { GeneratedTest } from "@/lib/types";
 
 export type SavedTestRecord = {
@@ -24,11 +24,13 @@ export type SavedTestRecord = {
 
 /** Returns all saved tests ordered by creation date (newest first). */
 export async function findAllTests(): Promise<SavedTestRecord[]> {
+  await ensureDbInitialized();
   return db.generatedTest.findMany({ orderBy: { createdAt: "desc" } });
 }
 
 /** Returns a single saved test by its ID, or null if not found. */
 export async function findTestById(id: string): Promise<SavedTestRecord | null> {
+  await ensureDbInitialized();
   return db.generatedTest.findUnique({ where: { id } });
 }
 
@@ -37,6 +39,7 @@ export async function createTest(
   test: GeneratedTest,
   source?: string
 ): Promise<SavedTestRecord> {
+  await ensureDbInitialized();
   return db.generatedTest.create({
     data: {
       title: test.title || "Untitled Test",
@@ -53,6 +56,7 @@ export async function createTest(
 
 /** Deletes a saved test by its ID. */
 export async function deleteTest(id: string): Promise<void> {
+  await ensureDbInitialized();
   await db.generatedTest.delete({ where: { id } });
 }
 
