@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build output
+/.next/
+/out/
+/build/
+dist/
+
+# Environment files & API keys / Secrets (CRITICAL)
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!*.env.example
+
+# Local SQLite databases & journals
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+db/*.db
+prisma/db/*.db
+
+# Logs & Debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+dev.log
+dev.out.log
+server.log
+
+# Temporary files & work logs
+tool-results/
+worklog.md
+bun
+download/
+
+# Testing & Coverage
+/coverage/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+*.pem
+
+# Editor & IDE configs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# TypeScript & tool caches
+*.tsbuildinfo
+next-env.d.ts
+.claude/
+.z-ai-config/
+.turbo/
+.vercel/

@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A locally-saved generated test paper.
+// Supabase holds the question bank (read-only); generated tests live here.
+model GeneratedTest {
+  id           String   @id @default(cuid())
+  title        String
+  className    String
+  subjectName  String
+  totalMarks   Int
+  durationMins Int
+  instructions String?
+  // JSON blob: full test config + sections + questions + answer key
+  testJson     String
+  source       String   @default("bank") // bank | ai | hybrid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
