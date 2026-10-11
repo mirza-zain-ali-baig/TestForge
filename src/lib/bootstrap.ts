@@ -11,6 +11,7 @@
 
 import { registerTestGenerationHandler } from "@/events/handlers/test-generation.handler";
 import { registerAnalyticsHandler } from "@/events/handlers/analytics.handler";
+import { registerAuthHandler } from "@/events/handlers/auth.handler";
 
 let booted = false;
 
@@ -20,6 +21,7 @@ export function bootstrap(): void {
 
   registerTestGenerationHandler();
   registerAnalyticsHandler();
+  registerAuthHandler();
 
   console.info("[Bootstrap] Event handlers registered.");
 }

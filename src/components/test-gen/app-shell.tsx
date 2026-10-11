@@ -38,6 +38,18 @@ import { TestAnalytics } from "./test-analytics";
 import { TestHistoryView } from "./test-history";
 import { PrintExportView } from "./print-export-view";
 import { ScrollToTop } from "./scroll-to-top";
+import { AuthDialog } from "./auth-dialog";
+import { fetchCurrentUser, logoutApi, type AuthUser } from "./lib";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogIn, LogOut, User as UserIcon, Shield } from "lucide-react";
 import type { GeneratedTest } from "@/lib/types";
 
 type View = "dashboard" | "generate" | "bank" | "saved" | "analytics" | "history" | "print";
@@ -57,6 +69,16 @@ export function TestGeneratorApp() {
   const [variants, setVariants] = useState<GeneratedTest[]>([]);
   const [activeVariant, setActiveVariant] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Authentication state
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
+
+  // Load authenticated user on mount
+  useEffect(() => {
+    fetchCurrentUser().then((u) => setUser(u));
+  }, []);
 
   const preview = variants[activeVariant] ?? null;
 
@@ -246,6 +268,74 @@ export function TestGeneratorApp() {
               <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               Supabase connected
             </Badge>
+
+            {/* User Auth Avatar / Sign In */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative flex h-9 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50"
+                  >
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-emerald-600 text-xs font-semibold text-white">
+                        {user.name
+                          ? user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join("")
+                              .toUpperCase()
+                          : user.email.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-[100px] truncate text-xs font-medium sm:inline-block">
+                      {user.name || user.email.split("@")[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold leading-none">{user.name || "Educator"}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <div className="mt-1">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
+                        >
+                          {user.role}
+                        </Badge>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await logoutApi();
+                      setUser(null);
+                      toast.success("Signed out successfully.");
+                    }}
+                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setAuthDefaultTab("login");
+                  setAuthOpen(true);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium"
+              >
+                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
+              </Button>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
@@ -362,6 +452,14 @@ export function TestGeneratorApp() {
 
       {/* Keyboard shortcuts help */}
       <KeyboardHelpDialog open={showHelp} onOpenChange={setShowHelp} />
+
+      {/* Authentication Dialog */}
+      <AuthDialog
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={(u) => setUser(u)}
+        defaultTab={authDefaultTab}
+      />
     </div>
   );
 }

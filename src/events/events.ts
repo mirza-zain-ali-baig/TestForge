@@ -24,6 +24,15 @@ export const EVENTS = {
 
   /** Fired when the analytics cache should be invalidated / rebuilt. */
   ANALYTICS_REBUILD_REQUESTED: "analytics:rebuild:requested",
+
+  /** Fired when a new user signs up. */
+  USER_REGISTERED: "user:registered",
+
+  /** Fired when a user logs in. */
+  USER_LOGIN: "user:login",
+
+  /** Fired when a user logs out. */
+  USER_LOGOUT: "user:logout",
 } as const;
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
@@ -50,9 +59,29 @@ export type AnalyticsRebuildRequestedPayload = {
   reason: string;
 };
 
+export type UserRegisteredPayload = {
+  userId: string;
+  email: string;
+  name: string | null;
+  role: string;
+};
+
+export type UserLoginPayload = {
+  userId: string;
+  email: string;
+  role: string;
+};
+
+export type UserLogoutPayload = {
+  userId: string;
+};
+
 /** Union map of event name → payload type (for type-safe listeners). */
 export type EventPayloads = {
   [EVENTS.TEST_GENERATION_COMPLETED]: TestGenerationCompletedPayload;
   [EVENTS.TEST_SAVED]: TestSavedPayload;
   [EVENTS.ANALYTICS_REBUILD_REQUESTED]: AnalyticsRebuildRequestedPayload;
+  [EVENTS.USER_REGISTERED]: UserRegisteredPayload;
+  [EVENTS.USER_LOGIN]: UserLoginPayload;
+  [EVENTS.USER_LOGOUT]: UserLogoutPayload;
 };

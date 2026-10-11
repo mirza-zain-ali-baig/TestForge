@@ -310,3 +310,53 @@ export function fmtDate(iso: string) {
     return iso;
   }
 }
+
+/* --------------------------- Authentication ----------------------------- */
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+};
+
+export async function fetchCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch("/api/auth/me", { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.user as AuthUser) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function registerApi(data: { email: string; password: string; name?: string }) {
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Registration failed.");
+  return json.user as AuthUser;
+}
+
+export async function loginApi(data: { email: string; password: string }) {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Login failed.");
+  return json.user as AuthUser;
+}
+
+export async function logoutApi() {
+  const res = await fetch("/api/auth/logout", {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Logout failed.");
+  return true;
+}
