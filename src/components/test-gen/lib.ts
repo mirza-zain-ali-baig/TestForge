@@ -345,7 +345,10 @@ export function hasPermission(user: AuthUser | null, perm: string): boolean {
 
 export async function fetchCurrentUser(): Promise<AuthUser | null> {
   try {
-    const res = await fetch("/api/auth/me", { cache: "no-store" });
+    const res = await fetch("/api/auth/me", {
+      cache: "no-store",
+      credentials: "include",
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return (data.user as AuthUser) ?? null;
@@ -363,6 +366,7 @@ export async function registerApi(data: {
   const res = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -374,6 +378,7 @@ export async function loginApi(data: { email: string; password: string }) {
   const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -384,6 +389,7 @@ export async function loginApi(data: { email: string; password: string }) {
 export async function logoutApi() {
   const res = await fetch("/api/auth/logout", {
     method: "POST",
+    credentials: "include",
   });
   if (!res.ok) throw new Error("Logout failed.");
   return true;

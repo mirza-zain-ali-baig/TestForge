@@ -480,6 +480,43 @@ async function runTests() {
     assert(false, "Test 21", String(err));
   }
 
+  // Test 22: Cross-Device Login — Delete user from local SQLite DB to simulate a 2nd device / fresh Vercel instance, then log in
+  try {
+    const { db } = await import("../src/lib/db");
+    await db.user.deleteMany({ where: { email: educatorEmail } });
+
+    const crossDeviceLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: educatorEmail,
+        password: testPassword,
+      }),
+    });
+    const crossBody = await crossDeviceLoginRes.json();
+    assert(
+      crossDeviceLoginRes.status === 200 &&
+        crossBody.user?.email === educatorEmail &&
+        crossBody.user?.role === "educator",
+      "Test 22: Cross-Device Login succeeds via Supabase Cloud even when local SQLite DB is wiped"
+    );
+  } catch (err) {
+    assert(false, "Test 22", String(err));
+  }
+
+  // Clean up test user rows from Supabase Cloud
+  try {
+    const { supabase } = await import("../src/lib/supabase");
+    await supabase
+      .from("questions")
+      .delete()
+      .eq("marks", -1)
+      .eq("question_from", "__tf_user__")
+      .in("tags", [studentEmail, educatorEmail, adminEmail]);
+  } catch {
+    // Ignore cleanup errors
+  }
+
   console.log("\n==========================================");
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log("==========================================");

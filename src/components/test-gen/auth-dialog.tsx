@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +77,14 @@ export function AuthDialog({
   const [role, setRole] = useState<UserRole>("student");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Sync active tab whenever dialog opens with a specific defaultTab
+  useEffect(() => {
+    if (open) {
+      setTab(defaultTab);
+      setError(null);
+    }
+  }, [open, defaultTab]);
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -90,7 +98,7 @@ export function AuthDialog({
     setError(null);
     setLoading(true);
     try {
-      const user = await loginApi({ email, password });
+      const user = await loginApi({ email: email.trim().toLowerCase(), password });
       toast.success(`Welcome back, ${user.name || user.email} (${user.role})!`);
       onSuccess(user);
       onClose();
@@ -107,7 +115,12 @@ export function AuthDialog({
     setError(null);
     setLoading(true);
     try {
-      const user = await registerApi({ email, password, name, role });
+      const user = await registerApi({
+        email: email.trim().toLowerCase(),
+        password,
+        name: name.trim(),
+        role,
+      });
       toast.success(`Account created as ${user.role}! Welcome, ${user.name || user.email}!`);
       onSuccess(user);
       onClose();

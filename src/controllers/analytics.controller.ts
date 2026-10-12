@@ -36,7 +36,7 @@ export async function getBankStats(): Promise<BankStats> {
       supabase.from("subjects").select("*", { count: "exact", head: true }),
       supabase.from("chapters").select("*", { count: "exact", head: true }),
       supabase.from("topics").select("*", { count: "exact", head: true }),
-      supabase.from("questions").select("*", { count: "exact", head: true }),
+      supabase.from("questions").select("*", { count: "exact", head: true }).gte("marks", 1),
       supabase.from("question_types").select("*"),
       supabase.from("difficulty_levels").select("*"),
     ]);
@@ -60,6 +60,7 @@ export async function getBankStats(): Promise<BankStats> {
         const { count } = await supabase
           .from("questions")
           .select("*", { count: "exact", head: true })
+          .gte("marks", 1)
           .eq("question_type_id", t.id);
         return { name: t.name, count: count ?? 0 };
       })
@@ -69,12 +70,13 @@ export async function getBankStats(): Promise<BankStats> {
         const { count } = await supabase
           .from("questions")
           .select("*", { count: "exact", head: true })
+          .gte("marks", 1)
           .eq("difficulty_level_id", d.id);
         return { name: d.name, count: count ?? 0 };
       })
     ),
     (async () => {
-      const { data } = await supabase.from("questions").select("blooms_taxonomy");
+      const { data } = await supabase.from("questions").select("blooms_taxonomy").gte("marks", 1);
       const map = new Map<string, number>();
       for (const r of data ?? []) {
         const k =

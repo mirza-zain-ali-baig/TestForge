@@ -90,7 +90,7 @@ export async function findQuestions(filter: QuestionFilter): Promise<{
   const limit = Math.min(Math.max(filter.limit ?? 50, 1), 100);
   const offset = Math.max(filter.offset ?? 0, 0);
 
-  let q = supabase.from("questions").select("*", { count: "exact" });
+  let q = supabase.from("questions").select("*", { count: "exact" }).gte("marks", 1);
 
   if (filter.subjectId) q = q.eq("subject_id", filter.subjectId);
   if (filter.chapterIds?.length) q = q.in("chapter_id", filter.chapterIds);
@@ -135,6 +135,7 @@ export async function findQuestionsByCellPaged(opts: {
     let q = supabase
       .from("questions")
       .select("*")
+      .gte("marks", 1)
       .eq("subject_id", opts.subjectId)
       .eq("question_type_id", opts.typeId)
       .eq("difficulty_level_id", opts.diffId);
@@ -178,6 +179,7 @@ export async function fetchAllQuestionKeys(
     const { data, error } = await supabase
       .from("questions")
       .select("id,subject_id,chapter_id,topic_id")
+      .gte("marks", 1)
       .in("subject_id", subjectIds)
       .order("id", { ascending: true })
       .range(offset, offset + PAGE - 1);
@@ -226,6 +228,7 @@ export async function findQuestionSources(opts: {
     let q = supabase
       .from("questions")
       .select("question_from")
+      .gte("marks", 1)
       .eq("subject_id", opts.subjectId);
     if (opts.chapterIds?.length) q = q.in("chapter_id", opts.chapterIds);
     if (opts.topicIds?.length) q = q.in("topic_id", opts.topicIds);
