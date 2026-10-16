@@ -56,11 +56,11 @@ type View = "dashboard" | "generate" | "bank" | "saved" | "analytics" | "history
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; desc: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Overview & stats" },
-  { id: "generate", label: "Generate Test", icon: Wand2, desc: "Build a new paper" },
+  { id: "generate", label: "Generate", icon: Wand2, desc: "Build a new paper" },
   { id: "bank", label: "Question Bank", icon: Database, desc: "Browse questions" },
   { id: "analytics", label: "Analytics", icon: BarChart3, desc: "Test coverage insights" },
   { id: "history", label: "History", icon: History, desc: "Generation trends" },
-  { id: "saved", label: "My Tests", icon: FolderOpen, desc: "Saved papers" },
+  { id: "saved", label: "Saved Papers", icon: FolderOpen, desc: "Saved papers & bookmarks" },
 ];
 
 export function TestGeneratorApp() {
@@ -245,8 +245,8 @@ export function TestGeneratorApp() {
               <div className="text-sm font-bold tracking-tight sm:text-base">
                 ExamForge
               </div>
-              <div className="hidden text-[11px] text-muted-foreground sm:block">
-                AI Test Generator for Classes
+              <div className="hidden text-[11px] text-muted-foreground sm:block whitespace-nowrap">
+                AI Test Generator
               </div>
             </div>
           </div>
@@ -261,24 +261,19 @@ export function TestGeneratorApp() {
                   else setView(n.id);
                 }}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap",
                   view === n.id
                     ? "bg-emerald-50 text-emerald-800 font-semibold shadow-xs dark:bg-emerald-950/60 dark:text-emerald-300"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                <n.icon className="h-4 w-4" />
+                <n.icon className="h-4 w-4 shrink-0" />
                 {n.label}
               </button>
             ))}
           </nav>
 
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="hidden border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 lg:flex">
-              <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              Supabase connected
-            </Badge>
-
             {/* User Auth Avatar / Sign In */}
             {user ? (
               <DropdownMenu>

@@ -238,11 +238,17 @@ export function GeneratorWizard({
     fetchCurriculum()
       .then((d) => {
         if (!alive) return;
-        setTree(d.tree);
-        if (d.tree[0]) {
+        const sorted = [...d.tree].sort((a, b) => {
+          const numA = parseInt(a.class_name?.match(/\d+/)?.[0] ?? "999", 10);
+          const numB = parseInt(b.class_name?.match(/\d+/)?.[0] ?? "999", 10);
+          if (numA !== numB) return numA - numB;
+          return (a.class_name ?? "").localeCompare(b.class_name ?? "");
+        });
+        setTree(sorted);
+        if (sorted[0]) {
           if (!classId) {
-            setClassId(d.tree[0].id);
-            const firstSubject = d.tree[0].subjects?.[0];
+            setClassId(sorted[0].id);
+            const firstSubject = sorted[0].subjects?.[0];
             if (firstSubject) {
               setSubjectId(firstSubject.id);
               if (firstSubject.chapters?.length) {
@@ -259,7 +265,16 @@ export function GeneratorWizard({
     };
   }, []);
 
-  const currentClass = tree.find((c) => c.id === classId) ?? tree[0];
+  const sortedTree = useMemo(() => {
+    return [...tree].sort((a, b) => {
+      const numA = parseInt(a.class_name?.match(/\d+/)?.[0] ?? "999", 10);
+      const numB = parseInt(b.class_name?.match(/\d+/)?.[0] ?? "999", 10);
+      if (numA !== numB) return numA - numB;
+      return (a.class_name ?? "").localeCompare(b.class_name ?? "");
+    });
+  }, [tree]);
+
+  const currentClass = sortedTree.find((c) => c.id === classId) ?? sortedTree[0];
   const currentSubject = currentClass?.subjects?.find((s) => s.id === subjectId) ?? currentClass?.subjects?.[0];
   const chapters = currentSubject?.chapters ?? [];
   const selectedChapters = chapters.filter((c) => chapterIds.includes(c.id));
@@ -456,11 +471,34 @@ export function GeneratorWizard({
     !!currentClass &&
     !!currentSubject;
 
+  const stepOrder: WizardStep[] = ["class", "subject", "syllabus", "setup"];
+  const currentStepIdx = stepOrder.indexOf(step);
+
   const STEPS_CONFIG = [
-    { id: "class" as const, num: 1, label: "Class", subtitle: currentClass?.class_name || "Select Grade" },
-    { id: "subject" as const, num: 2, label: "Subject", subtitle: currentSubject?.subject_name || "Select Subject" },
-    { id: "syllabus" as const, num: 3, label: "Syllabus", subtitle: `${chapterIds.length} Chapters` },
-    { id: "setup" as const, num: 4, label: "Test Setup", subtitle: "Practice / Print" },
+    {
+      id: "class" as const,
+      num: 1,
+      label: "Class",
+      subtitle: currentClass?.class_name || "Select Class",
+    },
+    {
+      id: "subject" as const,
+      num: 2,
+      label: "Subject",
+      subtitle: currentStepIdx >= 1 && currentSubject ? currentSubject.subject_name : "Choose Subject",
+    },
+    {
+      id: "syllabus" as const,
+      num: 3,
+      label: "Syllabus",
+      subtitle: currentStepIdx >= 2 ? `${chapterIds.length} Chapters` : "Select Chapters",
+    },
+    {
+      id: "setup" as const,
+      num: 4,
+      label: "Test Setup",
+      subtitle: currentStepIdx >= 3 ? `${totalQuestions} Qs · ${totalMarks}m` : "Configure & Generate",
+    },
   ];
 
   return (
@@ -503,17 +541,15 @@ export function GeneratorWizard({
         </Card>
       )}
 
-      {/* Stepper Navigation Bar */}
+      {/* Stepper Navigation Bar with Filled Progress Connectors */}
       <div className="overflow-x-auto pb-1">
-        <div className="flex items-center justify-between rounded-xl border bg-card p-2 sm:p-3 shadow-sm min-w-[550px]">
+        <div className="flex items-center justify-between rounded-2xl border bg-card p-3 shadow-xs min-w-[620px]">
           {STEPS_CONFIG.map((s, idx) => {
             const isCurrent = step === s.id;
-            const stepOrder: WizardStep[] = ["class", "subject", "syllabus", "setup"];
-            const currentIndex = stepOrder.indexOf(step);
             const thisIndex = stepOrder.indexOf(s.id);
-            const isCompleted = thisIndex < currentIndex;
+            const isCompleted = thisIndex < currentStepIdx;
             const isClickable =
-              thisIndex < currentIndex ||
+              thisIndex < currentStepIdx ||
               (s.id === "subject" && !!classId) ||
               (s.id === "syllabus" && !!classId && !!subjectId);
 
@@ -528,34 +564,48 @@ export function GeneratorWizard({
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }
                   }}
-                  className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all ${
+                  className={`group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all ${
                     isCurrent
-                      ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 font-semibold"
+                      ? "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-100 font-semibold ring-1 ring-emerald-500/20"
                       : isCompleted
-                      ? "text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
-                      : "text-muted-foreground/60 cursor-not-allowed"
+                      ? "text-slate-700 dark:text-slate-200 hover:bg-muted/60 cursor-pointer"
+                      : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
                   }`}
                 >
                   <div
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
                       isCurrent
                         ? "bg-emerald-600 text-white shadow-sm ring-4 ring-emerald-600/20"
                         : isCompleted
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : s.num}
+                    {isCompleted ? <Check className="h-4 w-4" /> : s.num}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold leading-tight">{s.label}</div>
-                    <div className="truncate text-[11px] font-normal text-muted-foreground">
+                    <div className="text-xs font-bold leading-tight">{s.label}</div>
+                    <div
+                      className={`truncate text-[11px] ${
+                        isCurrent
+                          ? "text-emerald-700 dark:text-emerald-300 font-medium"
+                          : isCompleted
+                          ? "text-slate-600 dark:text-slate-300 font-medium"
+                          : "text-slate-400 dark:text-slate-500"
+                      }`}
+                    >
                       {s.subtitle}
                     </div>
                   </div>
                 </button>
                 {idx < STEPS_CONFIG.length - 1 && (
-                  <div className="mx-2 h-4 w-px bg-border shrink-0" />
+                  <div className="flex-1 mx-2 sm:mx-3 h-1 min-w-[20px] rounded-full bg-muted overflow-hidden shrink-0">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        thisIndex < currentStepIdx ? "bg-emerald-600 w-full" : "w-0"
+                      }`}
+                    />
+                  </div>
                 )}
               </div>
             );
@@ -582,19 +632,25 @@ export function GeneratorWizard({
           {step === "class" && (
             <div className="space-y-6">
               <div className="text-center sm:text-left">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-2">
-                  <GraduationCap className="h-3.5 w-3.5" /> Step 1 of 4: Academic Level
-                </div>
-                <h2 className="text-2xl font-bold tracking-tight">Select Your Class / Grade</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Choose your class level below to view subjects, chapters, and available question bank.
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Select Class</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                  Choose a class below to view subjects, chapters, and the available question bank.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {tree.map((cls) => {
+              <div
+                className={`grid gap-5 ${
+                  sortedTree.length <= 1
+                    ? "grid-cols-1 max-w-md mx-auto"
+                    : sortedTree.length === 2
+                    ? "grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
+                {sortedTree.map((cls) => {
                   const isSelected = classId === cls.id;
                   const subjectsCount = cls.subjects?.length ?? 0;
+                  const totalChapters = cls.subjects?.reduce((acc, s) => acc + (s.chapters?.length ?? 0), 0) ?? 0;
                   const qCount = cls.questionCount ?? 0;
 
                   return (
@@ -608,10 +664,8 @@ export function GeneratorWizard({
                             setChapterIds(cls.subjects[0].chapters.map((c) => c.id));
                           }
                         }
-                        setStep("subject");
-                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
                           ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
                           : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
@@ -619,26 +673,36 @@ export function GeneratorWizard({
                     >
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                          <div
+                            className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${
+                              isSelected
+                                ? "bg-emerald-600 text-white shadow-xs"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
                             <GraduationCap className="h-6 w-6" />
                           </div>
-                          {isSelected && (
-                            <Badge className="bg-emerald-600 text-white border-0 text-xs">
-                              Selected
+                          {isSelected ? (
+                            <Badge className="bg-emerald-600 text-white border-0 text-xs font-semibold px-2.5 py-0.5">
+                              ✓ Selected
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-slate-700 text-xs">
+                              Click to Select
                             </Badge>
                           )}
                         </div>
 
-                        <h3 className="text-lg font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {cls.class_name}
                         </h3>
 
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-semibold text-slate-700 dark:text-slate-200">
                             <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
-                            {subjectsCount} {subjectsCount === 1 ? "Subject" : "Subjects"}
+                            {subjectsCount > 1 ? `${subjectsCount} Subjects · ` : ""}{totalChapters} {totalChapters === 1 ? "Chapter" : "Chapters"}
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-semibold text-slate-700 dark:text-slate-200">
                             <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
                             {qCount.toLocaleString()} Questions
                           </span>
@@ -649,13 +713,13 @@ export function GeneratorWizard({
                             {cls.subjects.slice(0, 4).map((sub) => (
                               <span
                                 key={sub.id}
-                                className="rounded-md border bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground"
+                                className="rounded-md border border-slate-200 dark:border-slate-700 bg-background/90 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300"
                               >
                                 {sub.subject_name}
                               </span>
                             ))}
                             {cls.subjects.length > 4 && (
-                              <span className="rounded-md border bg-background/80 px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                              <span className="rounded-md border border-slate-200 dark:border-slate-700 bg-background/90 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
                                 +{cls.subjects.length - 4} more
                               </span>
                             )}
@@ -663,9 +727,41 @@ export function GeneratorWizard({
                         )}
                       </div>
 
-                      <div className="mt-6 flex items-center justify-between border-t pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span>Select Subject</span>
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <div className="mt-6 border-t pt-3.5">
+                        {isSelected ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStep("subject");
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs shadow-xs"
+                          >
+                            <span>Continue to Subjects</span>
+                            <ArrowRight className="ml-1.5 h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setClassId(cls.id);
+                              if (cls.subjects && cls.subjects.length > 0) {
+                                setSubjectId(cls.subjects[0].id);
+                                if (cls.subjects[0].chapters?.length) {
+                                  setChapterIds(cls.subjects[0].chapters.map((c) => c.id));
+                                }
+                              }
+                            }}
+                            className="w-full text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 h-9"
+                          >
+                            <span>Select {cls.class_name}</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
