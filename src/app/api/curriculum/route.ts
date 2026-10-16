@@ -19,7 +19,14 @@ export async function GET(request: Request) {
     const subjectId = searchParams.get("subjectId") ?? undefined;
 
     const tree = await getCurriculumTree({ classId, subjectId });
-    return NextResponse.json({ tree });
+    return NextResponse.json(
+      { tree },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=1800, s-maxage=3600, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

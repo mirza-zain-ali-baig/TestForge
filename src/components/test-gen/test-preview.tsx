@@ -114,12 +114,14 @@ export function TestPreview({
   onBack,
   onRegenerate,
   onPrintExport,
+  initialMode,
 }: {
   test: GeneratedTest;
   onTestChange: (t: GeneratedTest) => void;
   onBack: () => void;
   onRegenerate: () => void;
   onPrintExport?: () => void;
+  initialMode?: "preview" | "practice" | "print";
 }) {
   const [showAnswers, setShowAnswers] = useState(false);
   const [hidePaper, setHidePaper] = useState(true); // auto-enabled: hide paper by default
@@ -165,7 +167,7 @@ export function TestPreview({
     qIndex: number;
   } | null>(null);
   const [addingToSection, setAddingToSection] = useState<number | null>(null);
-  const [practicing, setPracticing] = useState(false);
+  const [practicing, setPracticing] = useState(initialMode === "practice");
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [explainingId, setExplainingId] = useState<string | null>(null);
   const [explanations, setExplanations] = useState<Record<string, string>>({});

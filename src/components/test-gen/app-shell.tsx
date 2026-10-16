@@ -200,10 +200,20 @@ export function TestGeneratorApp() {
     return () => window.removeEventListener("keydown", handler);
   }, [navigate, showHelp]);
 
-  const handleGenerated = (newVariants: GeneratedTest[]) => {
+  const [initialPreviewMode, setInitialPreviewMode] = useState<"preview" | "practice" | "print">("preview");
+
+  const handleGenerated = (
+    newVariants: GeneratedTest[],
+    mode: "preview" | "practice" | "print" = "preview"
+  ) => {
     setVariants(newVariants);
     setActiveVariant(0);
-    setView("generate");
+    setInitialPreviewMode(mode);
+    if (mode === "print") {
+      setView("print");
+    } else {
+      setView("generate");
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -289,39 +299,18 @@ export function TestGeneratorApp() {
                           : user.email.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden max-w-[100px] truncate text-xs font-medium sm:inline-block">
+                    <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline-block">
                       {user.name || user.email.split("@")[0]}
                     </span>
-                    <Badge
-                      variant="outline"
-                      className="hidden border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[9px] uppercase text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 md:inline-flex"
-                    >
-                      {user.role}
-                    </Badge>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60" align="end">
+                <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold leading-none">
-                          {user.name || (user.role === "student" ? "Student" : "Educator")}
-                        </p>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
-                        >
-                          {user.role}
-                        </Badge>
-                      </div>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                      <p className="pt-1 text-[10px] text-muted-foreground">
-                        {user.role === "student"
-                          ? "Access: Practice Bank · Take Tests · Study Quizzes"
-                          : user.role === "admin"
-                          ? "Access: Full Admin · All Permissions"
-                          : "Access: Author · Save · Delete · Batch Exams"}
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold leading-none">
+                        {user.name || "Signed-in User"}
                       </p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -407,19 +396,6 @@ export function TestGeneratorApp() {
 
       {/* Main */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        {user?.role === "student" && (
-          <div className="no-print mb-4 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 px-3.5 py-2 text-xs text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span>
-                <strong>Student Mode:</strong> Browse the Question Bank, take online exams in My Tests, or generate practice quizzes. Saving or deleting official repository papers is restricted to Educators & Admins.
-              </span>
-            </div>
-            <Badge variant="outline" className="shrink-0 text-[10px] uppercase">
-              Role: Student
-            </Badge>
-          </div>
-        )}
         {view === "dashboard" && <Dashboard onStart={goGenerate} />}
         {view === "generate" &&
           (preview ? (
@@ -437,6 +413,7 @@ export function TestGeneratorApp() {
                 onBack={goGenerate}
                 onRegenerate={goGenerate}
                 onPrintExport={goPrint}
+                initialMode={initialPreviewMode}
               />
             </>
           ) : (

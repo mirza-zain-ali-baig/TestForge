@@ -28,8 +28,22 @@ export type BankStats = {
   byBloom: { name: string; count: number }[];
 };
 
-/** Fetches aggregated statistics from the Supabase question bank. */
+// In-memory cache for bank statistics (valid for 30 minutes)
+let cachedStats: BankStats | null = null;
+let lastStatsTime = 0;
+const STATS_CACHE_TTL_MS = 30 * 60 * 1000;
+
+export function invalidateBankStatsCache(): void {
+  cachedStats = null;
+  lastStatsTime = 0;
+}
+
+/** Fetches aggregated statistics from the Supabase question bank with in-memory caching. */
 export async function getBankStats(): Promise<BankStats> {
+  if (cachedStats && Date.now() - lastStatsTime < STATS_CACHE_TTL_MS) {
+    return cachedStats;
+  }
+
   const [classes, subjects, chapters, topics, questions, types, diffs] =
     await Promise.all([
       supabase.from("classes").select("*", { count: "exact", head: true }),
@@ -89,7 +103,7 @@ export async function getBankStats(): Promise<BankStats> {
     })(),
   ]);
 
-  return {
+  cachedStats = {
     counts: {
       classes: classes.count ?? 0,
       subjects: subjects.count ?? 0,
@@ -101,6 +115,9 @@ export async function getBankStats(): Promise<BankStats> {
     byDifficulty,
     byBloom,
   };
+  lastStatsTime = Date.now();
+
+  return cachedStats;
 }
 
 // ─── Generation history ───────────────────────────────────────────────────────

@@ -15,7 +15,11 @@ bootstrap();
 export async function GET() {
   try {
     const stats = await getBankStats();
-    return NextResponse.json(stats);
+    return NextResponse.json(stats, {
+      headers: {
+        "Cache-Control": "public, max-age=900, s-maxage=1800, stale-while-revalidate=86400",
+      },
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

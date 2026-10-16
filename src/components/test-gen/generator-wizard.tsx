@@ -25,6 +25,14 @@ import {
   Lock,
   LogIn,
   UserPlus,
+  GraduationCap,
+  BookOpen,
+  ArrowRight,
+  ArrowLeft,
+  Play,
+  Printer,
+  ListTree,
+  CheckSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +77,8 @@ import type {
   DifficultyName,
   GenerateSource,
 } from "@/lib/types";
+
+export type WizardStep = "class" | "subject" | "syllabus" | "setup";
 
 /* ----------------------------- Quick Presets ----------------------------- */
 
@@ -183,13 +193,14 @@ export function GeneratorWizard({
   user,
   onRequireAuth,
 }: {
-  onGenerated: (variants: GeneratedTest[]) => void;
+  onGenerated: (variants: GeneratedTest[], mode?: "preview" | "practice" | "print") => void;
   user?: AuthUser | null;
   onRequireAuth?: (tab?: "login" | "register") => void;
 }) {
   const [tree, setTree] = useState<CurriculumNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [step, setStep] = useState<WizardStep>("class");
 
   // selection
   const [classId, setClassId] = useState<string>("");
@@ -213,13 +224,12 @@ export function GeneratorWizard({
 
   // UI state
   const [selectedPreset, setSelectedPreset] = useState<string>("");
-  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const generateBtnRef = useRef<HTMLDivElement>(null);
 
-  /* -------------------- Mount: load curriculum + auto-select first class/subject/all chapters -------------------- */
+  /* -------------------- Mount: load curriculum -------------------- */
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -228,12 +238,14 @@ export function GeneratorWizard({
         if (!alive) return;
         setTree(d.tree);
         if (d.tree[0]) {
-          setClassId(d.tree[0].id);
-          const firstSubject = d.tree[0].subjects?.[0];
-          if (firstSubject) {
-            setSubjectId(firstSubject.id);
-            if (firstSubject.chapters?.length) {
-              setChapterIds(firstSubject.chapters.map((c) => c.id));
+          if (!classId) {
+            setClassId(d.tree[0].id);
+            const firstSubject = d.tree[0].subjects?.[0];
+            if (firstSubject) {
+              setSubjectId(firstSubject.id);
+              if (firstSubject.chapters?.length) {
+                setChapterIds(firstSubject.chapters.map((c) => c.id));
+              }
             }
           }
         }
@@ -245,8 +257,8 @@ export function GeneratorWizard({
     };
   }, []);
 
-  const currentClass = tree.find((c) => c.id === classId);
-  const currentSubject = currentClass?.subjects?.find((s) => s.id === subjectId);
+  const currentClass = tree.find((c) => c.id === classId) ?? tree[0];
+  const currentSubject = currentClass?.subjects?.find((s) => s.id === subjectId) ?? currentClass?.subjects?.[0];
   const chapters = currentSubject?.chapters ?? [];
   const selectedChapters = chapters.filter((c) => chapterIds.includes(c.id));
 
@@ -255,7 +267,7 @@ export function GeneratorWizard({
     [selectedChapters]
   );
 
-  /* -------------------- When class changes, auto-pick first subject of new class (if current subject is no longer valid) -------------------- */
+  /* -------------------- When class changes, auto-pick first subject of new class -------------------- */
   useEffect(() => {
     if (!classId || tree.length === 0) return;
     const cls = tree.find((c) => c.id === classId);
@@ -267,7 +279,7 @@ export function GeneratorWizard({
     }
   }, [classId, tree, subjectId]);
 
-  /* -------------------- When subject changes, auto-select ALL chapters of the new subject (20s flow UX) -------------------- */
+  /* -------------------- When subject changes, auto-select all its chapters -------------------- */
   useEffect(() => {
     if (!subjectId || tree.length === 0) return;
     let found: CurriculumNode | undefined;
@@ -311,7 +323,7 @@ export function GeneratorWizard({
     [blueprint]
   );
 
-  /* -------------------- Blueprint setters (clear preset highlight on manual edit) -------------------- */
+  /* -------------------- Blueprint setters -------------------- */
   const setTypeCount = (t: QuestionTypeName, total: number) => {
     setSelectedPreset("");
     setBlueprint({
@@ -357,29 +369,33 @@ export function GeneratorWizard({
     );
   };
 
-  /* -------------------- Preset click: fill blueprint + duration, scroll to generate -------------------- */
+  /* -------------------- Preset click -------------------- */
   const handlePresetClick = (preset: PresetDef) => {
     setSelectedPreset(preset.id);
     setBlueprint(preset.blueprint);
     setDurationMins(preset.duration);
-    setCustomizeOpen(false);
-    // allow state to settle before smooth-scrolling
-    setTimeout(() => {
-      generateBtnRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 120);
   };
 
-  /* -------------------- Generate (requires signed-in user) -------------------- */
-  const handleGenerate = async () => {
+  /* -------------------- Generate (supports Online Practice or Print modes) -------------------- */
+  const handleGenerate = async (mode: "preview" | "practice" | "print" = "preview") => {
     if (!user) {
       toast.error("Please sign in or register an account to generate tests.");
       onRequireAuth?.("login");
       return;
     }
-    if (!currentClass || !currentSubject) return;
+    if (!currentClass || !currentSubject) {
+      toast.error("Please select a class and subject first.");
+      return;
+    }
+    if (chapterIds.length === 0) {
+      toast.error("Please select at least one chapter from the syllabus.");
+      setStep("syllabus");
+      return;
+    }
+    if (totalQuestions === 0) {
+      toast.error("Please add at least 1 question to the blueprint or pick a preset.");
+      return;
+    }
     setGenerating(true);
     try {
       const req: GenerateTestRequest = {
@@ -387,7 +403,7 @@ export function GeneratorWizard({
         className: currentClass.class_name ?? "",
         subjectId,
         subjectName: currentSubject.subject_name ?? "",
-        title,
+        title: title.trim() || `${currentClass.class_name} ${currentSubject.subject_name} Exam`,
         durationMins,
         instructions,
         chapterIds,
@@ -403,13 +419,13 @@ export function GeneratorWizard({
         toast.success(
           `Generated ${variants.length} variants — ${variants[0].totalQuestions} questions each`
         );
-        onGenerated(variants);
+        onGenerated(variants, mode);
       } else {
         const test = await generateTest(req);
         toast.success(
           `Test generated — ${test.totalQuestions} questions, ${test.totalMarks} marks`
         );
-        onGenerated([test]);
+        onGenerated([test], mode);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Generation failed");
@@ -424,10 +440,16 @@ export function GeneratorWizard({
     !!currentClass &&
     !!currentSubject;
 
-  const customizeOpenEffective = customizeOpen || !selectedPreset;
+  const STEPS_CONFIG = [
+    { id: "class" as const, num: 1, label: "Class", subtitle: currentClass?.class_name || "Select Grade" },
+    { id: "subject" as const, num: 2, label: "Subject", subtitle: currentSubject?.subject_name || "Select Subject" },
+    { id: "syllabus" as const, num: 3, label: "Syllabus", subtitle: `${chapterIds.length} Chapters` },
+    { id: "setup" as const, num: 4, label: "Test Setup", subtitle: "Practice / Print" },
+  ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Auth required banner */}
       {!user && (
         <Card className="border-amber-300 bg-amber-50/70 dark:border-amber-800/70 dark:bg-amber-950/30">
           <CardContent className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
@@ -440,7 +462,7 @@ export function GeneratorWizard({
                   Sign In Required to Generate Tests
                 </div>
                 <div className="text-xs text-amber-800/90 dark:text-amber-200/80">
-                  Only registered and signed-in users (Students, Educators, or Admins) can generate test papers.
+                  Only registered and signed-in users can generate or practice tests.
                 </div>
               </div>
             </div>
@@ -464,356 +486,779 @@ export function GeneratorWizard({
           </CardContent>
         </Card>
       )}
+
+      {/* Stepper Navigation Bar */}
+      <div className="overflow-x-auto pb-1">
+        <div className="flex items-center justify-between rounded-xl border bg-card p-2 sm:p-3 shadow-sm min-w-[550px]">
+          {STEPS_CONFIG.map((s, idx) => {
+            const isCurrent = step === s.id;
+            const stepOrder: WizardStep[] = ["class", "subject", "syllabus", "setup"];
+            const currentIndex = stepOrder.indexOf(step);
+            const thisIndex = stepOrder.indexOf(s.id);
+            const isCompleted = thisIndex < currentIndex;
+            const isClickable =
+              thisIndex < currentIndex ||
+              (s.id === "subject" && !!classId) ||
+              (s.id === "syllabus" && !!classId && !!subjectId);
+
+            return (
+              <div key={s.id} className="flex flex-1 items-center">
+                <button
+                  type="button"
+                  disabled={!isClickable}
+                  onClick={() => {
+                    if (isClickable) {
+                      setStep(s.id);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                  }}
+                  className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all ${
+                    isCurrent
+                      ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200 font-semibold"
+                      : isCompleted
+                      ? "text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
+                      : "text-muted-foreground/60 cursor-not-allowed"
+                  }`}
+                >
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                      isCurrent
+                        ? "bg-emerald-600 text-white shadow-sm ring-4 ring-emerald-600/20"
+                        : isCompleted
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : s.num}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold leading-tight">{s.label}</div>
+                    <div className="truncate text-[11px] font-normal text-muted-foreground">
+                      {s.subtitle}
+                    </div>
+                  </div>
+                </button>
+                {idx < STEPS_CONFIG.length - 1 && (
+                  <div className="mx-2 h-4 w-px bg-border shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {loading ? (
         <Card>
-          <CardContent className="space-y-4 p-6">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <CardContent className="space-y-4 p-8">
+            <Skeleton className="h-8 w-64" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Skeleton className="h-44 w-full rounded-xl" />
+              <Skeleton className="h-44 w-full rounded-xl" />
+              <Skeleton className="h-44 w-full rounded-xl" />
+            </div>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* ============================ Section 1: Quick Presets ============================ */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Wand2 className="h-4 w-4 text-emerald-600" /> Create a test
-              </CardTitle>
-              <CardDescription>
-                Pick a preset to start in seconds — then click <strong>Generate</strong>. Or
-                customize below.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {PRESETS.map((p) => {
-                  const selected = selectedPreset === p.id;
+          {/* ========================================================================= */}
+          {/* STEP 1: CLASS SELECTION WINDOW                                            */}
+          {/* ========================================================================= */}
+          {step === "class" && (
+            <div className="space-y-6">
+              <div className="text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-2">
+                  <GraduationCap className="h-3.5 w-3.5" /> Step 1 of 4: Academic Level
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight">Select Your Class / Grade</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose your class level below to view subjects, chapters, and available question bank.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tree.map((cls) => {
+                  const isSelected = classId === cls.id;
+                  const subjectsCount = cls.subjects?.length ?? 0;
+                  const qCount = cls.questionCount ?? 0;
+
                   return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handlePresetClick(p)}
-                      className={[
-                        "flex min-h-[150px] flex-col gap-2 rounded-xl border-2 p-4 text-left transition-all",
-                        selected
-                          ? "border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600/30 dark:bg-emerald-950/40"
-                          : "border-border bg-card hover:border-emerald-400 hover:bg-emerald-50/40 hover:shadow-sm dark:hover:bg-emerald-950/20",
-                      ].join(" ")}
+                    <div
+                      key={cls.id}
+                      onClick={() => {
+                        setClassId(cls.id);
+                        if (cls.subjects && cls.subjects.length > 0) {
+                          setSubjectId(cls.subjects[0].id);
+                          if (cls.subjects[0].chapters?.length) {
+                            setChapterIds(cls.subjects[0].chapters.map((c) => c.id));
+                          }
+                        }
+                        setStep("subject");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                        isSelected
+                          ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
+                          : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
+                      }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <span className="text-3xl" aria-hidden>
-                          {p.emoji}
-                        </span>
-                        {selected && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}
-                      </div>
                       <div>
-                        <div className="text-sm font-bold leading-tight">{p.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
+                            <GraduationCap className="h-6 w-6" />
+                          </div>
+                          {isSelected && (
+                            <Badge className="bg-emerald-600 text-white border-0 text-xs">
+                              Selected
+                            </Badge>
+                          )}
+                        </div>
+
+                        <h3 className="text-lg font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {cls.class_name}
+                        </h3>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                            <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                            {subjectsCount} {subjectsCount === 1 ? "Subject" : "Subjects"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                            <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
+                            {qCount.toLocaleString()} Questions
+                          </span>
+                        </div>
+
+                        {cls.subjects && cls.subjects.length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-1.5">
+                            {cls.subjects.slice(0, 4).map((sub) => (
+                              <span
+                                key={sub.id}
+                                className="rounded-md border bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground"
+                              >
+                                {sub.subject_name}
+                              </span>
+                            ))}
+                            {cls.subjects.length > 4 && (
+                              <span className="rounded-md border bg-background/80 px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                                +{cls.subjects.length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-auto flex flex-wrap items-center gap-1.5">
-                        <Badge variant="secondary" className="text-[10px]">
-                          {p.marks} marks
-                        </Badge>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {p.duration} min
-                        </Badge>
+
+                      <div className="mt-6 flex items-center justify-between border-t pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span>Select Subject</span>
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
 
-          {/* ============================ Section 2: Customize (collapsible) ============================ */}
-          <Collapsible
-            open={customizeOpenEffective}
-            onOpenChange={(o) => {
-              // Only allow user to toggle when a preset is selected.
-              // When no preset is selected, the section is forced open.
-              if (selectedPreset) setCustomizeOpen(o);
-            }}
-          >
-            <Card className="gap-0 overflow-hidden py-0">
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className={[
-                    "flex w-full items-center gap-2 px-5 py-3.5 text-left transition hover:bg-accent/40",
-                    customizeOpenEffective ? "border-b" : "",
-                  ].join(" ")}
+          {/* ========================================================================= */}
+          {/* STEP 2: SUBJECT SELECTION WINDOW                                          */}
+          {/* ========================================================================= */}
+          {step === "subject" && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStep("class");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="mb-2 -ml-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Classes
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold tracking-tight">Select Subject</h2>
+                    <Badge variant="secondary" className="font-semibold">
+                      {currentClass?.class_name}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Choose a subject for {currentClass?.class_name} to view its syllabus and select chapters.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(currentClass?.subjects ?? []).map((sub) => {
+                  const isSelected = subjectId === sub.id;
+                  const chapCount = sub.chapters?.length ?? 0;
+                  const qCount = sub.questionCount ?? 0;
+
+                  return (
+                    <div
+                      key={sub.id}
+                      onClick={() => {
+                        setSubjectId(sub.id);
+                        if (sub.chapters?.length) {
+                          setChapterIds(sub.chapters.map((c) => c.id));
+                        } else {
+                          setChapterIds([]);
+                        }
+                        setStep("syllabus");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                        isSelected
+                          ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
+                          : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+                            <BookOpen className="h-6 w-6" />
+                          </div>
+                          {isSelected && (
+                            <Badge className="bg-emerald-600 text-white border-0 text-xs">
+                              Selected
+                            </Badge>
+                          )}
+                        </div>
+
+                        <h3 className="text-lg font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {sub.subject_name}
+                        </h3>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                            <Layers className="h-3.5 w-3.5 text-emerald-600" />
+                            {chapCount} {chapCount === 1 ? "Chapter" : "Chapters"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                            <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
+                            {qCount.toLocaleString()} Questions
+                          </span>
+                        </div>
+
+                        {sub.chapters && sub.chapters.length > 0 && (
+                          <div className="mt-4 space-y-1">
+                            <div className="text-[11px] font-medium text-muted-foreground">
+                              Syllabus Preview:
+                            </div>
+                            <div className="space-y-1">
+                              {sub.chapters.slice(0, 3).map((ch, idx) => (
+                                <div
+                                  key={ch.id}
+                                  className="truncate text-xs text-muted-foreground/90"
+                                >
+                                  <span className="font-mono text-[10px] text-muted-foreground mr-1">
+                                    Ch {ch.chapter_number || idx + 1}:
+                                  </span>
+                                  {ch.chapter_name}
+                                </div>
+                              ))}
+                              {sub.chapters.length > 3 && (
+                                <div className="text-[11px] text-muted-foreground font-medium">
+                                  +{sub.chapters.length - 3} more chapters…
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-6 flex items-center justify-between border-t pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span>Select Syllabus & Topics</span>
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* STEP 3: SYLLABUS SELECTION WINDOW (CHAPTERS & SUBTOPICS IN CARDS)        */}
+          {/* ========================================================================= */}
+          {step === "syllabus" && (
+            <div className="space-y-6">
+              {/* Header with back button and breadcrumb */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStep("subject");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="mb-2 -ml-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Subjects
+                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-2xl font-bold tracking-tight">Select Syllabus & Subtopics</h2>
+                    <Badge variant="outline" className="font-semibold text-xs">
+                      {currentClass?.class_name}
+                    </Badge>
+                    <span className="text-muted-foreground">›</span>
+                    <Badge className="bg-emerald-600 text-white font-semibold text-xs border-0">
+                      {currentSubject?.subject_name}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Select the chapters and specific subtopics you want to include in this test or practice session.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={selectAllChapters}
+                    className="text-xs"
+                  >
+                    <CheckSquare className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> Select All Chapters
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setChapterIds([]);
+                      setTopicIds([]);
+                    }}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Status bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/40 p-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="font-semibold">
+                    {chapterIds.length} of {chapters.length} Chapters Selected
+                  </Badge>
+                  {topicIds.length > 0 ? (
+                    <Badge variant="outline" className="text-emerald-700 dark:text-emerald-300 border-emerald-400">
+                      {topicIds.length} Specific Subtopics Filtered
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      (All subtopics of selected chapters included by default)
+                    </span>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  disabled={chapterIds.length === 0}
+                  onClick={() => {
+                    setStep("setup");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-4"
                 >
-                  <Settings2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">Customize</div>
-                    <div className="truncate text-[11px] text-muted-foreground">
-                      {selectedPreset
-                        ? "Optional — tweak class, chapters, counts, or difficulty"
-                        : "Pick a class, subject, and chapters to build your test"}
-                    </div>
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform ${
-                      customizeOpenEffective ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="space-y-5 p-5">
-                  {/* Class + Subject dropdowns */}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Class
-                      </Label>
-                      <Select value={classId} onValueChange={setClassId}>
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Select class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tree.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.class_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Subject
-                      </Label>
-                      <Select value={subjectId} onValueChange={setSubjectId}>
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Select subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(currentClass?.subjects ?? []).map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.subject_name} ({s.questionCount} Q)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  Continue to Test Setup <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              </div>
 
-                  {/* Chapter chips */}
-                  {chapters.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <Label className="flex items-center gap-2 text-sm font-medium">
-                          <Layers className="h-4 w-4 text-emerald-600" /> Chapters
-                          <Badge variant="outline" className="ml-1 text-[10px]">
-                            {chapterIds.length}/{chapters.length}
-                          </Badge>
-                        </Label>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={selectAllChapters}>
-                            Select all
-                          </Button>
+              {/* Chapters List with Subtopics Cards */}
+              <div className="space-y-4">
+                {chapters.map((chap, idx) => {
+                  const isChecked = chapterIds.includes(chap.id);
+                  const topics = chap.topics ?? [];
+                  const chapNo = chap.chapter_number || idx + 1;
+
+                  return (
+                    <Card
+                      key={chap.id}
+                      className={`overflow-hidden transition-all border-2 ${
+                        isChecked
+                          ? "border-emerald-500/80 bg-card shadow-sm ring-1 ring-emerald-500/20"
+                          : "border-border bg-card/60 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      {/* Chapter Card Header */}
+                      <div
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 cursor-pointer transition-colors ${
+                          isChecked
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-b border-emerald-200/50 dark:border-emerald-900/50"
+                            : "hover:bg-accent/40"
+                        }`}
+                        onClick={() => toggleChapter(chap.id)}
+                      >
+                        <div className="flex items-start sm:items-center gap-3">
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => toggleChapter(chap.id)}
+                            className="mt-0.5 sm:mt-0 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                          />
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant={isChecked ? "default" : "secondary"}
+                                className={isChecked ? "bg-emerald-600 text-white" : ""}
+                              >
+                                Chapter {chapNo}
+                              </Badge>
+                              <h3 className="text-base font-bold text-foreground">
+                                {chap.chapter_name}
+                              </h3>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {topics.length} Subtopics · {chap.questionCount ?? 0} Questions Available
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
                           <Button
+                            type="button"
                             size="sm"
                             variant="ghost"
-                            onClick={() => setChapterIds([])}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleChapter(chap.id);
+                            }}
+                            className="h-7 text-xs font-medium"
                           >
-                            Clear
+                            {isChecked ? "Deselect Chapter" : "Select Chapter"}
                           </Button>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {chapters.map((c) => {
-                          const checked = chapterIds.includes(c.id);
-                          return (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => toggleChapter(c.id)}
-                              className={[
-                                "flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all",
-                                checked
-                                  ? "border-emerald-600 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
-                                  : "border-border hover:border-emerald-400 hover:bg-accent",
-                              ].join(" ")}
-                              title={c.chapter_name}
-                            >
-                              <span className="font-mono text-[10px] text-muted-foreground">
-                                Ch{c.chapter_number}
-                              </span>
-                              <span className="max-w-[160px] truncate font-medium">
-                                {c.chapter_name}
-                              </span>
-                              <Badge variant="secondary" className="text-[10px]">
-                                {c.questionCount}
-                              </Badge>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Blueprint: 3 compact cards */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-sm font-medium">
-                      <SquareStack className="h-4 w-4 text-emerald-600" /> Question setup
-                    </Label>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {TYPE_NAMES.map((t) => {
-                        const cfg = blueprint[t];
-                        const meta = TYPE_META[t];
-                        const typeCount =
-                          cfg.difficulties.Easy +
-                          cfg.difficulties.Medium +
-                          cfg.difficulties.Hard;
-                        const dimmed = typeCount === 0;
-                        const colorVar = `var(--chart-${TYPE_NAMES.indexOf(t) + 1})`;
-                        return (
-                          <div
-                            key={t}
-                            className={[
-                              "rounded-xl border-2 p-3 transition-all",
-                              dimmed ? "border-muted bg-muted/20 opacity-60" : "bg-card",
-                            ].join(" ")}
-                            style={dimmed ? undefined : { borderColor: colorVar }}
-                          >
-                            <div className="mb-2 flex items-center gap-2">
-                              <span
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-white"
-                                style={{ background: colorVar }}
-                              >
-                                <TypeIcon name={t} />
+                      {/* Subtopics Section inside Chapter Card */}
+                      {isChecked && (
+                        <div className="p-4 bg-background/50">
+                          <div className="mb-2.5 flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                              <ListTree className="h-3.5 w-3.5 text-emerald-600" />
+                              Subtopics / Articles ({topics.length})
+                            </span>
+                            {topics.length > 0 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                Click any subtopic to include/exclude specifically
                               </span>
-                              <div className="min-w-0">
-                                <div className="truncate text-xs font-semibold">
-                                  {meta.label}
-                                </div>
-                                <div className="truncate text-[10px] text-muted-foreground">
-                                  {typeCount}Q · {typeCount * cfg.marksPerQuestion} marks
-                                </div>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                                  Count
-                                </Label>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={typeCount}
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    if (raw === "") return; // allow empty while typing
-                                    const n = parseInt(raw, 10);
-                                    if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
-                                  }}
-                                  className="mt-0.5 h-9 text-sm font-semibold"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                                  Marks
-                                </Label>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  value={cfg.marksPerQuestion}
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    if (raw === "") return;
-                                    const n = parseInt(raw, 10);
-                                    if (!isNaN(n)) setMarks(t, Math.max(1, n));
-                                  }}
-                                  className="mt-0.5 h-9 text-sm"
-                                />
-                              </div>
-                            </div>
+                            )}
                           </div>
-                        );
-                      })}
+
+                          {topics.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {topics.map((t, topicIdx) => {
+                                const isTopicSelected = topicIds.includes(t.id);
+                                const articleNo = t.topic_article_no || `${chapNo}.${topicIdx + 1}`;
+
+                                return (
+                                  <div
+                                    key={t.id}
+                                    onClick={() => {
+                                      if (topicIds.includes(t.id)) {
+                                        setTopicIds(topicIds.filter((id) => id !== t.id));
+                                      } else {
+                                        setTopicIds([...topicIds, t.id]);
+                                      }
+                                    }}
+                                    className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-all cursor-pointer ${
+                                      isTopicSelected
+                                        ? "border-emerald-600 bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
+                                        : "border-border bg-card hover:border-emerald-400 hover:bg-accent/50"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Checkbox
+                                        checked={isTopicSelected}
+                                        onCheckedChange={() => {
+                                          if (topicIds.includes(t.id)) {
+                                            setTopicIds(topicIds.filter((id) => id !== t.id));
+                                          } else {
+                                            setTopicIds([...topicIds, t.id]);
+                                          }
+                                        }}
+                                        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
+                                      />
+                                      <Badge
+                                        variant="outline"
+                                        className="font-mono text-[10px] px-1.5 py-0 shrink-0"
+                                      >
+                                        {articleNo}
+                                      </Badge>
+                                      <span className="truncate" title={t.topic_name}>
+                                        {t.topic_name}
+                                      </span>
+                                    </div>
+                                    {t.questionCount != null && t.questionCount > 0 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-[10px] shrink-0"
+                                      >
+                                        {t.questionCount} Qs
+                                      </Badge>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+                              All questions in this chapter are included in the test pool.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Sticky / Prominent Bottom Continuation Bar */}
+              <div className="sticky bottom-4 z-20 rounded-xl border-2 border-emerald-500/80 bg-card p-4 shadow-xl backdrop-blur">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold">
+                      {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {topicIds.length > 0
+                        ? `${topicIds.length} specific subtopics selected`
+                        : "All subtopics included across selected chapters"}
                     </div>
                   </div>
 
-                  {/* Difficulty: auto-balanced by default, expandable */}
-                  <Collapsible open={difficultyOpen} onOpenChange={setDifficultyOpen}>
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Shuffle className="h-4 w-4 text-emerald-600" />
+                  <Button
+                    size="lg"
+                    disabled={chapterIds.length === 0}
+                    onClick={() => {
+                      setStep("setup");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow"
+                  >
+                    Continue to Test Setup & Generation <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* STEP 4: TEST SETUP & GENERATION (PRACTICE ONLINE / PRINT EXPORT)          */}
+          {/* ========================================================================= */}
+          {step === "setup" && (
+            <div className="space-y-6">
+              {/* Header with back button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStep("syllabus");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="mb-2 -ml-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Syllabus Selection
+                  </Button>
+                  <h2 className="text-2xl font-bold tracking-tight">Configure Your Test</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Set up your question counts, marks, difficulty, and choose whether to practice interactively online or generate a printable paper.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className="text-xs font-semibold">
+                    {currentClass?.class_name}
+                  </Badge>
+                  <span className="text-muted-foreground">›</span>
+                  <Badge variant="outline" className="text-xs font-semibold">
+                    {currentSubject?.subject_name}
+                  </Badge>
+                  <span className="text-muted-foreground">›</span>
+                  <Badge className="bg-emerald-600 text-white text-xs border-0">
+                    {chapterIds.length} Chapters
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Section 1: Quick Presets */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Wand2 className="h-4 w-4 text-emerald-600" /> Quick Exam Presets
+                  </CardTitle>
+                  <CardDescription>
+                    Select a preset blueprint to configure question counts and timing in one click, or customize below.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {PRESETS.map((p) => {
+                      const selected = selectedPreset === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handlePresetClick(p)}
+                          className={`flex min-h-[140px] flex-col gap-2 rounded-xl border-2 p-4 text-left transition-all ${
+                            selected
+                              ? "border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600/30 dark:bg-emerald-950/40"
+                              : "border-border bg-card hover:border-emerald-400 hover:bg-emerald-50/40 hover:shadow-sm dark:hover:bg-emerald-950/20"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <span className="text-3xl" aria-hidden>
+                              {p.emoji}
+                            </span>
+                            {selected && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+                          </div>
                           <div>
-                            <div className="text-sm font-medium">
-                              Difficulty distribution
+                            <div className="text-sm font-bold leading-tight">{p.name}</div>
+                            <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+                          </div>
+                          <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                            <Badge variant="secondary" className="text-[10px]">
+                              {p.marks} marks
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {p.duration} min
+                            </Badge>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Section 2: Question Setup (MCQ, Short, Long) */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <SquareStack className="h-4 w-4 text-emerald-600" /> Question Breakdown
+                      </CardTitle>
+                      <CardDescription>
+                        Set the number of questions and marks per question for each category.
+                      </CardDescription>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1">
+                        Total Questions: <strong className="ml-1 text-emerald-600">{totalQuestions}</strong>
+                      </Badge>
+                      <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1">
+                        Total Marks: <strong className="ml-1 text-emerald-600">{totalMarks}</strong>
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {TYPE_NAMES.map((t) => {
+                      const cfg = blueprint[t];
+                      const meta = TYPE_META[t];
+                      const typeCount =
+                        cfg.difficulties.Easy +
+                        cfg.difficulties.Medium +
+                        cfg.difficulties.Hard;
+                      const dimmed = typeCount === 0;
+                      const colorVar = `var(--chart-${TYPE_NAMES.indexOf(t) + 1})`;
+                      return (
+                        <div
+                          key={t}
+                          className={`rounded-xl border-2 p-4 transition-all ${
+                            dimmed ? "border-muted bg-muted/20 opacity-60" : "bg-card shadow-sm"
+                          }`}
+                          style={dimmed ? undefined : { borderColor: colorVar }}
+                        >
+                          <div className="mb-3 flex items-center gap-2.5">
+                            <span
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm"
+                              style={{ background: colorVar }}
+                            >
+                              <TypeIcon name={t} />
+                            </span>
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-bold">
+                                {meta.label}
+                              </div>
+                              <div className="truncate text-[11px] text-muted-foreground font-medium">
+                                {typeCount} Questions · {typeCount * cfg.marksPerQuestion} Marks
+                              </div>
                             </div>
-                            <div className="text-[11px] text-muted-foreground">
-                              {difficultyOpen
-                                ? "Fine-tune Easy / Medium / Hard per type"
-                                : "Auto-balanced (Easy / Medium / Hard)"}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Questions
+                              </Label>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={typeCount}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === "") return;
+                                  const n = parseInt(raw, 10);
+                                  if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
+                                }}
+                                className="mt-1 h-9 text-sm font-bold"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Marks/Q
+                              </Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={cfg.marksPerQuestion}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === "") return;
+                                  const n = parseInt(raw, 10);
+                                  if (!isNaN(n)) setMarks(t, Math.max(1, n));
+                                }}
+                                className="mt-1 h-9 text-sm"
+                              />
                             </div>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setDifficultyOpen(!difficultyOpen)}
-                        >
-                          <ChevronDown
-                            className={`mr-1 h-4 w-4 transition-transform ${
-                              difficultyOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                          {difficultyOpen ? "Hide" : "Customize"}
-                        </Button>
-                      </div>
-                      <CollapsibleContent>
-                        <div className="mt-3 space-y-3">
-                          <DifficultyEditor
-                            blueprint={blueprint}
-                            setBlueprint={(bp) => {
-                              setSelectedPreset("");
-                              setBlueprint(bp);
-                            }}
-                            setCount={setCount}
-                            subjectId={subjectId}
-                            chapterIds={chapterIds}
-                            topicIds={topicIds}
-                            selectedChapters={selectedChapters}
-                            allTopics={allTopics}
-                          />
-                          <DifficultyPreview
-                            blueprint={blueprint}
-                            totalQuestions={totalQuestions}
-                            totalMarks={totalMarks}
-                          />
-                        </div>
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Test title + Duration */}
+              {/* Section 3: Test Options & Advanced Customization */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Settings2 className="h-4 w-4 text-emerald-600" /> Exam Details & Options
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Title and Duration */}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label htmlFor="title" className="flex items-center gap-1.5">
-                        Test title
-                        <span className="text-[10px] font-normal text-muted-foreground">
-                          (optional)
-                        </span>
+                      <Label htmlFor="title" className="text-xs font-semibold">
+                        Test Title (Printed at top of paper)
                       </Label>
                       <Input
                         id="title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Computer Science — Mid Term"
+                        placeholder={`e.g. ${currentClass?.class_name ?? ""} ${currentSubject?.subject_name ?? ""} Examination`}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-emerald-600" /> Duration:{" "}
-                        {durationMins} min
+                      <Label className="flex items-center gap-2 text-xs font-semibold">
+                        <Clock className="h-3.5 w-3.5 text-emerald-600" /> Exam Duration: {durationMins} minutes
                       </Label>
-                      <div className="pt-1">
+                      <div className="pt-2">
                         <Slider
                           value={[durationMins]}
                           onValueChange={(v) => setDurationMins(v[0])}
@@ -823,293 +1268,312 @@ export function GeneratorWizard({
                         />
                         <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                           <span>15 min</span>
-                          <span>3 hrs</span>
+                          <span>90 min</span>
+                          <span>180 min (3 hrs)</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
 
-          {/* ============================ Section 3: Generate ============================ */}
-          <div ref={generateBtnRef}>
-            <Card>
-              <CardContent className="space-y-4 p-5">
-                {/* Source pills */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Question source</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {SOURCES.map((s) => {
-                      const selected = source === s.id;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => setSource(s.id)}
-                          title={s.desc}
-                          className={[
-                            "flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-lg border-2 p-3 text-center transition-all",
-                            selected
-                              ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40"
-                              : "border-border hover:border-emerald-400 hover:bg-accent",
-                          ].join(" ")}
-                        >
-                          <s.icon className="h-5 w-5 text-emerald-600" />
-                          <span className="text-xs font-semibold">{s.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Variant count */}
-                <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <CopyPlus className="h-4 w-4 text-emerald-600" />
-                    <div>
-                      <div className="text-sm font-medium">Variants</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        Multiple disjoint versions
-                      </div>
+                  {/* Question Source */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label className="text-xs font-semibold">Question Source</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {SOURCES.map((s) => {
+                        const selected = source === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setSource(s.id)}
+                            title={s.desc}
+                            className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 text-center transition-all ${
+                              selected
+                                ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40"
+                                : "border-border hover:border-emerald-400 hover:bg-accent/40"
+                            }`}
+                          >
+                            <s.icon className="h-4 w-4 text-emerald-600" />
+                            <span className="text-xs font-bold">{s.label}</span>
+                            <span className="text-[10px] text-muted-foreground line-clamp-1">{s.desc}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setVariantCount(n)}
-                        className={[
-                          "h-9 min-w-[36px] rounded-md border text-sm font-semibold transition-all",
-                          variantCount === n
-                            ? "border-emerald-600 bg-emerald-600 text-white"
-                            : "border-border hover:border-emerald-400 hover:bg-accent",
-                        ].join(" ")}
+
+                  {/* Collapsible Advanced Settings (Difficulty, Source filter, Instructions, Templates) */}
+                  <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full text-xs">
+                        <ChevronDown
+                          className={`mr-1.5 h-3.5 w-3.5 transition-transform ${
+                            advancedOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                        {advancedOpen ? "Hide Advanced Options" : "Show Advanced Options (Difficulty, Filters, Instructions)"}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="mt-3 space-y-4 rounded-xl border bg-muted/20 p-4">
+                        {/* Shuffle switch */}
+                        <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                          <div className="flex items-center gap-2">
+                            <Shuffle className="h-4 w-4 text-emerald-600" />
+                            <div>
+                              <div className="text-xs font-semibold">Shuffle Questions & Options</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                Randomize order of questions and multiple choice options.
+                              </div>
+                            </div>
+                          </div>
+                          <Switch checked={shuffle} onCheckedChange={setShuffle} />
+                        </div>
+
+                        {/* Difficulty breakdown */}
+                        <div className="rounded-lg border bg-card p-3 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs font-semibold flex items-center gap-2">
+                              <Shuffle className="h-3.5 w-3.5 text-emerald-600" />
+                              Difficulty Distribution (Easy / Medium / Hard)
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDifficultyOpen(!difficultyOpen)}
+                              className="h-7 text-xs"
+                            >
+                              {difficultyOpen ? "Hide Details" : "Fine-Tune"}
+                            </Button>
+                          </div>
+                          {difficultyOpen && (
+                            <DifficultyEditor
+                              blueprint={blueprint}
+                              setBlueprint={(bp) => {
+                                setSelectedPreset("");
+                                setBlueprint(bp);
+                              }}
+                              setCount={setCount}
+                              subjectId={subjectId}
+                              chapterIds={chapterIds}
+                              topicIds={topicIds}
+                              selectedChapters={selectedChapters}
+                              allTopics={allTopics}
+                            />
+                          )}
+                          <DifficultyPreview
+                            blueprint={blueprint}
+                            totalQuestions={totalQuestions}
+                            totalMarks={totalMarks}
+                          />
+                        </div>
+
+                        {/* Question source filter (question_from) */}
+                        <SourceFilterEditor
+                          subjectId={subjectId}
+                          chapterIds={chapterIds}
+                          topicIds={topicIds}
+                          questionSources={questionSources}
+                          setQuestionSources={setQuestionSources}
+                        />
+
+                        {/* Instructions */}
+                        <div className="rounded-lg border bg-card p-3">
+                          <Label
+                            htmlFor="instructions"
+                            className="flex items-center gap-2 text-xs font-semibold"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-emerald-600" /> Instructions for Students
+                          </Label>
+                          <Textarea
+                            id="instructions"
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            rows={2}
+                            className="mt-2 text-xs"
+                            placeholder="General instructions printed at the top of the paper…"
+                          />
+                        </div>
+
+                        {/* Templates & AI Suggester */}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <div className="flex-1 rounded-lg border bg-card p-3">
+                            <BlueprintTemplates
+                              blueprint={blueprint}
+                              onApply={(bp) => {
+                                setBlueprint(bp);
+                                setSelectedPreset("");
+                                toast.success("Template applied");
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1 rounded-lg border bg-card p-3 flex items-center justify-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAiOpen(true)}
+                              className="text-xs w-full"
+                            >
+                              <Sparkles className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                              Ask AI Blueprint Suggester
+                            </Button>
+                            <AIBlueprintSuggester
+                              open={aiOpen}
+                              setOpen={setAiOpen}
+                              onApply={(bp) => {
+                                setBlueprint(bp);
+                                setSelectedPreset("");
+                                toast.success("AI blueprint applied");
+                              }}
+                              className={currentClass?.class_name ?? ""}
+                              subjectName={currentSubject?.subject_name ?? ""}
+                              currentTotalMarks={totalMarks}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </CardContent>
+              </Card>
+
+              {/* Section 4: PRIMARY ACTION WINDOWS (Practice Online vs Print Export) */}
+              <div className="space-y-4">
+                <div className="text-center sm:text-left">
+                  <h3 className="text-lg font-bold">Choose How You Want to Generate</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Practice the test interactively online in your browser or generate a printable paper with logo & formatting.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Action 1: Practice Online */}
+                  <Card className="relative flex flex-col justify-between overflow-hidden border-2 border-blue-500/30 bg-gradient-to-br from-blue-50/50 via-background to-card shadow-sm hover:border-blue-500 hover:shadow-md transition-all dark:from-blue-950/20">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                          <Play className="h-5 w-5 fill-current" />
+                        </div>
+                        <Badge className="bg-blue-600 text-white border-0 text-[10px]">
+                          Interactive Online
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-lg mt-2 font-bold text-foreground">
+                        Practice Online Test
+                      </CardTitle>
+                      <CardDescription className="text-xs leading-relaxed">
+                        Solve MCQ, Short & Long questions directly in browser with timer, instant answer checking, and score summary.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ul className="space-y-2 text-xs text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span>Live exam timer ({durationMins} minutes)</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span>Interactive MCQ choice selection & instant score</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                          <span>Short & Long questions with step-by-step answers</span>
+                        </li>
+                      </ul>
+
+                      <Button
+                        size="lg"
+                        disabled={generating || (!!user && !canGenerate)}
+                        onClick={() => handleGenerate("practice")}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 shadow"
                       >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                        {!user ? (
+                          <>
+                            <Lock className="mr-2 h-4 w-4" /> Sign In to Practice Online
+                          </>
+                        ) : generating ? (
+                          <>
+                            <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                            Preparing Test…
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-4 w-4 fill-current" /> Start Online Practice ({totalQuestions} Qs)
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-                {/* Advanced options */}
-                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      <ChevronDown
-                        className={`mr-1 h-4 w-4 transition-transform ${
-                          advancedOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                      Advanced options
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="mt-2 space-y-3 rounded-lg border bg-muted/20 p-3">
-                      {/* Shuffle */}
-                      <div className="flex items-center justify-between rounded-md border bg-card p-3">
-                        <div className="flex items-center gap-2">
-                          <Shuffle className="h-4 w-4 text-emerald-600" />
-                          <div>
-                            <div className="text-sm font-medium">
-                              Shuffle questions &amp; options
-                            </div>
-                            <div className="text-[11px] text-muted-foreground">
-                              Randomize order per generation.
-                            </div>
-                          </div>
+                  {/* Action 2: Generate & Print */}
+                  <Card className="relative flex flex-col justify-between overflow-hidden border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-background to-card shadow-sm hover:border-emerald-500 hover:shadow-md transition-all dark:from-emerald-950/20">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                          <Printer className="h-5 w-5" />
                         </div>
-                        <Switch checked={shuffle} onCheckedChange={setShuffle} />
+                        <Badge className="bg-emerald-600 text-white border-0 text-[10px]">
+                          Official Exam Paper
+                        </Badge>
                       </div>
+                      <CardTitle className="text-lg mt-2 font-bold text-foreground">
+                        Generate & Print Paper
+                      </CardTitle>
+                      <CardDescription className="text-xs leading-relaxed">
+                        Create official school/college examination papers with logo, header, student details, 2-column layout, and PDF/Word export.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ul className="space-y-2 text-xs text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>Custom school logo, institution name & details</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>Single / 2-column compact layout with adjustable font size</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>Export to PDF, Word (.docx), Excel, or print directly</span>
+                        </li>
+                      </ul>
 
-                      {/* Topics filter (optional) */}
-                      {selectedChapters.length > 0 && (
-                        <div className="rounded-md border bg-card p-3">
-                          <div className="mb-2 flex items-center justify-between">
-                            <Label className="flex items-center gap-2 text-sm font-medium">
-                              <Layers className="h-4 w-4 text-emerald-600" /> Topics filter
-                              <span className="text-[11px] font-normal text-muted-foreground">
-                                (optional)
-                              </span>
-                            </Label>
-                            {topicIds.length > 0 && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setTopicIds([])}
-                              >
-                                Clear
-                              </Button>
-                            )}
-                          </div>
-                          <div className="grid max-h-48 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
-                            {allTopics.map((t) => {
-                              const checked = topicIds.includes(t.id);
-                              return (
-                                <label
-                                  key={t.id}
-                                  className={[
-                                    "flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs transition-all",
-                                    checked
-                                      ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
-                                      : "border-border hover:bg-accent",
-                                  ].join(" ")}
-                                >
-                                  <Checkbox
-                                    checked={checked}
-                                    onCheckedChange={() => toggleTopic(t.id)}
-                                  />
-                                  <span className="font-mono text-[10px] text-muted-foreground">
-                                    {t.topic_article_no}
-                                  </span>
-                                  <span className="truncate">{t.topic_name}</span>
-                                  <Badge
-                                    variant="secondary"
-                                    className="ml-auto text-[10px]"
-                                  >
-                                    {t.questionCount}
-                                  </Badge>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Question source filter (question_from) */}
-                      <SourceFilterEditor
-                        subjectId={subjectId}
-                        chapterIds={chapterIds}
-                        topicIds={topicIds}
-                        questionSources={questionSources}
-                        setQuestionSources={setQuestionSources}
-                      />
-
-                      {/* Instructions */}
-                      <div className="rounded-md border bg-card p-3">
-                        <Label
-                          htmlFor="instructions"
-                          className="flex items-center gap-2 text-sm font-medium"
-                        >
-                          <FileText className="h-4 w-4 text-emerald-600" /> Instructions for
-                          students
-                        </Label>
-                        <Textarea
-                          id="instructions"
-                          value={instructions}
-                          onChange={(e) => setInstructions(e.target.value)}
-                          rows={3}
-                          className="mt-2"
-                          placeholder="General instructions printed at the top of the paper…"
-                        />
-                      </div>
-
-                      {/* Templates */}
-                      <div className="rounded-md border bg-card p-3">
-                        <BlueprintTemplates
-                          blueprint={blueprint}
-                          onApply={(bp) => {
-                            setBlueprint(bp);
-                            setSelectedPreset("");
-                            toast.success("Template applied");
-                          }}
-                        />
-                      </div>
-
-                      {/* AI Suggester */}
-                      <AIBlueprintSuggester
-                        open={aiOpen}
-                        setOpen={setAiOpen}
-                        onApply={(bp) => {
-                          setBlueprint(bp);
-                          setSelectedPreset("");
-                          toast.success("AI blueprint applied");
-                        }}
-                        className={currentClass?.class_name ?? ""}
-                        subjectName={currentSubject?.subject_name ?? ""}
-                        currentTotalMarks={totalMarks}
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                {/* Summary line */}
-                <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  <span>
-                    <strong className="text-foreground">{totalQuestions}</strong> questions
-                  </span>
-                  <span>·</span>
-                  <span>
-                    <strong className="text-foreground">{totalMarks}</strong> marks
-                  </span>
-                  <span>·</span>
-                  <span>
-                    <strong className="text-foreground">{durationMins}</strong> min
-                  </span>
-                  <span>·</span>
-                  <span>
-                    <strong className="text-foreground">{chapterIds.length}</strong> chapters
-                  </span>
-                  <span>·</span>
-                  <span>
-                    <strong className="text-foreground capitalize">{source}</strong>
-                  </span>
+                      <Button
+                        size="lg"
+                        disabled={generating || (!!user && !canGenerate)}
+                        onClick={() => handleGenerate("print")}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 shadow"
+                      >
+                        {!user ? (
+                          <>
+                            <Lock className="mr-2 h-4 w-4" /> Sign In to Generate Paper
+                          </>
+                        ) : generating ? (
+                          <>
+                            <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                            Generating Paper…
+                          </>
+                        ) : (
+                          <>
+                            <Printer className="mr-2 h-4 w-4" /> Generate Printable Paper ({totalMarks} Marks)
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
-
-                {/* Generate button */}
-                <Button
-                  size="lg"
-                  className="h-14 w-full bg-emerald-600 text-base hover:bg-emerald-700"
-                  onClick={handleGenerate}
-                  disabled={generating || (!!user && !canGenerate)}
-                >
-                  {!user ? (
-                    <>
-                      <Lock className="mr-2 h-5 w-5" />
-                      Sign In or Register to Generate Test
-                    </>
-                  ) : generating ? (
-                    <>
-                      <span className="mr-2 inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      {variantCount > 1
-                        ? `Generating ${variantCount} variants…`
-                        : "Generating your test…"}
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="mr-2 h-5 w-5" />
-                      {variantCount > 1
-                        ? `Generate ${variantCount} variants · ${
-                            variantCount * totalQuestions
-                          } questions`
-                        : `Generate Test · ${totalQuestions} questions · ${totalMarks} marks`}
-                    </>
-                  )}
-                </Button>
 
                 {!canGenerate && (
-                  <p className="text-center text-[11px] text-muted-foreground">
+                  <p className="text-center text-xs text-muted-foreground pt-1">
                     {chapterIds.length === 0
-                      ? "Select at least one chapter in Customize above."
-                      : "Pick a preset above or add questions in Customize."}
+                      ? "Please select at least one chapter in the syllabus step."
+                      : "Please configure at least 1 question in the question breakdown or pick a preset."}
                   </p>
                 )}
-
-                {source !== "bank" && (
-                  <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      AI generation calls the language model and may take 10–30 seconds depending
-                      on the number of questions. Generated questions are original and not stored
-                      in the bank.
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

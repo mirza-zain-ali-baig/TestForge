@@ -72,12 +72,10 @@ export function Dashboard({ onStart }: { onStart: () => void }) {
                 <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
               </Badge>
               <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Generate exam papers in seconds
+                Create custom exam papers & practice online
               </h2>
               <p className="max-w-xl text-sm text-white/85">
-                Pull from a bank of {stats?.counts.questions ?? "…"} curated questions across the
-                curriculum, or let AI author fresh ones. Configure your blueprint, preview, print
-                and save — all in one place.
+                Select your class, choose your subject and syllabus chapters, and generate custom test papers instantly from curated questions or fresh AI generation. Practice online or export print-ready exam papers with full styling.
               </p>
             </div>
             <Button

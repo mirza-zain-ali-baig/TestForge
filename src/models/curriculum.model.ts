@@ -28,24 +28,48 @@ export type CurriculumFilter = {
   subjectId?: string;
 };
 
+// In-memory cache for the entire curriculum tree (valid for 30 minutes)
+let cachedTree: CurriculumClass[] | null = null;
+let lastTreeTime = 0;
+const TREE_CACHE_TTL_MS = 30 * 60 * 1000;
+
+export function invalidateCurriculumCache(): void {
+  cachedTree = null;
+  lastTreeTime = 0;
+}
+
 /**
  * Fetches the full class → subject → chapter → topic tree from Supabase,
  * annotating each node with an accurate question count.
+ * Results are cached in server memory for ultra-fast response times.
  */
 export async function getCurriculumTree(
   filter: CurriculumFilter = {}
 ): Promise<CurriculumClass[]> {
+  // If we have a cached tree in memory, filter and return it instantly (0ms)
+  if (cachedTree && Date.now() - lastTreeTime < TREE_CACHE_TTL_MS) {
+    let result = cachedTree;
+    if (filter.classId) {
+      result = result.filter((cls) => cls.id === filter.classId);
+    }
+    if (filter.subjectId) {
+      result = result.map((cls) => ({
+        ...cls,
+        subjects: cls.subjects.filter((sub) => sub.id === filter.subjectId),
+      }));
+    }
+    return result;
+  }
+
+  // Fetch full tree from Supabase so future requests are instantaneous
   // Classes
   let classQ = supabase.from("classes").select("*").order("class_name");
-  if (filter.classId) classQ = classQ.eq("id", filter.classId);
   const { data: classData, error: ce } = await classQ;
   if (ce) throw new Error(ce.message);
   const classes = (classData as ClassRow[]) ?? [];
 
   // Subjects
   let subjQ = supabase.from("subjects").select("*").order("subject_name");
-  if (filter.classId) subjQ = subjQ.eq("class_id", filter.classId);
-  if (filter.subjectId) subjQ = subjQ.eq("id", filter.subjectId);
   const { data: subjData, error: se } = await subjQ;
   if (se) throw new Error(se.message);
   const subjects = (subjData as SubjectRow[]) ?? [];
@@ -114,20 +138,42 @@ export async function getCurriculumTree(
   }
 
   // Build tree
-  return classes.map((cls) => ({
-    ...cls,
-    questionCount: 0,
-    subjects: (subjectsByClass.get(cls.id) ?? []).map((sub) => ({
-      ...sub,
-      questionCount: countsBySubject[sub.id] ?? 0,
-      chapters: (chaptersBySubject.get(sub.id) ?? []).map((ch) => ({
+  const fullTree: CurriculumClass[] = classes.map((cls) => {
+    const classSubjects = (subjectsByClass.get(cls.id) ?? []).map((sub) => {
+      const subChapters = (chaptersBySubject.get(sub.id) ?? []).map((ch) => ({
         ...ch,
         questionCount: countsByChapter[ch.id] ?? 0,
         topics: (topicsByChapter.get(ch.id) ?? []).map((t) => ({
           ...t,
           questionCount: countsByTopic[t.id] ?? 0,
         })),
-      })),
-    })),
-  }));
+      }));
+      return {
+        ...sub,
+        questionCount: countsBySubject[sub.id] ?? 0,
+        chapters: subChapters,
+      };
+    });
+    return {
+      ...cls,
+      questionCount: classSubjects.reduce((acc, s) => acc + s.questionCount, 0),
+      subjects: classSubjects,
+    };
+  });
+
+  cachedTree = fullTree;
+  lastTreeTime = Date.now();
+
+  let filteredResult = fullTree;
+  if (filter.classId) {
+    filteredResult = filteredResult.filter((cls) => cls.id === filter.classId);
+  }
+  if (filter.subjectId) {
+    filteredResult = filteredResult.map((cls) => ({
+      ...cls,
+      subjects: cls.subjects.filter((sub) => sub.id === filter.subjectId),
+    }));
+  }
+
+  return filteredResult;
 }

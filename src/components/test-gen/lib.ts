@@ -7,15 +7,29 @@ import type {
 
 /* --------------------------- API fetch helpers -------------------------- */
 
+let statsClientCache: unknown = null;
+let statsClientCacheTime = 0;
+
 export async function fetchStats() {
-  const res = await fetch("/api/stats", { cache: "no-store" });
+  if (statsClientCache && Date.now() - statsClientCacheTime < 10 * 60 * 1000) {
+    return statsClientCache as Promise<{
+      counts: { classes: number; subjects: number; chapters: number; topics: number; questions: number };
+      byType: { name: string; count: number }[];
+      byDifficulty: { name: string; count: number }[];
+      byBloom: { name: string; count: number }[];
+    }>;
+  }
+  const res = await fetch("/api/stats");
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
-  return res.json() as Promise<{
+  const data = await res.json();
+  statsClientCache = data;
+  statsClientCacheTime = Date.now();
+  return data as {
     counts: { classes: number; subjects: number; chapters: number; topics: number; questions: number };
     byType: { name: string; count: number }[];
     byDifficulty: { name: string; count: number }[];
     byBloom: { name: string; count: number }[];
-  }>;
+  };
 }
 
 export type CurriculumNode = {
@@ -36,11 +50,22 @@ export type CurriculumNode = {
   topics?: CurriculumNode[];
 };
 
+let curriculumClientCache: { tree: CurriculumNode[] } | null = null;
+let curriculumClientCacheTime = 0;
+
 export async function fetchCurriculum(classId?: string) {
+  if (!classId && curriculumClientCache && Date.now() - curriculumClientCacheTime < 15 * 60 * 1000) {
+    return curriculumClientCache;
+  }
   const qs = classId ? `?classId=${classId}` : "";
-  const res = await fetch(`/api/curriculum${qs}`, { cache: "no-store" });
+  const res = await fetch(`/api/curriculum${qs}`);
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
-  return res.json() as Promise<{ tree: CurriculumNode[] }>;
+  const data = (await res.json()) as { tree: CurriculumNode[] };
+  if (!classId) {
+    curriculumClientCache = data;
+    curriculumClientCacheTime = Date.now();
+  }
+  return data;
 }
 
 export type BankQuestion = {
