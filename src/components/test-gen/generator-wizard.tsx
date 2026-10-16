@@ -58,6 +58,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   fetchCurriculum,
@@ -386,14 +391,40 @@ export function GeneratorWizard({
   };
 
   /* -------------------- Chapter / topic toggles -------------------- */
-  const toggleChapter = (id: string) => {
-    setChapterIds(
-      chapterIds.includes(id)
-        ? chapterIds.filter((x) => x !== id)
-        : [...chapterIds, id]
-    );
+  const allTopicIds = useMemo(
+    () => chapters.flatMap((c) => c.topics?.map((t) => t.id) ?? []),
+    [chapters]
+  );
+
+  const areAllChaptersSelected =
+    chapters.length > 0 && chapterIds.length === chapters.length;
+
+  const toggleSelectAllChapters = () => {
+    if (areAllChaptersSelected) {
+      setChapterIds([]);
+      setTopicIds([]);
+    } else {
+      setChapterIds(chapters.map((c) => c.id));
+      setTopicIds(allTopicIds);
+    }
   };
-  const selectAllChapters = () => setChapterIds(chapters.map((c) => c.id));
+
+  const toggleChapter = (id: string) => {
+    const isAdding = !chapterIds.includes(id);
+    const newChaps = isAdding
+      ? [...chapterIds, id]
+      : chapterIds.filter((x) => x !== id);
+    setChapterIds(newChaps);
+
+    const chap = chapters.find((c) => c.id === id);
+    const chapTopicIds = chap?.topics?.map((t) => t.id) ?? [];
+    if (isAdding) {
+      setTopicIds((prev) => Array.from(new Set([...prev, ...chapTopicIds])));
+    } else {
+      setTopicIds((prev) => prev.filter((tId) => !chapTopicIds.includes(tId)));
+    }
+  };
+
   const toggleTopic = (id: string) => {
     setTopicIds(
       topicIds.includes(id) ? topicIds.filter((x) => x !== id) : [...topicIds, id]
@@ -925,25 +956,27 @@ export function GeneratorWizard({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={selectAllChapters}
-                    className="text-xs"
+                  <button
+                    type="button"
+                    onClick={toggleSelectAllChapters}
+                    className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                      areAllChaptersSelected
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
+                        : "border-border bg-card hover:bg-accent/40 text-foreground"
+                    }`}
                   >
-                    <CheckSquare className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> Select All Chapters
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setChapterIds([]);
-                      setTopicIds([]);
-                    }}
-                    className="text-xs"
-                  >
-                    Clear All
-                  </Button>
+                    <Checkbox
+                      checked={areAllChaptersSelected}
+                      onCheckedChange={toggleSelectAllChapters}
+                      className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    />
+                    <span>
+                      {areAllChaptersSelected ? "Deselect All Chapters & Subtopics" : "Select All Chapters & Subtopics"}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] ml-1 font-bold">
+                      {chapterIds.length}/{chapters.length}
+                    </Badge>
+                  </button>
                 </div>
               </div>
 
@@ -953,15 +986,16 @@ export function GeneratorWizard({
                   <Badge variant="secondary" className="font-semibold">
                     {chapterIds.length} of {chapters.length} Chapters Selected
                   </Badge>
-                  {topicIds.length > 0 ? (
-                    <Badge variant="outline" className="text-emerald-700 dark:text-emerald-300 border-emerald-400">
-                      {topicIds.length} Specific Subtopics Filtered
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      (All subtopics of selected chapters included by default)
-                    </span>
-                  )}
+                  <Badge
+                    variant="outline"
+                    className={
+                      topicIds.length > 0
+                        ? "text-emerald-700 dark:text-emerald-300 border-emerald-400 font-semibold"
+                        : "text-muted-foreground"
+                    }
+                  >
+                    {topicIds.length} of {allTopicIds.length} Subtopics Included
+                  </Badge>
                 </div>
                 <Button
                   size="sm"
@@ -1209,15 +1243,15 @@ export function GeneratorWizard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
                 <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Question Source & Origin Filter (FIRST CARD) */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                  {/* Card 1: Question Source Engine, Category Filter & Presets in Clean Dropdowns */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div>
                         <h3 className="text-sm font-bold flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-emerald-600" /> Question Source & Filter
+                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup & Question Filters
                         </h3>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Select generation engine and filter bank questions by category (e.g. Past Paper, Exercise).
+                          Select generation engine, filter by source categories, and choose exam blueprints.
                         </p>
                       </div>
                       <Badge variant="outline" className="text-[10px] font-semibold capitalize">
@@ -1225,56 +1259,51 @@ export function GeneratorWizard({
                       </Badge>
                     </div>
 
-                    {/* Question Source Selection (Bank / Hybrid / AI) */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Generation Engine</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {SOURCES.map((s) => {
-                          const selected = source === s.id;
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => setSource(s.id)}
-                              className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 rounded-xl border p-2.5 text-xs transition-all ${
-                                selected
-                                  ? "border-emerald-600 bg-emerald-50 text-emerald-950 font-bold dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
-                                  : "border-border bg-background hover:bg-accent/40 text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              <s.icon className={`h-4 w-4 ${selected ? "text-emerald-600" : "text-muted-foreground"}`} />
-                              <span className="font-semibold text-center sm:text-left">{s.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Question Origin / question_from Filter */}
-                    <SourceFilterEditor
-                      subjectId={subjectId}
-                      chapterIds={chapterIds}
-                      topicIds={topicIds}
-                      questionSources={questionSources}
-                      setQuestionSources={setQuestionSources}
-                      defaultOpen={true}
-                    />
-                  </div>
-
-                  {/* Card 2: Question Breakdown with Presets Dropdown */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
-                      <div>
-                        <h3 className="text-sm font-bold flex items-center gap-2">
-                          <SquareStack className="h-4 w-4 text-emerald-600" /> Question Breakdown
-                        </h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Select an exam preset or adjust counts with <strong className="text-foreground">+</strong> and <strong className="text-foreground">-</strong> buttons.
-                        </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Dropdown 1: Generation Engine */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          <Bot className="h-3.5 w-3.5 text-emerald-600" />
+                          Question Source Engine
+                        </Label>
+                        <Select value={source} onValueChange={(v) => setSource(v as any)}>
+                          <SelectTrigger className="h-9 text-xs font-semibold bg-background">
+                            <SelectValue placeholder="Select Source" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SOURCES.map((s) => (
+                              <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
+                                <span className="flex items-center gap-2">
+                                  <s.icon className="h-3.5 w-3.5 text-emerald-600" />
+                                  <span>{s.label}</span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      {/* Presets as clean Dropdown */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Dropdown 2: Question Source Filter (question_from) */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          <Filter className="h-3.5 w-3.5 text-emerald-600" />
+                          Question Source Filter
+                        </Label>
+                        <SourceFilterDropdown
+                          subjectId={subjectId}
+                          chapterIds={chapterIds}
+                          topicIds={topicIds}
+                          questionSources={questionSources}
+                          setQuestionSources={setQuestionSources}
+                        />
+                      </div>
+
+                      {/* Dropdown 3: Exam Preset */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          <Wand2 className="h-3.5 w-3.5 text-emerald-600" />
+                          Exam Preset
+                        </Label>
                         <Select
                           value={selectedPreset || "custom"}
                           onValueChange={(val) => {
@@ -1286,7 +1315,7 @@ export function GeneratorWizard({
                             }
                           }}
                         >
-                          <SelectTrigger className="h-8 w-[190px] text-xs font-semibold bg-background">
+                          <SelectTrigger className="h-9 text-xs font-semibold bg-background">
                             <SelectValue placeholder="Custom Blueprint" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1301,6 +1330,23 @@ export function GeneratorWizard({
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Question Breakdown */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold flex items-center gap-2">
+                          <SquareStack className="h-4 w-4 text-emerald-600" /> Question Breakdown
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Adjust question counts easily with <strong className="text-foreground">+</strong> and <strong className="text-foreground">-</strong> buttons.
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="font-bold text-xs">
+                        {totalQuestions} Questions · {totalMarks} Marks
+                      </Badge>
                     </div>
 
                     {/* Question Breakdown Stepper Rows */}
@@ -1983,6 +2029,155 @@ function DifficultyEditor(props: {
         );
       })}
     </div>
+  );
+}
+
+/* ========================================================================= */
+/*                       SourceFilterDropdown                                */
+/* ========================================================================= */
+
+function SourceFilterDropdown(props: {
+  subjectId: string;
+  chapterIds: string[];
+  topicIds: string[];
+  questionSources: string[];
+  setQuestionSources: (v: string[]) => void;
+}) {
+  const { subjectId, chapterIds, topicIds, questionSources, setQuestionSources } = props;
+  const [open, setOpen] = useState(false);
+  const [sourceCounts, setSourceCounts] = useState<{ name: string; count: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadSources = useCallback(async () => {
+    if (!subjectId) return;
+    setLoading(true);
+    try {
+      const data = await fetchQuestionSources({ subjectId, chapterIds, topicIds });
+      setSourceCounts(data.sources);
+    } catch {
+      toast.error("Could not load question sources");
+    } finally {
+      setLoading(false);
+    }
+  }, [subjectId, chapterIds, topicIds]);
+
+  useEffect(() => {
+    loadSources();
+  }, [subjectId, chapterIds, topicIds, loadSources]);
+
+  // Prune any selected sources that no longer exist after a re-fetch
+  useEffect(() => {
+    if (sourceCounts.length === 0) return;
+    const valid = new Set(sourceCounts.map((s) => s.name));
+    const pruned = questionSources.filter((s) => valid.has(s));
+    if (pruned.length !== questionSources.length) {
+      setQuestionSources(pruned);
+    }
+  }, [sourceCounts, questionSources, setQuestionSources]);
+
+  const toggleSource = (name: string) => {
+    if (questionSources.includes(name)) {
+      setQuestionSources(questionSources.filter((s) => s !== name));
+    } else {
+      setQuestionSources([...questionSources, name]);
+    }
+  };
+
+  const label =
+    questionSources.length === 0
+      ? "All Sources (Default)"
+      : `${questionSources.length} Source${questionSources.length > 1 ? "s" : ""} Active`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold shadow-xs hover:bg-accent/40 focus:outline-hidden"
+        >
+          <span className="truncate flex items-center gap-1.5 min-w-0">
+            <Filter className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">{label}</span>
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3 space-y-2.5" align="start">
+        <div className="flex items-center justify-between border-b pb-2">
+          <span className="text-xs font-bold text-foreground">Question Category Filter</span>
+          {questionSources.length > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              {questionSources.length} active
+            </Badge>
+          )}
+        </div>
+
+        <p className="text-[11px] text-muted-foreground leading-tight">
+          Restrict bank questions to specific categories (e.g. past paper). Leave empty to use all questions.
+        </p>
+
+        {loading ? (
+          <div className="space-y-1.5 py-1">
+            <Skeleton className="h-7 w-full" />
+            <Skeleton className="h-7 w-full" />
+          </div>
+        ) : sourceCounts.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+            No question sources found in this scope.
+          </div>
+        ) : (
+          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+            {sourceCounts.map((s) => {
+              const checked = questionSources.includes(s.name);
+              return (
+                <label
+                  key={s.name}
+                  className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border p-2 text-xs transition-all ${
+                    checked
+                      ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 font-medium"
+                      : "border-border hover:bg-accent/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => toggleSource(s.name)}
+                      className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    />
+                    <span className="capitalize truncate">{s.name}</span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {s.count}
+                  </Badge>
+                </label>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-1 border-t">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setQuestionSources(sourceCounts.map((s) => s.name))}
+            className="h-7 text-[11px] px-2 text-emerald-600 hover:text-emerald-700"
+          >
+            Select All
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setQuestionSources([])}
+            disabled={questionSources.length === 0}
+            className="h-7 text-[11px] px-2 text-muted-foreground hover:text-foreground"
+          >
+            Reset to All
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
