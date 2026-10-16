@@ -45,6 +45,8 @@ import {
   ImageIcon,
   FileDown,
   EyeOff,
+  BookOpen,
+  GraduationCap,
 } from "lucide-react";
 import {
   Card,
@@ -1654,7 +1656,7 @@ function AnswerKeyPage({ test }: { test: GeneratedTest }) {
 
 /* --------------------------- Practice mode ------------------------------ */
 
-type PracticeState = "intro" | "taking" | "results";
+type PracticeState = "intro" | "taking" | "results" | "mcq_study";
 
 type Answer = {
   // MCQ: "A"|"B"|"C"|"D"; written: free text
@@ -1710,6 +1712,10 @@ function PracticeMode({
     setCurrent(0);
     setAnswers({});
     setSecondsLeft(test.durationMins * 60);
+  };
+
+  const startMcqStudy = () => {
+    setState("mcq_study");
   };
 
   const setMcq = (qi: number, opt: string) =>
@@ -1780,15 +1786,29 @@ function PracticeMode({
             <X className="h-4 w-4" /> Exit
           </Button>
           <div className="hidden items-center gap-2 sm:flex">
-            <Play className="h-4 w-4 text-emerald-600" />
-            <span className="text-sm font-semibold">Practice Mode</span>
+            {state === "mcq_study" ? (
+              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            ) : (
+              <Play className="h-4 w-4 text-emerald-600" />
+            )}
+            <span className="text-sm font-semibold">
+              {state === "mcq_study" ? "MCQ Study Mode" : "Practice Mode"}
+            </span>
             <Badge variant="outline" className="text-[10px]">
               {test.title}
             </Badge>
           </div>
         </div>
         {state === "taking" && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setState("mcq_study")}
+              className="hidden sm:flex text-xs text-muted-foreground hover:text-foreground h-8"
+            >
+              <BookOpen className="mr-1.5 h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /> MCQ Study Mode
+            </Button>
             <Badge variant="outline" className="text-xs">
               {answeredCount}/{flat.length} answered
             </Badge>
@@ -1818,6 +1838,18 @@ function PracticeMode({
             </div>
           </div>
         )}
+        {state === "mcq_study" && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={start}
+              className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 text-xs font-semibold h-8"
+            >
+              <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Switch to Timed Test
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -1826,7 +1858,17 @@ function PracticeMode({
           <PracticeIntro
             test={test}
             totalQuestions={flat.length}
-            onStart={start}
+            onStartExam={start}
+            onStartMcqStudy={startMcqStudy}
+          />
+        )}
+
+        {state === "mcq_study" && (
+          <MCQStudyView
+            test={test}
+            mcqs={flat.filter((f) => !!f.q.options)}
+            onSwitchToExam={start}
+            onExit={onClose}
           />
         )}
 
@@ -1941,57 +1983,108 @@ function TimerRing({
 function PracticeIntro({
   test,
   totalQuestions,
-  onStart,
+  onStartExam,
+  onStartMcqStudy,
 }: {
   test: GeneratedTest;
   totalQuestions: number;
-  onStart: () => void;
+  onStartExam: () => void;
+  onStartMcqStudy: () => void;
 }) {
   const mcqCount = test.sections
     .filter((s) => s.type_name === "MCQ")
     .reduce((sum, s) => sum + s.questions.length, 0);
+
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-12 text-center sm:py-20">
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-8 sm:py-14 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
-        <Play className="h-8 w-8" />
+        <GraduationCap className="h-8 w-8" />
       </div>
+
       <div className="space-y-2">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Ready to practice?
+          Choose How You Want to Practice
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Take this test interactively. MCQs are auto-graded instantly; written answers are
-          self-assessed against the model answer.
+        <p className="text-sm text-muted-foreground max-w-lg">
+          Take the complete timed exam under exam conditions, or prepare and study MCQs at your own pace with instant answer reveals and explanations.
         </p>
       </div>
+
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <IntroStat label="Questions" value={`${totalQuestions}`} />
-        <IntroStat label="Total marks" value={`${test.totalMarks}`} />
-        <IntroStat label="Duration" value={`${test.durationMins} min`} />
-        <IntroStat label="Auto-graded" value={`${mcqCount} MCQ`} />
+        <IntroStat label="Total Marks" value={`${test.totalMarks}`} />
+        <IntroStat label="Exam Duration" value={`${test.durationMins} min`} />
+        <IntroStat label="Available MCQs" value={`${mcqCount}`} />
       </div>
+
       {test.instructions && (
-        <div className="w-full rounded-lg border bg-muted/30 p-4 text-left">
+        <div className="w-full rounded-xl border bg-muted/30 p-4 text-left">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Instructions
           </div>
-          <p className="whitespace-pre-line text-sm leading-relaxed">{test.instructions}</p>
+          <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed">{test.instructions}</p>
         </div>
       )}
-      <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
-        <Timer className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>
-          The timer starts as soon as you click “Start”. When time runs out, the test is
-          submitted automatically. You can flag questions to review later.
-        </span>
+
+      {/* Two Choice Cards */}
+      <div className="grid w-full grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+        {/* Option 1: Timed Exam */}
+        <div className="rounded-2xl border-2 border-emerald-500/30 bg-card p-5 shadow-sm hover:border-emerald-500 transition-all flex flex-col justify-between">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                <Timer className="h-5 w-5" />
+              </span>
+              <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                Timed Exam
+              </Badge>
+            </div>
+            <h3 className="text-base font-bold text-foreground">Give Timed Test</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Full exam simulation with live countdown timer ({test.durationMins}m), question navigation, flagging, and automated scorecard at the end.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            onClick={onStartExam}
+            className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+          >
+            <Play className="mr-1.5 h-4 w-4 fill-current" /> Start Timed Test
+          </Button>
+        </div>
+
+        {/* Option 2: MCQ Preparation Mode */}
+        <div className="rounded-2xl border-2 border-blue-500/30 bg-card p-5 shadow-sm hover:border-blue-500 transition-all flex flex-col justify-between">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                <Lightbulb className="h-5 w-5" />
+              </span>
+              <Badge className="bg-blue-600 text-white text-[10px] font-bold">
+                Study Mode
+              </Badge>
+            </div>
+            <h3 className="text-base font-bold text-foreground">Prepare MCQs Only</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Study all {mcqCount} MCQs at your own pace without timer pressure. Click options for instant correctness, and toggle answers & explanations.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            disabled={mcqCount === 0}
+            onClick={onStartMcqStudy}
+            className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs disabled:opacity-50 shadow-sm"
+          >
+            {mcqCount > 0 ? (
+              <>
+                <BookOpen className="mr-1.5 h-4 w-4" /> Prepare MCQs ({mcqCount})
+              </>
+            ) : (
+              "No MCQs in this test"
+            )}
+          </Button>
+        </div>
       </div>
-      <Button
-        size="lg"
-        onClick={onStart}
-        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-      >
-        <Play className="mr-2 h-4 w-4" /> Start practice test
-      </Button>
     </div>
   );
 }
@@ -2003,6 +2096,368 @@ function IntroStat({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-0.5 text-lg font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+/* ----------------------- MCQ Preparation & Study View ----------------------- */
+
+function MCQStudyView({
+  test,
+  mcqs,
+  onSwitchToExam,
+  onExit,
+}: {
+  test: GeneratedTest;
+  mcqs: { q: GeneratedQuestion; section: string; marks: number; globalIndex: number }[];
+  onSwitchToExam: () => void;
+  onExit: () => void;
+}) {
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
+  const [revealed, setRevealed] = useState<Record<number, boolean>>({});
+  const [showAll, setShowAll] = useState(false);
+
+  const toggleReveal = (idx: number) => {
+    setRevealed((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const handleSelectOption = (idx: number, opt: string) => {
+    setSelectedAnswers((prev) => ({ ...prev, [idx]: opt }));
+  };
+
+  const clearSelection = (idx: number) => {
+    setSelectedAnswers((prev) => {
+      const copy = { ...prev };
+      delete copy[idx];
+      return copy;
+    });
+  };
+
+  const resetAll = () => {
+    setSelectedAnswers({});
+    setRevealed({});
+    setShowAll(false);
+  };
+
+  const toggleShowAll = () => {
+    const next = !showAll;
+    setShowAll(next);
+    if (!next) {
+      setRevealed({});
+    }
+  };
+
+  const answeredCount = Object.keys(selectedAnswers).length;
+  const correctCount = mcqs.reduce((acc, m, idx) => {
+    const chosen = selectedAnswers[idx];
+    return chosen && chosen === m.q.options?.correct_option ? acc + 1 : acc;
+  }, 0);
+  const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+
+  if (mcqs.length === 0) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+          <BookOpen className="h-7 w-7" />
+        </div>
+        <h3 className="text-lg font-bold">No MCQs in This Test</h3>
+        <p className="text-xs text-muted-foreground">
+          This test only contains subjective questions (Short and Long). You can take the timed test to practice them.
+        </p>
+        <div className="flex gap-2 mt-2">
+          <Button onClick={onSwitchToExam} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
+            <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Start Timed Test
+          </Button>
+          <Button variant="outline" onClick={onExit} className="text-xs">
+            Exit
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
+      {/* Top Banner & Stats */}
+      <div className="rounded-2xl border-2 border-blue-500/30 bg-gradient-to-br from-blue-50/70 via-background to-card p-5 dark:from-blue-950/20 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+          <div>
+            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+              <Lightbulb className="h-4 w-4" /> MCQ Preparation & Study Mode
+            </div>
+            <h2 className="text-lg font-bold text-foreground mt-0.5">{test.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Self-paced preparation without timer stress. Click any option to test your recall, or reveal answers and explanations instantly.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={toggleShowAll}
+              className="text-xs h-8"
+            >
+              {showAll ? (
+                <>
+                  <EyeOff className="mr-1.5 h-3.5 w-3.5" /> Hide All Answers
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-1.5 h-3.5 w-3.5" /> Reveal All Answers
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={resetAll}
+              disabled={answeredCount === 0 && Object.keys(revealed).length === 0 && !showAll}
+              className="text-xs h-8 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Reset
+            </Button>
+          </div>
+        </div>
+
+        {/* Live Scorebar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4">
+          <div className="rounded-xl border bg-background/80 p-2.5 text-center">
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Total MCQs</div>
+            <div className="text-xl font-black text-foreground mt-0.5">{mcqs.length}</div>
+          </div>
+          <div className="rounded-xl border bg-background/80 p-2.5 text-center">
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Attempted</div>
+            <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+              {answeredCount}/{mcqs.length}
+            </div>
+          </div>
+          <div className="rounded-xl border bg-background/80 p-2.5 text-center">
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Correct</div>
+            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+              {correctCount}
+            </div>
+          </div>
+          <div className="rounded-xl border bg-background/80 p-2.5 text-center">
+            <div className="text-[10px] font-bold uppercase text-muted-foreground">Accuracy</div>
+            <div className="text-xl font-black text-foreground mt-0.5">
+              {answeredCount > 0 ? `${accuracy}%` : "—"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MCQs List */}
+      <div className="space-y-4">
+        {mcqs.map((item, idx) => {
+          const { q, marks } = item;
+          const chosen = selectedAnswers[idx];
+          const isRevealed = showAll || !!revealed[idx];
+          const correctOpt = q.options?.correct_option;
+          const isAnswered = !!chosen;
+          const isCorrect = isAnswered && chosen === correctOpt;
+
+          return (
+            <Card
+              key={item.globalIndex}
+              className={`transition-all border-2 ${
+                isAnswered
+                  ? isCorrect
+                    ? "border-emerald-500/40 bg-emerald-50/10"
+                    : "border-red-500/30 bg-red-50/10"
+                  : "border-border/80 hover:border-border"
+              }`}
+            >
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold leading-relaxed text-foreground">
+                        {q.question_text}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {marks} Mark{marks > 1 ? "s" : ""}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px]">
+                          {q.difficulty_name}
+                        </Badge>
+                        {q.blooms_taxonomy && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {q.blooms_taxonomy}
+                          </Badge>
+                        )}
+                        {q.source_origin && (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            {q.source_origin}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per Question Status Badge */}
+                  {isAnswered && (
+                    <Badge
+                      className={`shrink-0 text-[10px] font-bold ${
+                        isCorrect ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
+                      }`}
+                    >
+                      {isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Options Grid */}
+                {q.options && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {(["A", "B", "C", "D"] as const).map((opt) => {
+                      const text = q.options![`option_${opt.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"];
+                      const isOptionChosen = chosen === opt;
+                      const isOptionCorrect = opt === correctOpt;
+
+                      let style = "border-border bg-background hover:bg-accent/40 text-foreground";
+                      if (isAnswered) {
+                        if (isOptionCorrect) {
+                          style = "border-emerald-600 bg-emerald-50 text-emerald-950 font-bold dark:bg-emerald-950/50 dark:text-emerald-100 ring-1 ring-emerald-500/30";
+                        } else if (isOptionChosen && !isOptionCorrect) {
+                          style = "border-red-500 bg-red-50 text-red-950 font-bold dark:bg-red-950/40 dark:text-red-100 ring-1 ring-red-500/30";
+                        } else {
+                          style = "border-border/60 bg-muted/20 opacity-60 text-muted-foreground";
+                        }
+                      } else if (isRevealed) {
+                        if (isOptionCorrect) {
+                          style = "border-emerald-600 bg-emerald-50 text-emerald-950 font-bold dark:bg-emerald-950/50 dark:text-emerald-100 ring-1 ring-emerald-500/30";
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => handleSelectOption(idx, opt)}
+                          className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left text-xs transition-all ${style}`}
+                        >
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs font-bold transition-all ${
+                              (isAnswered || isRevealed) && isOptionCorrect
+                                ? "border-emerald-600 bg-emerald-600 text-white"
+                                : isOptionChosen && !isOptionCorrect
+                                ? "border-red-500 bg-red-500 text-white"
+                                : "border-border bg-muted/40"
+                            }`}
+                          >
+                            {opt}
+                          </span>
+                          <span className="flex-1 leading-snug mt-0.5">{text}</span>
+                          {(isAnswered || isRevealed) && isOptionCorrect && (
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                          )}
+                          {isOptionChosen && !isOptionCorrect && (
+                            <X className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Footer Controls: Reveal Button & Clear */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleReveal(idx)}
+                      className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {isRevealed ? (
+                        <>
+                          <EyeOff className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                          Hide Answer & Explanation
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                          Show Answer & Explanation
+                        </>
+                      )}
+                    </Button>
+                    {isAnswered && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => clearSelection(idx)}
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <RefreshCw className="mr-1.5 h-3 w-3" /> Try Again
+                      </Button>
+                    )}
+                  </div>
+
+                  {isAnswered && (
+                    <span className="text-[11px] font-semibold text-muted-foreground">
+                      Your choice: <strong className="text-foreground">Option {chosen}</strong>
+                      {isCorrect ? " (Correct)" : ` (Correct was Option ${correctOpt})`}
+                    </span>
+                  )}
+                </div>
+
+                {/* Revealed Answer & Explanation Block */}
+                {isRevealed && (
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/70 p-3.5 text-xs text-foreground dark:bg-emerald-950/30 space-y-1.5 animate-fade-in">
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300">
+                      <KeyRound className="h-3.5 w-3.5" />
+                      Correct Answer: Option {correctOpt}
+                      {q.options && (
+                        <span className="font-medium text-foreground">
+                          — {q.options[`option_${correctOpt.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"]}
+                        </span>
+                      )}
+                    </div>
+                    {q.explanation && (
+                      <div className="text-muted-foreground leading-relaxed pt-1">
+                        <strong className="text-foreground">Explanation: </strong>
+                        {q.explanation}
+                      </div>
+                    )}
+                    {q.model_answer && !q.explanation && (
+                      <div className="text-muted-foreground leading-relaxed pt-1">
+                        <strong className="text-foreground">Solution: </strong>
+                        {q.model_answer}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Bottom Floating Bar */}
+      <div className="sticky bottom-4 rounded-2xl border bg-card/95 backdrop-blur-md p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="text-xs text-muted-foreground text-center sm:text-left">
+          Done reviewing? You can now test your knowledge under timed exam conditions.
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={onSwitchToExam}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+          >
+            <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Start Timed Exam
+          </Button>
+          <Button variant="outline" onClick={onExit} className="text-xs">
+            Exit
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

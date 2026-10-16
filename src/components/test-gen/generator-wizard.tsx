@@ -100,42 +100,42 @@ const PRESETS: PresetDef[] = [
     id: "quick-quiz",
     name: "Quick Quiz",
     desc: "10 MCQ + 3 Short",
-    marks: 19,
-    duration: 30,
+    marks: 16,
+    duration: 20,
     questionCount: 13,
     emoji: "⚡",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 4, Medium: 4, Hard: 2 } },
-      Short: { marksPerQuestion: 3, difficulties: { Easy: 1, Medium: 1, Hard: 1 } },
-      Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+      Short: { marksPerQuestion: 2, difficulties: { Easy: 1, Medium: 1, Hard: 1 } },
+      Long: { marksPerQuestion: 8, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
     },
   },
   {
     id: "class-test",
     name: "Class Test",
-    desc: "15 MCQ + 3 Short + 1 Long",
-    marks: 35,
-    duration: 60,
-    questionCount: 19,
+    desc: "15 MCQ + 4 Short + 1 Long",
+    marks: 31,
+    duration: 45,
+    questionCount: 20,
     emoji: "📘",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 5, Medium: 7, Hard: 3 } },
-      Short: { marksPerQuestion: 3, difficulties: { Easy: 1, Medium: 1, Hard: 1 } },
-      Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 1, Hard: 0 } },
+      Short: { marksPerQuestion: 2, difficulties: { Easy: 2, Medium: 1, Hard: 1 } },
+      Long: { marksPerQuestion: 8, difficulties: { Easy: 0, Medium: 1, Hard: 0 } },
     },
   },
   {
     id: "full-exam",
     name: "Full Exam",
-    desc: "25 MCQ + 5 Short + 3 Long",
-    marks: 65,
+    desc: "20 MCQ + 6 Short + 2 Long",
+    marks: 48,
     duration: 90,
-    questionCount: 33,
+    questionCount: 28,
     emoji: "🎓",
     blueprint: {
-      MCQ: { marksPerQuestion: 1, difficulties: { Easy: 8, Medium: 10, Hard: 7 } },
-      Short: { marksPerQuestion: 3, difficulties: { Easy: 2, Medium: 2, Hard: 1 } },
-      Long: { marksPerQuestion: 5, difficulties: { Easy: 1, Medium: 1, Hard: 1 } },
+      MCQ: { marksPerQuestion: 1, difficulties: { Easy: 8, Medium: 8, Hard: 4 } },
+      Short: { marksPerQuestion: 2, difficulties: { Easy: 2, Medium: 3, Hard: 1 } },
+      Long: { marksPerQuestion: 8, difficulties: { Easy: 1, Medium: 1, Hard: 0 } },
     },
   },
   {
@@ -148,8 +148,8 @@ const PRESETS: PresetDef[] = [
     emoji: "✅",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 7, Medium: 8, Hard: 5 } },
-      Short: { marksPerQuestion: 3, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
-      Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+      Short: { marksPerQuestion: 2, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+      Long: { marksPerQuestion: 8, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
     },
   },
 ];
@@ -172,8 +172,8 @@ const SOURCES: {
 function emptyBlueprint(): Blueprint {
   return {
     MCQ: { marksPerQuestion: 1, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
-    Short: { marksPerQuestion: 3, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
-    Long: { marksPerQuestion: 5, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+    Short: { marksPerQuestion: 2, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
+    Long: { marksPerQuestion: 8, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
   };
 }
 
@@ -381,7 +381,7 @@ export function GeneratorWizard({
     setSelectedPreset("");
     setBlueprint({
       ...blueprint,
-      [t]: { ...blueprint[t], marksPerQuestion: Math.max(1, v) },
+      [t]: { ...blueprint[t], marksPerQuestion: Math.max(0, v) },
     });
   };
 
@@ -1209,73 +1209,107 @@ export function GeneratorWizard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
                 <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Sleek Quick Presets Selector */}
-                  <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Wand2 className="h-3.5 w-3.5 text-emerald-600" />
-                        Quick Exam Presets
-                      </Label>
-                      {selectedPreset && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPreset("")}
-                          className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                        >
-                          Reset to Custom
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {PRESETS.map((p) => {
-                        const isSelected = selectedPreset === p.id;
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => handlePresetClick(p)}
-                            className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all ${
-                              isSelected
-                                ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-2 ring-emerald-600/20"
-                                : "border-border bg-background hover:border-emerald-400 hover:bg-accent/40"
-                            }`}
-                          >
-                            <div className="flex w-full items-center justify-between text-base mb-1">
-                              <span>{p.emoji}</span>
-                              {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600 font-bold" />}
-                            </div>
-                            <div className="text-xs font-bold truncate w-full">{p.name}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                              {p.marks}m · {p.duration}min
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Card 2: Question Breakdown (MCQ, Short, Long Stepper Rows) */}
+                  {/* Card 1: Question Source & Origin Filter (FIRST CARD) */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
                     <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-emerald-600" /> Question Source & Filter
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Select generation engine and filter bank questions by category (e.g. Past Paper, Exercise).
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] font-semibold capitalize">
+                        Engine: {source}
+                      </Badge>
+                    </div>
+
+                    {/* Question Source Selection (Bank / Hybrid / AI) */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Generation Engine</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {SOURCES.map((s) => {
+                          const selected = source === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setSource(s.id)}
+                              className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 rounded-xl border p-2.5 text-xs transition-all ${
+                                selected
+                                  ? "border-emerald-600 bg-emerald-50 text-emerald-950 font-bold dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
+                                  : "border-border bg-background hover:bg-accent/40 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              <s.icon className={`h-4 w-4 ${selected ? "text-emerald-600" : "text-muted-foreground"}`} />
+                              <span className="font-semibold text-center sm:text-left">{s.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Question Origin / question_from Filter */}
+                    <SourceFilterEditor
+                      subjectId={subjectId}
+                      chapterIds={chapterIds}
+                      topicIds={topicIds}
+                      questionSources={questionSources}
+                      setQuestionSources={setQuestionSources}
+                      defaultOpen={true}
+                    />
+                  </div>
+
+                  {/* Card 2: Question Breakdown with Presets Dropdown */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
                       <div>
                         <h3 className="text-sm font-bold flex items-center gap-2">
                           <SquareStack className="h-4 w-4 text-emerald-600" /> Question Breakdown
                         </h3>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Adjust question counts easily with <strong className="text-foreground">+</strong> and <strong className="text-foreground">-</strong> buttons.
+                          Select an exam preset or adjust counts with <strong className="text-foreground">+</strong> and <strong className="text-foreground">-</strong> buttons.
                         </p>
                       </div>
-                      <Badge variant="secondary" className="font-bold text-xs">
-                        {totalQuestions} Questions · {totalMarks} Marks
-                      </Badge>
+
+                      {/* Presets as clean Dropdown */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Select
+                          value={selectedPreset || "custom"}
+                          onValueChange={(val) => {
+                            if (val === "custom") {
+                              setSelectedPreset("");
+                            } else {
+                              const p = PRESETS.find((x) => x.id === val);
+                              if (p) handlePresetClick(p);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[190px] text-xs font-semibold bg-background">
+                            <SelectValue placeholder="Custom Blueprint" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="custom" className="text-xs font-medium">
+                              ⚙️ Custom Blueprint
+                            </SelectItem>
+                            {PRESETS.map((p) => (
+                              <SelectItem key={p.id} value={p.id} className="text-xs font-medium">
+                                {p.emoji} {p.name} ({p.marks}m · {p.duration}m)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
+                    {/* Question Breakdown Stepper Rows */}
                     <div className="space-y-3">
                       {TYPE_NAMES.map((t) => {
                         const cfg = blueprint[t];
                         const meta = TYPE_META[t];
                         const count = cfg.difficulties.Easy + cfg.difficulties.Medium + cfg.difficulties.Hard;
-                        const subtotalMarks = count * cfg.marksPerQuestion;
+                        const subtotalMarks = count * (cfg.marksPerQuestion || 0);
                         const colorVar = `var(--chart-${TYPE_NAMES.indexOf(t) + 1})`;
 
                         return (
@@ -1305,12 +1339,22 @@ export function GeneratorWizard({
                                     type="number"
                                     min={1}
                                     max={20}
-                                    value={cfg.marksPerQuestion}
+                                    value={cfg.marksPerQuestion === 0 ? "" : cfg.marksPerQuestion}
+                                    placeholder="1"
                                     onChange={(e) => {
-                                      const n = parseInt(e.target.value, 10);
+                                      const raw = e.target.value;
+                                      if (raw === "") {
+                                        setMarks(t, 0);
+                                        return;
+                                      }
+                                      const n = parseInt(raw, 10);
                                       if (!isNaN(n)) setMarks(t, Math.max(1, n));
                                     }}
-                                    className="h-5 w-10 rounded border bg-background px-1 text-center font-bold text-xs"
+                                    onBlur={() => {
+                                      if (cfg.marksPerQuestion < 1) setMarks(t, 1);
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                    className="h-6 w-12 rounded border bg-background px-1 text-center font-bold text-xs"
                                     title="Marks per question"
                                   />
                                   <span>· Subtotal: <strong className="text-foreground">{subtotalMarks} marks</strong></span>
@@ -1335,11 +1379,18 @@ export function GeneratorWizard({
                                   type="number"
                                   min={0}
                                   max={100}
-                                  value={count}
+                                  value={count === 0 ? "" : count}
+                                  placeholder="0"
                                   onChange={(e) => {
-                                    const n = parseInt(e.target.value, 10);
+                                    const raw = e.target.value;
+                                    if (raw === "") {
+                                      setTypeCount(t, 0);
+                                      return;
+                                    }
+                                    const n = parseInt(raw, 10);
                                     if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
                                   }}
+                                  onFocus={(e) => e.target.select()}
                                   className="h-8 w-14 bg-transparent text-center font-bold text-sm focus:outline-none"
                                 />
                                 <Button
@@ -1359,7 +1410,7 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  {/* Card 3: Exam Details (Title & Duration Presets) */}
+                  {/* Card 3: Exam Details (Title & Duration with Custom Input) */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
                     <h3 className="text-sm font-bold flex items-center gap-2">
                       <Settings2 className="h-4 w-4 text-emerald-600" /> Exam Details & Duration
@@ -1380,15 +1431,15 @@ export function GeneratorWizard({
                       </div>
 
                       <div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-2">
                           <Label className="text-xs font-semibold flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5 text-emerald-600" />
                             Exam Time Duration: <span className="font-bold text-emerald-600 dark:text-emerald-400">{durationMins} Minutes</span>
                           </Label>
                         </div>
-                        {/* Quick duration chips */}
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {[15, 30, 45, 60, 90, 120].map((mins) => (
+                        {/* Quick duration chips + Custom input */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {[15, 20, 30, 45, 60, 90, 120].map((mins) => (
                             <button
                               key={mins}
                               type="button"
@@ -1402,6 +1453,33 @@ export function GeneratorWizard({
                               {mins}m
                             </button>
                           ))}
+
+                          {/* Specific Custom Time Input */}
+                          <div className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 shadow-xs">
+                            <input
+                              type="number"
+                              min={1}
+                              max={360}
+                              value={durationMins === 0 ? "" : durationMins}
+                              placeholder="Custom"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (raw === "") {
+                                  setDurationMins(0);
+                                  return;
+                                }
+                                const n = parseInt(raw, 10);
+                                if (!isNaN(n)) setDurationMins(Math.max(1, Math.min(360, n)));
+                              }}
+                              onBlur={() => {
+                                if (durationMins < 1) setDurationMins(30);
+                              }}
+                              onFocus={(e) => e.target.select()}
+                              className="h-6 w-14 bg-transparent text-center text-xs font-bold focus:outline-none"
+                              title="Enter custom duration in minutes"
+                            />
+                            <span className="text-[11px] font-medium text-muted-foreground">min</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1415,37 +1493,12 @@ export function GeneratorWizard({
                         >
                           <span className="flex items-center gap-1.5">
                             <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
-                            Advanced Options (Shuffle, Difficulty, Filters, Instructions)
+                            Advanced Options (Shuffle, Difficulty Distribution, Instructions, AI Suggester)
                           </span>
                           <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
                         </button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-3 space-y-3">
-                        {/* Question source */}
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium">Question Source</Label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {SOURCES.map((s) => {
-                              const selected = source === s.id;
-                              return (
-                                <button
-                                  key={s.id}
-                                  type="button"
-                                  onClick={() => setSource(s.id)}
-                                  className={`flex items-center justify-center gap-1.5 rounded-lg border p-2 text-xs transition-all ${
-                                    selected
-                                      ? "border-emerald-600 bg-emerald-50 text-emerald-950 font-bold dark:bg-emerald-950/40 dark:text-emerald-100"
-                                      : "border-border bg-background hover:bg-accent/40"
-                                  }`}
-                                >
-                                  <s.icon className="h-3.5 w-3.5 text-emerald-600" />
-                                  <span>{s.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
+                      <CollapsibleContent className="pt-3 space-y-4">
                         {/* Shuffle switch */}
                         <div className="flex items-center justify-between rounded-lg border bg-background p-2.5">
                           <div className="flex items-center gap-2">
@@ -1490,15 +1543,6 @@ export function GeneratorWizard({
                           />
                         </div>
 
-                        {/* Question source filter */}
-                        <SourceFilterEditor
-                          subjectId={subjectId}
-                          chapterIds={chapterIds}
-                          topicIds={topicIds}
-                          questionSources={questionSources}
-                          setQuestionSources={setQuestionSources}
-                        />
-
                         {/* Instructions */}
                         <div>
                           <Label htmlFor="inst" className="text-xs font-medium">
@@ -1513,41 +1557,29 @@ export function GeneratorWizard({
                           />
                         </div>
 
-                        {/* Templates & AI Suggester */}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                          <div className="flex-1">
-                            <BlueprintTemplates
-                              blueprint={blueprint}
-                              onApply={(bp) => {
-                                setBlueprint(bp);
-                                setSelectedPreset("");
-                                toast.success("Template applied");
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1 flex items-center justify-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setAiOpen(true)}
-                              className="text-xs w-full"
-                            >
-                              <Sparkles className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
-                              AI Blueprint Suggester
-                            </Button>
-                            <AIBlueprintSuggester
-                              open={aiOpen}
-                              setOpen={setAiOpen}
-                              onApply={(bp) => {
-                                setBlueprint(bp);
-                                setSelectedPreset("");
-                                toast.success("AI blueprint applied");
-                              }}
-                              className={currentClass?.class_name ?? ""}
-                              subjectName={currentSubject?.subject_name ?? ""}
-                              currentTotalMarks={totalMarks}
-                            />
-                          </div>
+                        {/* Templates & AI Suggester as standalone clean blocks */}
+                        <div className="space-y-3 pt-1">
+                          <BlueprintTemplates
+                            blueprint={blueprint}
+                            onApply={(bp) => {
+                              setBlueprint(bp);
+                              setSelectedPreset("");
+                              toast.success("Template applied");
+                            }}
+                          />
+
+                          <AIBlueprintSuggester
+                            open={aiOpen}
+                            setOpen={setAiOpen}
+                            onApply={(bp) => {
+                              setBlueprint(bp);
+                              setSelectedPreset("");
+                              toast.success("AI blueprint applied");
+                            }}
+                            className={currentClass?.class_name ?? ""}
+                            subjectName={currentSubject?.subject_name ?? ""}
+                            currentTotalMarks={totalMarks}
+                          />
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
@@ -1863,13 +1895,18 @@ function DifficultyEditor(props: {
                     <Input
                       type="number"
                       min={0}
-                      value={need}
+                      value={need === 0 ? "" : need}
+                      placeholder="0"
                       onChange={(e) => {
                         const raw = e.target.value;
-                        if (raw === "") return;
+                        if (raw === "") {
+                          setCount(t, d, 0);
+                          return;
+                        }
                         const n = parseInt(raw, 10);
                         if (!isNaN(n)) setCount(t, d, Math.max(0, n));
                       }}
+                      onFocus={(e) => e.target.select()}
                       className="mt-1 h-8"
                     />
                   </div>
@@ -1959,13 +1996,14 @@ function SourceFilterEditor(props: {
   topicIds: string[];
   questionSources: string[];
   setQuestionSources: (v: string[]) => void;
+  defaultOpen?: boolean;
 }) {
-  const { subjectId, chapterIds, topicIds, questionSources, setQuestionSources } = props;
+  const { subjectId, chapterIds, topicIds, questionSources, setQuestionSources, defaultOpen = false } = props;
   const [sourceCounts, setSourceCounts] = useState<
     { name: string; count: number }[]
   >([]);
   const [sourcesLoading, setSourcesLoading] = useState(false);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(defaultOpen);
   const [sourcesFetched, setSourcesFetched] = useState(false);
 
   const loadSources = useCallback(async () => {
@@ -1981,6 +2019,12 @@ function SourceFilterEditor(props: {
       setSourcesLoading(false);
     }
   }, [subjectId, chapterIds, topicIds]);
+
+  useEffect(() => {
+    if (defaultOpen && !sourcesFetched && subjectId) {
+      loadSources();
+    }
+  }, [defaultOpen, sourcesFetched, subjectId, loadSources]);
 
   useEffect(() => {
     if (sourcesFetched) {
@@ -2531,13 +2575,21 @@ function AIBlueprintSuggester({
                 type="number"
                 min={1}
                 max={200}
-                value={targetMarks}
+                value={targetMarks === 0 ? "" : targetMarks}
+                placeholder="Target marks"
                 onChange={(e) => {
                   const raw = e.target.value;
-                  if (raw === "") return;
+                  if (raw === "") {
+                    setTargetMarks(0);
+                    return;
+                  }
                   const n = parseInt(raw, 10);
                   if (!isNaN(n)) setTargetMarks(Math.max(1, n));
                 }}
+                onBlur={() => {
+                  if (targetMarks < 1) setTargetMarks(currentTotalMarks || 30);
+                }}
+                onFocus={(e) => e.target.select()}
                 className="h-8"
               />
             </div>
