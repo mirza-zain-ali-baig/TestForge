@@ -570,8 +570,8 @@ export function TestPreview({
 
       {/* Paper (hidden by default — click "Show paper" to view) */}
       {!hidePaper && (
-      <Card id="print-area" className="mx-auto max-w-3xl">
-        <CardContent className="p-6 sm:p-10">
+      <Card id="print-area" className="mx-auto max-w-3xl min-w-0 w-full overflow-hidden">
+        <CardContent className="p-4 sm:p-8 md:p-10">
           {/* Header */}
           <div className="border-b-2 border-emerald-600 pb-4 text-center">
             <div className="text-[11px] font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">
@@ -849,11 +849,11 @@ function SortableQuestion({
   }, [q]);
 
   return (
-    <li ref={setNodeRef} style={style} className="flex gap-3">
+    <li ref={setNodeRef} style={style} className="flex gap-2 sm:gap-3 min-w-0 max-w-full overflow-hidden">
       <button
         {...attributes}
         {...listeners}
-        className="no-print mt-0.5 cursor-grab touch-none rounded p-0.5 text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
+        className="no-print mt-0.5 cursor-grab touch-none rounded p-0.5 text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing shrink-0"
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
@@ -863,7 +863,7 @@ function SortableQuestion({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed break-words">
             {q.question_text}
             <span className="ml-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               [{q.marks} mark{q.marks > 1 ? "s" : ""}]
@@ -932,7 +932,7 @@ function SortableQuestion({
                 ].join(" ")}
               >
                 <span className="font-semibold text-muted-foreground">{o.label}.</span>
-                <span className="flex-1">{o.text}</span>
+                <span className="flex-1 break-words">{o.text}</span>
                 {showAnswers && o.correct && (
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                 )}
@@ -947,7 +947,7 @@ function SortableQuestion({
             <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
               <KeyRound className="h-3 w-3" /> Model Answer
             </div>
-            <p className="whitespace-pre-line leading-relaxed">
+            <p className="whitespace-pre-line leading-relaxed break-words">
               {q.model_answer ?? "No model answer provided."}
             </p>
           </div>

@@ -43,7 +43,7 @@ export function ChatMarkdown({ content, reasoning, isStreaming = false }: ChatMa
   const blocks = useMemo(() => parseBlocks(mainContent), [mainContent]);
 
   return (
-    <div className="space-y-3 leading-relaxed text-sm">
+    <div className="space-y-3 leading-relaxed text-sm break-words max-w-full overflow-hidden">
       {/* Reasoning Disclosure (if model returned reasoning / thoughts) */}
       {thought && (
         <ReasoningDisclosure

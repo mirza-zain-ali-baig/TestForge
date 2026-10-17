@@ -535,8 +535,8 @@ function BankQuestionCard({
   onEditNote: () => void;
 }) {
   return (
-    <li className="rounded-lg border bg-card p-3 transition-colors hover:border-emerald-300">
-      <div className="flex gap-3">
+    <li className="rounded-lg border bg-card p-3 transition-colors hover:border-emerald-300 min-w-0 max-w-full overflow-hidden">
+      <div className="flex gap-2 sm:gap-3 min-w-0">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
           {number}
         </span>
@@ -591,7 +591,7 @@ function BankQuestionCard({
               <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-amber-500" : ""}`} />
             </button>
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed">{q.question_text}</p>
+          <p className="mt-1.5 text-sm leading-relaxed break-words">{q.question_text}</p>
 
           {q.options && (
             <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">

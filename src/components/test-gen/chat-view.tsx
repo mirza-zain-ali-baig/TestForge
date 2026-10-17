@@ -92,7 +92,14 @@ export function ChatView({ user }: ChatViewProps) {
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Set default sidebar open on desktop once mounted
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -193,6 +200,9 @@ export function ChatView({ user }: ChatViewProps) {
       setIsGenerating(false);
     }
     setActiveSessionId(id);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
     setTimeout(() => scrollToBottom(false), 50);
   };
 
@@ -206,6 +216,9 @@ export function ChatView({ user }: ChatViewProps) {
     setSessions((prev) => [fresh, ...prev]);
     setActiveSessionId(fresh.id);
     setInput("");
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
     setTimeout(() => {
       textareaRef.current?.focus();
       scrollToBottom(false);
@@ -486,12 +499,20 @@ export function ChatView({ user }: ChatViewProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] min-h-[550px] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className="relative flex h-[calc(100vh-8.5rem)] min-h-[550px] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {/* Mobile Backdrop Overlay */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="absolute inset-0 bg-black/50 z-20 md:hidden backdrop-blur-xs transition-opacity"
+        />
+      )}
+
       {/* ─── ChatGPT-style Sidebar ─── */}
       <aside
         className={`${
-          sidebarOpen ? "w-64 sm:w-72" : "w-0 -translate-x-full"
-        } relative flex flex-col shrink-0 border-r border-border bg-muted/30 transition-all duration-200 ease-in-out overflow-hidden z-10`}
+          sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full w-0 md:w-0"
+        } absolute md:relative inset-y-0 left-0 z-30 flex flex-col shrink-0 border-r border-border bg-card md:bg-muted/30 transition-all duration-200 ease-in-out overflow-hidden`}
       >
         {/* New Chat Button */}
         <div className="p-3 border-b border-border/60">
@@ -567,14 +588,14 @@ export function ChatView({ user }: ChatViewProps) {
       </aside>
 
       {/* ─── Main Chat Interface ─── */}
-      <div className="relative flex flex-1 flex-col overflow-hidden bg-background">
+      <div className="relative flex flex-1 flex-col overflow-hidden bg-background min-w-0 w-full">
         {/* Top Navbar */}
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 px-3 sm:px-4 bg-card/60 backdrop-blur-xs">
-          <div className="flex items-center gap-2">
+        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 px-2 sm:px-4 bg-card/60 backdrop-blur-xs gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen((v) => !v)}
               title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
             >
@@ -584,15 +605,15 @@ export function ChatView({ user }: ChatViewProps) {
                 <PanelLeftOpen className="h-4 w-4" />
               )}
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
-              <div>
-                <h2 className="text-xs sm:text-sm font-bold text-foreground leading-tight">
+              <div className="min-w-0">
+                <h2 className="text-xs sm:text-sm font-bold text-foreground leading-tight truncate">
                   ExamForge AI
                 </h2>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:block">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:block truncate">
                   Free Academic & Exam Assistant
                 </p>
               </div>
@@ -600,9 +621,9 @@ export function ChatView({ user }: ChatViewProps) {
           </div>
 
           {/* Model Selector (Only Free Models) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Select value={activeModel} onValueChange={setActiveModel}>
-              <SelectTrigger className="h-8 text-xs font-medium max-w-[210px] sm:max-w-[270px] bg-muted/50 border-border">
+              <SelectTrigger className="h-8 text-xs font-medium max-w-[130px] sm:max-w-[210px] md:max-w-[270px] bg-muted/50 border-border">
                 <SelectValue placeholder="Select Free Model" />
               </SelectTrigger>
               <SelectContent align="end">
@@ -697,7 +718,7 @@ export function ChatView({ user }: ChatViewProps) {
 
                     {/* Bubble */}
                     <div
-                      className={`group relative max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm ${
+                      className={`group relative min-w-0 max-w-[88%] sm:max-w-[85%] break-words overflow-hidden rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm ${
                         isUser
                           ? "bg-emerald-600 text-white rounded-tr-none"
                           : m.isError

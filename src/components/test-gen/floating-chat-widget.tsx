@@ -310,7 +310,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
 
       {/* Floating Chat Modal Panel */}
       {isOpen && (
-        <div className="no-print fixed bottom-5 right-5 z-50 flex h-[580px] w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all">
+        <div className="no-print fixed bottom-3 right-3 left-3 sm:left-auto sm:right-5 sm:bottom-5 z-50 flex h-[540px] sm:h-[580px] w-auto sm:w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3.5 py-2.5">
             <div className="flex items-center gap-2 min-w-0">
@@ -416,7 +416,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
                     </div>
 
                     <div
-                      className={`group relative max-w-[85%] rounded-xl px-3 py-2 text-xs ${
+                      className={`group relative min-w-0 max-w-[88%] sm:max-w-[85%] break-words overflow-hidden rounded-xl px-3 py-2 text-xs ${
                         isUser
                           ? "bg-emerald-600 text-white rounded-tr-none"
                           : m.isError
