@@ -209,7 +209,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
 
               const delta = parsed.choices?.[0]?.delta;
               const textChunk = delta?.content ?? delta?.text ?? parsed.choices?.[0]?.text ?? "";
-              const reasoningChunk = delta?.reasoning ?? "";
+              const reasoningChunk = delta?.reasoning ?? delta?.reasoning_content ?? "";
 
               if (reasoningChunk) {
                 assistantReasoning += reasoningChunk;
@@ -444,7 +444,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
 
                       {isUser ? (
                         <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
-                      ) : !m.content && isGenerating && m.id === messages[messages.length - 1]?.id ? (
+                      ) : !m.content && !m.reasoning && isGenerating && m.id === messages[messages.length - 1]?.id ? (
                         <div className="flex items-center gap-1.5 py-1 text-muted-foreground text-[11px]">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
                           <span>Thinking...</span>

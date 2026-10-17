@@ -1,8 +1,8 @@
 /**
  * user.model.ts — Model layer
  *
- * Data-access operations for User accounts and Sessions (Prisma / SQLite).
- * Pure data tier: no HTTP or business orchestration logic lives here.
+ * Direct Supabase Cloud persistence for User accounts and Sessions.
+ * Keeps cross-device & cross-Vercel deployments synchronized permanently.
  */
 
 import crypto from "crypto";
@@ -34,38 +34,7 @@ export type SessionWithUser = {
   };
 };
 
-const CLOUD_USER_MARKER = "__tf_user__";
-const CLOUD_USER_MARKS = -1;
-
-// Default FK anchor IDs from the Supabase question bank for cloud metadata rows
-let cachedAnchor: {
-  subject_id: string;
-  chapter_id: string;
-  topic_id: string;
-  question_type_id: string;
-  difficulty_level_id: string;
-} | null = {
-  subject_id: "197cbe8d-0432-48e7-8afb-b9e33a48e021",
-  chapter_id: "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
-  topic_id: "6cce0421-87ee-4918-8f18-01f29c604d26",
-  question_type_id: "adcc43f1-f0a9-4940-bf76-b6873367813a",
-  difficulty_level_id: "aeeda179-d03f-4d48-a5b5-80c27d6867bd",
-};
-
-export async function getCloudAnchor() {
-  if (cachedAnchor) return cachedAnchor;
-  const { data } = await supabase
-    .from("questions")
-    .select("subject_id,chapter_id,topic_id,question_type_id,difficulty_level_id")
-    .gte("marks", 1)
-    .limit(1);
-  if (data?.[0]) {
-    cachedAnchor = data[0];
-  }
-  return cachedAnchor;
-}
-
-// In-memory fallback store in case a serverless environment has a stale Prisma client or read-only DB
+// In-memory fallback cache
 const globalFallback = globalThis as unknown as {
   __tfUsers?: Map<string, UserRecord>;
   __tfSessions?: Map<string, SessionWithUser>;
@@ -80,119 +49,40 @@ function hasPrismaUserModels(): boolean {
   return Boolean(anyDb && anyDb.user && anyDb.session);
 }
 
-function serializeUserForCloud(user: UserRecord): string {
-  return JSON.stringify({
-    id: user.id,
-    email: user.email.toLowerCase().trim(),
-    name: user.name,
-    passwordHash: user.passwordHash,
-    role: user.role,
-    createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : String(user.createdAt),
-    updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : String(user.updatedAt),
-  });
-}
-
-function deserializeUserFromCloud(raw: string): UserRecord | null {
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.email || !parsed.passwordHash) return null;
-    return {
-      id: String(parsed.id),
-      email: String(parsed.email).toLowerCase().trim(),
-      name: parsed.name ?? null,
-      passwordHash: String(parsed.passwordHash),
-      role: String(parsed.role || "student"),
-      createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
-      updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function saveUserToCloud(user: UserRecord): Promise<void> {
-  try {
-    const anchor = await getCloudAnchor();
-    if (!anchor) return;
-    const normalizedEmail = user.email.toLowerCase().trim();
-
-    // Remove any older duplicate cloud record for this email first
-    await supabase
-      .from("questions")
-      .delete()
-      .eq("marks", CLOUD_USER_MARKS)
-      .eq("question_from", CLOUD_USER_MARKER)
-      .eq("tags", normalizedEmail);
-
-    await supabase.from("questions").insert({
-      ...anchor,
-      marks: CLOUD_USER_MARKS,
-      question_from: CLOUD_USER_MARKER,
-      tags: normalizedEmail,
-      blooms_taxonomy: user.role,
-      question_text: serializeUserForCloud(user),
-    });
-  } catch (err) {
-    console.warn("[UserModel] Cloud user sync warning:", err);
-  }
-}
-
-async function findUserInCloudByEmail(email: string): Promise<UserRecord | null> {
-  try {
-    const normalizedEmail = email.toLowerCase().trim();
-    const { data, error } = await supabase
-      .from("questions")
-      .select("question_text")
-      .eq("marks", CLOUD_USER_MARKS)
-      .eq("question_from", CLOUD_USER_MARKER)
-      .eq("tags", normalizedEmail)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    if (error || !data?.length) return null;
-    return deserializeUserFromCloud(data[0].question_text);
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Finds a user by their unique email address.
- * Checks Supabase Cloud (shared across all devices & Vercel instances) + local SQLite.
+ * Primary source: Supabase `app_users` table.
  */
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
   const normalized = email.toLowerCase().trim();
-  await ensureDbInitialized();
 
-  // 1. Check shared Supabase Cloud store first so cross-device login always has the latest account
-  const cloudUser = await findUserInCloudByEmail(normalized);
-  if (cloudUser) {
-    fallbackUsers.set(normalized, cloudUser);
-    if (hasPrismaUserModels()) {
-      try {
-        await db.user.upsert({
-          where: { email: normalized },
-          update: {
-            name: cloudUser.name,
-            passwordHash: cloudUser.passwordHash,
-            role: cloudUser.role,
-          },
-          create: {
-            id: cloudUser.id,
-            email: cloudUser.email,
-            name: cloudUser.name,
-            passwordHash: cloudUser.passwordHash,
-            role: cloudUser.role,
-          },
-        });
-      } catch {
-        // Ignore non-fatal local cache sync error
-      }
+  // 1. Query Supabase app_users table
+  try {
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("*")
+      .eq("email", normalized)
+      .maybeSingle();
+
+    if (!error && data) {
+      const record: UserRecord = {
+        id: data.id,
+        email: data.email,
+        name: data.name ?? null,
+        passwordHash: data.password_hash,
+        role: data.role || "educator",
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+      fallbackUsers.set(normalized, record);
+      return record;
     }
-    return cloudUser;
+  } catch (err) {
+    console.warn("[UserModel] Supabase findUserByEmail error:", err);
   }
 
-  // 2. Check local SQLite via Prisma (and sync to Supabase Cloud if found locally)
+  // 2. Local fallback
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
       const found = await db.user.findUnique({
@@ -200,72 +90,69 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
       });
       if (found) {
         fallbackUsers.set(normalized, found);
-        await saveUserToCloud(found);
         return found;
       }
-    } catch (err) {
-      console.warn("[UserModel] Prisma findUserByEmail fallback:", err);
-    }
+    } catch {}
   }
 
   return fallbackUsers.get(normalized) ?? null;
 }
 
-/** Finds a user by their ID across local SQLite, memory, and Supabase Cloud. */
+/** Finds a user by their ID across Supabase Cloud and local fallback. */
 export async function findUserById(id: string): Promise<UserRecord | null> {
-  await ensureDbInitialized();
+  try {
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-  if (hasPrismaUserModels()) {
-    try {
-      const found = await db.user.findUnique({
-        where: { id },
-      });
-      if (found) return found;
-    } catch (err) {
-      console.warn("[UserModel] Prisma findUserById fallback:", err);
+    if (!error && data) {
+      return {
+        id: data.id,
+        email: data.email,
+        name: data.name ?? null,
+        passwordHash: data.password_hash,
+        role: data.role || "educator",
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
     }
+  } catch (err) {
+    console.warn("[UserModel] Supabase findUserById error:", err);
   }
 
   for (const u of fallbackUsers.values()) {
     if (u.id === id) return u;
   }
 
-  try {
-    const { data } = await supabase
-      .from("questions")
-      .select("question_text")
-      .eq("marks", CLOUD_USER_MARKS)
-      .eq("question_from", CLOUD_USER_MARKER)
-      .ilike("question_text", `%"id":"${id}"%`)
-      .limit(1);
-    if (data?.[0]) {
-      const cloudUser = deserializeUserFromCloud(data[0].question_text);
-      if (cloudUser) {
-        fallbackUsers.set(cloudUser.email, cloudUser);
-        return cloudUser;
-      }
-    }
-  } catch {
-    // Ignore
+  await ensureDbInitialized();
+  if (hasPrismaUserModels()) {
+    try {
+      const found = await db.user.findUnique({ where: { id } });
+      if (found) return found;
+    } catch {}
   }
 
   return null;
 }
 
 /**
- * Persists a new user record to BOTH Supabase Cloud (for multi-device login)
- * and local SQLite (Prisma).
+ * Persists a new user record to Supabase app_users table.
  */
 export async function createUser(data: {
   email: string;
   name?: string;
   passwordHash: string;
   role?: string;
+  authProvider?: string;
 }): Promise<UserRecord> {
   const normalizedEmail = data.email.toLowerCase().trim();
   const now = new Date();
-  let finalRecord: UserRecord = {
-    id: crypto.randomUUID(),
+  const userId = crypto.randomUUID();
+
+  const finalRecord: UserRecord = {
+    id: userId,
     email: normalizedEmail,
     name: data.name?.trim() || null,
     passwordHash: data.passwordHash,
@@ -274,30 +161,59 @@ export async function createUser(data: {
     updatedAt: now,
   };
 
-  await ensureDbInitialized();
+  // 1. Save to Supabase Cloud
+  try {
+    const { data: inserted, error } = await supabase
+      .from("app_users")
+      .upsert(
+        {
+          id: finalRecord.id,
+          email: normalizedEmail,
+          name: finalRecord.name,
+          password_hash: finalRecord.passwordHash,
+          role: finalRecord.role,
+          auth_provider: data.authProvider || "credentials",
+          updated_at: now.toISOString(),
+        },
+        { onConflict: "email" }
+      )
+      .select()
+      .single();
 
+    if (!error && inserted) {
+      finalRecord.id = inserted.id;
+    }
+  } catch (err) {
+    console.warn("[UserModel] Supabase createUser error:", err);
+  }
+
+  // 2. Save locally if available
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
-      const created = await db.user.create({
-        data: {
+      await db.user.upsert({
+        where: { email: normalizedEmail },
+        update: {
+          name: finalRecord.name,
+          passwordHash: finalRecord.passwordHash,
+          role: finalRecord.role,
+        },
+        create: {
+          id: finalRecord.id,
           email: normalizedEmail,
-          name: data.name?.trim() || null,
-          passwordHash: data.passwordHash,
-          role: data.role || "educator",
+          name: finalRecord.name,
+          passwordHash: finalRecord.passwordHash,
+          role: finalRecord.role,
         },
       });
-      finalRecord = created;
-    } catch (err) {
-      console.warn("[UserModel] Prisma createUser fallback:", err);
-    }
+    } catch {}
   }
 
   fallbackUsers.set(normalizedEmail, finalRecord);
-  await saveUserToCloud(finalRecord);
   return finalRecord;
 }
 
-/** Creates a new session associated with a user. */
+/** Creates a new session associated with a user in Supabase. */
 export async function createSession(data: {
   userId: string;
   token: string;
@@ -310,9 +226,21 @@ export async function createSession(data: {
     createdAt: Date;
   };
 }): Promise<{ id: string; token: string; expiresAt: Date }> {
-  await ensureDbInitialized();
-
   const sessionId = crypto.randomUUID();
+
+  // 1. Save to Supabase app_sessions
+  try {
+    await supabase.from("app_sessions").insert({
+      id: sessionId,
+      token: data.token,
+      user_id: data.userId,
+      expires_at: data.expiresAt.toISOString(),
+    });
+  } catch (err) {
+    console.warn("[UserModel] Supabase createSession error:", err);
+  }
+
+  // 2. Memory cache
   if (data.userSnapshot) {
     fallbackSessions.set(data.token, {
       id: sessionId,
@@ -324,23 +252,19 @@ export async function createSession(data: {
     });
   }
 
+  // 3. Local DB
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
-      return await db.session.create({
+      await db.session.create({
         data: {
+          id: sessionId,
           userId: data.userId,
           token: data.token,
           expiresAt: data.expiresAt,
         },
-        select: {
-          id: true,
-          token: true,
-          expiresAt: true,
-        },
       });
-    } catch (err) {
-      console.warn("[UserModel] Prisma createSession fallback:", err);
-    }
+    } catch {}
   }
 
   return {
@@ -354,8 +278,45 @@ export async function createSession(data: {
 export async function findSessionWithUser(token: string): Promise<SessionWithUser | null> {
   if (revokedTokens.has(token)) return null;
 
-  await ensureDbInitialized();
+  // 1. Query Supabase app_sessions joined with app_users
+  try {
+    const { data, error } = await supabase
+      .from("app_sessions")
+      .select("id, token, user_id, expires_at, created_at, user:app_users(id, email, name, role, created_at)")
+      .eq("token", token)
+      .maybeSingle();
 
+    if (!error && data && data.user) {
+      const u = Array.isArray(data.user) ? data.user[0] : data.user;
+      if (u) {
+        const sessionRecord: SessionWithUser = {
+          id: data.id,
+          token: data.token,
+          userId: data.user_id,
+          expiresAt: new Date(data.expires_at),
+          createdAt: new Date(data.created_at),
+          user: {
+            id: u.id,
+            email: u.email,
+            name: u.name ?? null,
+            role: u.role || "educator",
+            createdAt: new Date(u.created_at),
+          },
+        };
+        fallbackSessions.set(token, sessionRecord);
+        return sessionRecord;
+      }
+    }
+  } catch (err) {
+    console.warn("[UserModel] Supabase findSessionWithUser error:", err);
+  }
+
+  // 2. Check memory cache
+  const cached = fallbackSessions.get(token);
+  if (cached) return cached;
+
+  // 3. Check local SQLite
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
       const found = await db.session.findUnique({
@@ -373,12 +334,10 @@ export async function findSessionWithUser(token: string): Promise<SessionWithUse
         },
       });
       if (found) return found;
-    } catch (err) {
-      console.warn("[UserModel] Prisma findSessionWithUser fallback:", err);
-    }
+    } catch {}
   }
 
-  return fallbackSessions.get(token) ?? null;
+  return null;
 }
 
 /** Deletes a session by token (sign-out). */
@@ -386,34 +345,37 @@ export async function deleteSession(token: string): Promise<void> {
   revokedTokens.add(token);
   fallbackSessions.delete(token);
 
-  await ensureDbInitialized();
+  // 1. Delete from Supabase
+  try {
+    await supabase.from("app_sessions").delete().eq("token", token);
+  } catch (err) {
+    console.warn("[UserModel] Supabase deleteSession error:", err);
+  }
 
+  // 2. Delete locally
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
-      await db.session.deleteMany({
-        where: { token },
-      });
-    } catch (err) {
-      console.warn("[UserModel] Prisma deleteSession fallback:", err);
-    }
+      await db.session.deleteMany({ where: { token } });
+    } catch {}
   }
 }
 
 /** Purges expired sessions for database hygiene. */
 export async function purgeExpiredSessions(): Promise<number> {
-  await ensureDbInitialized();
+  try {
+    const nowIso = new Date().toISOString();
+    await supabase.from("app_sessions").delete().lt("expires_at", nowIso);
+  } catch {}
 
+  await ensureDbInitialized();
   if (hasPrismaUserModels()) {
     try {
       const result = await db.session.deleteMany({
-        where: {
-          expiresAt: { lt: new Date() },
-        },
+        where: { expiresAt: { lt: new Date() } },
       });
       return result.count;
-    } catch {
-      return 0;
-    }
+    } catch {}
   }
   return 0;
 }

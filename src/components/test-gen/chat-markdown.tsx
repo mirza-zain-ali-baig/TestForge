@@ -96,8 +96,34 @@ function ReasoningDisclosure({
   thought: string;
   isStreaming: boolean;
 }) {
-  // If still actively thinking with no answer yet, keep open; once finished, collapsed by default
-  const [isOpen, setIsOpen] = useState(isStreaming);
+  const [isOpen, setIsOpen] = useState(true);
+  const [userToggled, setUserToggled] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const thoughtContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Live timer counting up while thinking
+  useEffect(() => {
+    if (!isStreaming) return;
+    const interval = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isStreaming]);
+
+  // While actively streaming, keep open unless user explicitly collapses
+  useEffect(() => {
+    if (isStreaming && !userToggled) {
+      setIsOpen(true);
+    }
+  }, [isStreaming, userToggled]);
+
+  // Auto-scroll the inner thought box as tokens stream in
+  useEffect(() => {
+    if (isStreaming && isOpen && thoughtContainerRef.current) {
+      thoughtContainerRef.current.scrollTop = thoughtContainerRef.current.scrollHeight;
+    }
+  }, [thought, isStreaming, isOpen]);
+
   const wordCount = useMemo(() => {
     return thought.trim().split(/\s+/).filter(Boolean).length;
   }, [thought]);
@@ -106,18 +132,21 @@ function ReasoningDisclosure({
     <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-950/20 my-1 overflow-hidden transition-all">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setUserToggled(true);
+          setIsOpen((prev) => !prev);
+        }}
         className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/10 transition-colors text-left"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <BrainCircuit className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <BrainCircuit className={`h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 ${isStreaming ? "animate-pulse" : ""}`} />
           <span className="font-semibold truncate">
-            {isStreaming ? "ExamForge AI is thinking..." : "Thought Process & Reasoning"}
+            {isStreaming
+              ? `ExamForge AI is thinking (${seconds}s)...`
+              : `Thought Process & Reasoning (${seconds > 0 ? `${seconds}s` : `${wordCount} words`})`}
           </span>
-          {!isStreaming && (
-            <span className="text-[10px] text-muted-foreground px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              {wordCount} words
-            </span>
+          {isStreaming && (
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
           )}
         </div>
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0 ml-2">
@@ -131,7 +160,10 @@ function ReasoningDisclosure({
       </button>
 
       {isOpen && (
-        <div className="border-t border-emerald-500/15 p-3.5 text-xs text-muted-foreground/90 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto custom-scrollbar select-text bg-background/50">
+        <div
+          ref={thoughtContainerRef}
+          className="border-t border-emerald-500/15 p-3.5 text-xs text-muted-foreground/90 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto custom-scrollbar select-text bg-background/50"
+        >
           {thought}
         </div>
       )}
@@ -351,7 +383,7 @@ export function renderInlineStyles(str: string): React.ReactNode {
   // 3. Inline code `` `...` ``
   // 4. Bold `**...**`
   // 5. Italic `*...*`
-  const regex = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*[^*]+?\*\*|\*[^*]+?\*)/g;
+  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*[^*]+?\*\*|\*[^*]+?\*)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -362,8 +394,11 @@ export function renderInlineStyles(str: string): React.ReactNode {
     }
     const token = m[0];
 
-    // Display math embedded inline
-    if (token.startsWith("$$") && token.endsWith("$$")) {
+    // Display math embedded inline: $$...$$ or \[...\]
+    if (
+      (token.startsWith("$$") && token.endsWith("$$")) ||
+      (token.startsWith("\\[") && token.endsWith("\\]"))
+    ) {
       const expr = token.slice(2, -2).trim();
       try {
         const html = katex.renderToString(expr, {
@@ -373,7 +408,7 @@ export function renderInlineStyles(str: string): React.ReactNode {
         parts.push(
           <span
             key={m.index}
-            className="my-1 block text-center"
+            className="my-1.5 block text-center overflow-x-auto max-w-full"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         );

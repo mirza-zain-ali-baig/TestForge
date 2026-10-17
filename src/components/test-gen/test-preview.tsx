@@ -108,6 +108,7 @@ import {
 } from "./lib";
 import { TYPE_NAMES, DIFF_NAMES, TYPE_META } from "./lib";
 import { formatDuration } from "./generator-wizard";
+import { renderInlineStyles } from "./chat-markdown";
 
 const LETTERS = ["A", "B", "C", "D"] as const;
 
@@ -863,12 +864,12 @@ function SortableQuestion({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm leading-relaxed break-words">
-            {q.question_text}
+          <div className="text-sm leading-relaxed break-words">
+            {renderInlineStyles(q.question_text)}
             <span className="ml-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               [{q.marks} mark{q.marks > 1 ? "s" : ""}]
             </span>
-          </p>
+          </div>
           <div className="no-print flex shrink-0 items-center gap-0.5">
             {showAnswers && q.source === "ai" && (
               <Badge variant="outline" className="mr-1 gap-1 text-[10px]">
@@ -932,7 +933,7 @@ function SortableQuestion({
                 ].join(" ")}
               >
                 <span className="font-semibold text-muted-foreground">{o.label}.</span>
-                <span className="flex-1 break-words">{o.text}</span>
+                <span className="flex-1 break-words">{renderInlineStyles(o.text)}</span>
                 {showAnswers && o.correct && (
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                 )}
@@ -947,13 +948,11 @@ function SortableQuestion({
             <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
               <KeyRound className="h-3 w-3" /> Model Answer
             </div>
-            <p className="whitespace-pre-line leading-relaxed break-words">
-              {q.model_answer ?? "No model answer provided."}
-            </p>
+            <div className="whitespace-pre-line leading-relaxed break-words">
+              {renderInlineStyles(q.model_answer ?? "No model answer provided.")}
+            </div>
           </div>
         )}
-
-
 
         {/* Meta tags */}
         {showAnswers && (
@@ -982,7 +981,9 @@ function SortableQuestion({
               <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
                 <Bot className="h-3 w-3" /> AI Explanation
               </div>
-              <p className="leading-relaxed text-amber-950 dark:text-amber-200">{explanation}</p>
+              <div className="leading-relaxed text-amber-950 dark:text-amber-200 break-words">
+                {renderInlineStyles(explanation)}
+              </div>
             </div>
           </div>
         )}

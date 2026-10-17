@@ -18,9 +18,11 @@ export const dynamic = "force-dynamic";
 
 bootstrap();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const tests = await findAllTests();
+    const { searchParams } = new URL(request.url);
+    const userEmail = searchParams.get("userEmail") || undefined;
+    const tests = await findAllTests(userEmail);
     return NextResponse.json({ tests });
   } catch (e) {
     return NextResponse.json(
@@ -33,7 +35,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // ── RBAC Authorization: only educator or admin can persist official tests ──
-    await authorizeRequest(request, ["educator", "admin"], "save test papers");
+    const auth = await authorizeRequest(request, ["educator", "admin"], "save test papers");
 
     const body = (await request.json()) as { test: GeneratedTest; source?: string };
 
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     // ── Delegate to model ─────────────────────────────────────────────────
-    const created = await createTest(body.test, body.source);
+    const created = await createTest(body.test, body.source, auth.user.email);
 
     // ── Emit event (non-blocking) ─────────────────────────────────────────
     eventBus.emit(EVENTS.TEST_SAVED, {

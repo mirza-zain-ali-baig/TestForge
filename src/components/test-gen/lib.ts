@@ -419,3 +419,16 @@ export async function logoutApi() {
   if (!res.ok) throw new Error("Logout failed.");
   return true;
 }
+
+export async function oauthSyncApi(data: { email: string; name?: string; provider?: string }) {
+  const res = await fetch("/api/auth/oauth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "OAuth sign-in failed.");
+  return json.user as AuthUser;
+}
+

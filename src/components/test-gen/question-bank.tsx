@@ -33,6 +33,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { renderInlineStyles } from "./chat-markdown";
 import {
   fetchCurriculum,
   fetchQuestions,
@@ -591,7 +593,7 @@ function BankQuestionCard({
               <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-amber-500" : ""}`} />
             </button>
           </div>
-          <p className="mt-1.5 text-sm leading-relaxed break-words">{q.question_text}</p>
+          <div className="mt-1.5 text-sm leading-relaxed break-words">{renderInlineStyles(q.question_text)}</div>
 
           {q.options && (
             <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
@@ -609,7 +611,7 @@ function BankQuestionCard({
                     ].join(" ")}
                   >
                     <span className="font-semibold text-muted-foreground">{l}.</span>
-                    <span className="flex-1">{text}</span>
+                    <span className="flex-1 break-words">{renderInlineStyles(text)}</span>
                     {showAnswers && correct && (
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                     )}

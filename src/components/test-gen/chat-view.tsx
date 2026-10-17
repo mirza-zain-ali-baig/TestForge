@@ -130,30 +130,63 @@ export function ChatView({ user }: ChatViewProps) {
     };
   }, []);
 
+  // Cloud sync helper
+  const syncSessionToCloud = useCallback((sess: ChatSession) => {
+    if (!userEmail) return;
+    fetch("/api/chat/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail, session: sess }),
+    }).catch(() => {});
+  }, [userEmail]);
+
   // Load sessions on mount or when user changes
   useEffect(() => {
+    let isCancelled = false;
+
+    // 1. Initial display from localStorage
     try {
       const raw = localStorage.getItem(SESSIONS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setSessions(parsed);
+          // Keep at most 1 empty session
+          const filtered = parsed.filter((s: ChatSession, idx: number) => {
+            if (s.messages && s.messages.length > 0) return true;
+            return idx === parsed.findIndex((other: ChatSession) => !other.messages || other.messages.length === 0);
+          });
+          const toSet = filtered.length > 0 ? filtered : [createNewSession()];
+          setSessions(toSet);
           const savedActive = localStorage.getItem(ACTIVE_KEY);
-          if (savedActive && parsed.some((s: ChatSession) => s.id === savedActive)) {
+          if (savedActive && toSet.some((s: ChatSession) => s.id === savedActive)) {
             setActiveSessionId(savedActive);
           } else {
-            setActiveSessionId(parsed[0].id);
+            setActiveSessionId(toSet[0].id);
           }
-          return;
         }
       }
     } catch {}
 
-    // Fallback: create fresh session
-    const fresh = createNewSession();
-    setSessions([fresh]);
-    setActiveSessionId(fresh.id);
-  }, [SESSIONS_KEY, ACTIVE_KEY, createNewSession]);
+    // 2. Fetch fresh history from Supabase Cloud
+    if (userEmail) {
+      fetch(`/api/chat/sessions?email=${encodeURIComponent(userEmail)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (isCancelled) return;
+          if (Array.isArray(data.sessions) && data.sessions.length > 0) {
+            setSessions(data.sessions);
+            setActiveSessionId((prev) =>
+              data.sessions.some((s: ChatSession) => s.id === prev) ? prev : data.sessions[0].id
+            );
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [SESSIONS_KEY, ACTIVE_KEY, createNewSession, userEmail]);
 
   // Persist sessions
   useEffect(() => {
@@ -206,12 +239,35 @@ export function ChatView({ user }: ChatViewProps) {
     setTimeout(() => scrollToBottom(false), 50);
   };
 
-  // Add new session
+  // Add new session (prevents duplicate empty chats!)
   const handleNewChat = () => {
     if (isGenerating && abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsGenerating(false);
     }
+
+    // If current session is already completely empty, reuse it!
+    if (activeSession && (!activeSession.messages || activeSession.messages.length === 0)) {
+      setInput("");
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
+      setTimeout(() => textareaRef.current?.focus(), 50);
+      return;
+    }
+
+    // Look for any existing empty session in the list
+    const existingEmpty = sessions.find((s) => !s.messages || s.messages.length === 0);
+    if (existingEmpty) {
+      setActiveSessionId(existingEmpty.id);
+      setInput("");
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
+      setTimeout(() => textareaRef.current?.focus(), 50);
+      return;
+    }
+
     const fresh = createNewSession();
     setSessions((prev) => [fresh, ...prev]);
     setActiveSessionId(fresh.id);
@@ -228,6 +284,13 @@ export function ChatView({ user }: ChatViewProps) {
   // Delete session
   const handleDeleteSession = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+
+    if (userEmail) {
+      fetch(`/api/chat/sessions?id=${encodeURIComponent(id)}&email=${encodeURIComponent(userEmail)}`, {
+        method: "DELETE",
+      }).catch(() => {});
+    }
+
     const remaining = sessions.filter((s) => s.id !== id);
     if (remaining.length === 0) {
       const fresh = createNewSession();
@@ -385,7 +448,7 @@ export function ChatView({ user }: ChatViewProps) {
 
               const delta = parsed.choices?.[0]?.delta;
               const textChunk = delta?.content ?? delta?.text ?? parsed.choices?.[0]?.text ?? "";
-              const reasoningChunk = delta?.reasoning ?? "";
+              const reasoningChunk = delta?.reasoning ?? delta?.reasoning_content ?? "";
 
               if (reasoningChunk) {
                 assistantReasoning += reasoningChunk;
@@ -495,6 +558,14 @@ export function ChatView({ user }: ChatViewProps) {
     } finally {
       setIsGenerating(false);
       abortControllerRef.current = null;
+      // Sync active session with Supabase Cloud
+      setSessions((currentSessions) => {
+        const updated = currentSessions.find((s) => s.id === activeSessionId);
+        if (updated) {
+          syncSessionToCloud(updated);
+        }
+        return currentSessions;
+      });
     }
   };
 
@@ -756,7 +827,7 @@ export function ChatView({ user }: ChatViewProps) {
                       {/* Content & Markdown */}
                       {isUser ? (
                         <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
-                      ) : !m.content && isGenerating && m.id === messages[messages.length - 1]?.id ? (
+                      ) : !m.content && !m.reasoning && isGenerating && m.id === messages[messages.length - 1]?.id ? (
                         <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
                           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                           <span>ExamForge AI is formulating the answer...</span>

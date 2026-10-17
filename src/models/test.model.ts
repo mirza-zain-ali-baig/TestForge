@@ -1,18 +1,18 @@
 /**
  * test.model.ts — Model layer
  *
- * All persistence operations for locally-saved generated tests (Prisma / SQLite).
- * The Supabase question bank is read-only; generated test papers are stored here.
+ * Persistence operations for generated tests using Supabase `app_generated_tests` table.
+ * Fully persistent across all Vercel serverless deployments.
  */
 
 import crypto from "crypto";
 import { db, ensureDbInitialized } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
-import { getCloudAnchor } from "./user.model";
 import type { GeneratedTest } from "@/lib/types";
 
 export type SavedTestRecord = {
   id: string;
+  userEmail?: string;
   title: string;
   className: string;
   subjectName: string;
@@ -25,70 +25,55 @@ export type SavedTestRecord = {
   updatedAt: Date;
 };
 
-const CLOUD_TEST_MARKER = "__tf_saved_test__";
-const CLOUD_TEST_MARKS = -2;
-
-function serializeSavedTestForCloud(record: SavedTestRecord): string {
-  return JSON.stringify({
-    ...record,
-    createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : String(record.createdAt),
-    updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : String(record.updatedAt),
-  });
-}
-
-function deserializeSavedTestFromCloud(raw: string): SavedTestRecord | null {
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.id || !parsed.testJson) return null;
-    return {
-      id: String(parsed.id),
-      title: String(parsed.title || "Untitled Test"),
-      className: String(parsed.className || ""),
-      subjectName: String(parsed.subjectName || ""),
-      totalMarks: Number(parsed.totalMarks || 0),
-      durationMins: Number(parsed.durationMins || 60),
-      instructions: parsed.instructions ?? null,
-      testJson: String(parsed.testJson),
-      source: String(parsed.source || "bank"),
-      createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
-      updatedAt: parsed.updatedAt ? new Date(parsed.updatedAt) : new Date(),
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** Returns all saved tests ordered by creation date (newest first) across Supabase Cloud + local SQLite. */
-export async function findAllTests(): Promise<SavedTestRecord[]> {
-  await ensureDbInitialized();
+/** Returns all saved tests ordered by creation date (newest first). */
+export async function findAllTests(userEmail?: string): Promise<SavedTestRecord[]> {
   const merged = new Map<string, SavedTestRecord>();
 
+  // 1. Query Supabase app_generated_tests
   try {
-    const localRows = await db.generatedTest.findMany({ orderBy: { createdAt: "desc" } });
-    for (const r of localRows) {
-      merged.set(r.id, r);
-    }
-  } catch (err) {
-    console.warn("[TestModel] Local findAllTests fallback:", err);
-  }
-
-  try {
-    const { data } = await supabase
-      .from("questions")
-      .select("question_text")
-      .eq("marks", CLOUD_TEST_MARKS)
-      .eq("question_from", CLOUD_TEST_MARKER)
+    let q = supabase
+      .from("app_generated_tests")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
-    for (const row of data ?? []) {
-      const parsed = deserializeSavedTestFromCloud(row.question_text);
-      if (parsed && !merged.has(parsed.id)) {
-        merged.set(parsed.id, parsed);
+
+    if (userEmail) {
+      q = q.eq("user_email", userEmail.toLowerCase().trim());
+    }
+
+    const { data, error } = await q;
+    if (!error && data) {
+      for (const row of data) {
+        merged.set(row.id, {
+          id: row.id,
+          userEmail: row.user_email,
+          title: row.title,
+          className: row.class_name,
+          subjectName: row.subject_name,
+          totalMarks: row.total_marks,
+          durationMins: row.duration_mins,
+          instructions: row.instructions,
+          testJson: row.test_json,
+          source: row.source || "bank",
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+        });
       }
     }
   } catch (err) {
-    console.warn("[TestModel] Cloud findAllTests warning:", err);
+    console.warn("[TestModel] Supabase findAllTests error:", err);
   }
+
+  // 2. Query local SQLite
+  await ensureDbInitialized();
+  try {
+    const localRows = await db.generatedTest.findMany({ orderBy: { createdAt: "desc" } });
+    for (const r of localRows) {
+      if (!merged.has(r.id)) {
+        merged.set(r.id, r);
+      }
+    }
+  } catch {}
 
   return Array.from(merged.values()).sort(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
@@ -97,41 +82,57 @@ export async function findAllTests(): Promise<SavedTestRecord[]> {
 
 /** Returns a single saved test by its ID, or null if not found. */
 export async function findTestById(id: string): Promise<SavedTestRecord | null> {
+  // 1. Query Supabase app_generated_tests
+  try {
+    const { data, error } = await supabase
+      .from("app_generated_tests")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        id: data.id,
+        userEmail: data.user_email,
+        title: data.title,
+        className: data.class_name,
+        subjectName: data.subject_name,
+        totalMarks: data.total_marks,
+        durationMins: data.duration_mins,
+        instructions: data.instructions,
+        testJson: data.test_json,
+        source: data.source || "bank",
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    }
+  } catch (err) {
+    console.warn("[TestModel] Supabase findTestById error:", err);
+  }
+
+  // 2. Check local SQLite
   await ensureDbInitialized();
   try {
     const local = await db.generatedTest.findUnique({ where: { id } });
     if (local) return local;
-  } catch {
-    // Fallback to cloud
-  }
-
-  try {
-    const { data } = await supabase
-      .from("questions")
-      .select("question_text")
-      .eq("marks", CLOUD_TEST_MARKS)
-      .eq("question_from", CLOUD_TEST_MARKER)
-      .eq("tags", id)
-      .limit(1);
-    if (data?.[0]) {
-      return deserializeSavedTestFromCloud(data[0].question_text);
-    }
-  } catch {
-    // Ignore
-  }
+  } catch {}
 
   return null;
 }
 
-/** Persists a newly generated test to both local SQLite and Supabase Cloud. */
+/** Persists a newly generated test to Supabase Cloud and local database. */
 export async function createTest(
   test: GeneratedTest,
-  source?: string
+  source?: string,
+  userEmail?: string
 ): Promise<SavedTestRecord> {
-  await ensureDbInitialized();
   const now = new Date();
+  const testId = crypto.randomUUID();
+  const normalizedEmail = (userEmail || "guest@examforge.test").toLowerCase().trim();
+
   let savedRecord: SavedTestRecord = {
-    id: crypto.randomUUID(),
+    id: testId,
+    userEmail: normalizedEmail,
     title: test.title || "Untitled Test",
     className: test.className,
     subjectName: test.subjectName,
@@ -144,67 +145,81 @@ export async function createTest(
     updatedAt: now,
   };
 
+  // 1. Persist to Supabase app_generated_tests
   try {
-    savedRecord = await db.generatedTest.create({
-      data: {
-        title: test.title || "Untitled Test",
-        className: test.className,
-        subjectName: test.subjectName,
-        totalMarks: test.totalMarks,
-        durationMins: test.durationMins,
-        instructions: test.instructions ?? "",
-        testJson: JSON.stringify(test),
-        source: source ?? test.source,
-      },
-    });
-  } catch (err) {
-    console.warn("[TestModel] Local createTest fallback:", err);
-  }
+    const { data: inserted, error } = await supabase
+      .from("app_generated_tests")
+      .insert({
+        id: savedRecord.id,
+        user_email: normalizedEmail,
+        title: savedRecord.title,
+        class_name: savedRecord.className,
+        subject_name: savedRecord.subjectName,
+        total_marks: savedRecord.totalMarks,
+        duration_mins: savedRecord.durationMins,
+        instructions: savedRecord.instructions,
+        test_json: savedRecord.testJson,
+        source: savedRecord.source,
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      })
+      .select()
+      .single();
 
-  try {
-    const anchor = await getCloudAnchor();
-    if (anchor) {
-      await supabase.from("questions").insert({
-        ...anchor,
-        marks: CLOUD_TEST_MARKS,
-        question_from: CLOUD_TEST_MARKER,
-        tags: savedRecord.id,
-        blooms_taxonomy: savedRecord.source,
-        question_text: serializeSavedTestForCloud(savedRecord),
-      });
+    if (!error && inserted) {
+      savedRecord.id = inserted.id;
     }
   } catch (err) {
-    console.warn("[TestModel] Cloud createTest sync warning:", err);
+    console.warn("[TestModel] Supabase createTest error:", err);
   }
+
+  // 2. Save to local SQLite
+  await ensureDbInitialized();
+  try {
+    await db.generatedTest.create({
+      data: {
+        id: savedRecord.id,
+        title: savedRecord.title,
+        className: savedRecord.className,
+        subjectName: savedRecord.subjectName,
+        totalMarks: savedRecord.totalMarks,
+        durationMins: savedRecord.durationMins,
+        instructions: savedRecord.instructions ?? "",
+        testJson: savedRecord.testJson,
+        source: savedRecord.source,
+      },
+    });
+  } catch {}
 
   return savedRecord;
 }
 
-/** Deletes a saved test by its ID from both local SQLite and Supabase Cloud. */
-export async function deleteTest(id: string): Promise<void> {
+/** Deletes a saved test by its ID across Supabase Cloud and local database. */
+export async function deleteTest(id: string): Promise<boolean> {
+  let deleted = false;
+
+  // 1. Delete from Supabase app_generated_tests
+  try {
+    const { error } = await supabase
+      .from("app_generated_tests")
+      .delete()
+      .eq("id", id);
+    if (!error) deleted = true;
+  } catch (err) {
+    console.warn("[TestModel] Supabase deleteTest error:", err);
+  }
+
+  // 2. Delete from local SQLite
   await ensureDbInitialized();
   try {
-    await db.generatedTest.deleteMany({ where: { id } });
-  } catch {
-    // Ignore if only present in cloud
-  }
+    await db.generatedTest.delete({ where: { id } });
+    deleted = true;
+  } catch {}
 
-  try {
-    await supabase
-      .from("questions")
-      .delete()
-      .eq("marks", CLOUD_TEST_MARKS)
-      .eq("question_from", CLOUD_TEST_MARKER)
-      .eq("tags", id);
-  } catch {
-    // Ignore
-  }
+  return deleted;
 }
 
-/**
- * Parses the testJson field of a saved record back into a GeneratedTest.
- * Returns null if the JSON is corrupted.
- */
+/** Parses the JSON payload stored inside a SavedTestRecord into a GeneratedTest object. */
 export function parseTestJson(record: SavedTestRecord): GeneratedTest | null {
   try {
     return JSON.parse(record.testJson) as GeneratedTest;
