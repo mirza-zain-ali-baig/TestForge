@@ -17,10 +17,21 @@ import {
   User,
   ShieldCheck,
   RotateCcw,
+  Key,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -32,7 +43,6 @@ import { toast } from "sonner";
 import { ChatMarkdown } from "./chat-markdown";
 import {
   CURATED_FREE_MODELS,
-  getDefaultOpenRouterKey,
   type ChatMessage,
 } from "@/lib/openrouter";
 import type { AuthUser } from "./lib";
@@ -105,6 +115,33 @@ export function ChatView({ user }: ChatViewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeModel, setActiveModel] = useState("auto");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Custom API key management
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState("");
+  const [apiKeyInput, setApiKeyInput] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("examforge_custom_openrouter_key") || "";
+      setCustomApiKey(stored);
+      setApiKeyInput(stored);
+    }
+  }, []);
+
+  const handleSaveApiKey = () => {
+    const trimmed = apiKeyInput.trim();
+    if (trimmed) {
+      localStorage.setItem("examforge_custom_openrouter_key", trimmed);
+      setCustomApiKey(trimmed);
+      toast.success("OpenRouter API key saved!");
+    } else {
+      localStorage.removeItem("examforge_custom_openrouter_key");
+      setCustomApiKey("");
+      toast.success("Custom key removed (using default)");
+    }
+    setApiKeyModalOpen(false);
+  };
 
   // Scroll tracking
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
@@ -392,7 +429,7 @@ export function ChatView({ user }: ChatViewProps) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const apiKey = getDefaultOpenRouterKey();
+      const apiKey = customApiKey?.trim() || undefined;
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -714,6 +751,31 @@ export function ChatView({ user }: ChatViewProps) {
               </SelectContent>
             </Select>
 
+            {/* Custom API Key Configuration */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 relative ${
+                customApiKey
+                  ? "text-emerald-500 hover:text-emerald-600 bg-emerald-500/10"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => {
+                setApiKeyInput(customApiKey);
+                setApiKeyModalOpen(true);
+              }}
+              title={
+                customApiKey
+                  ? "Personal OpenRouter API Key Active (click to edit)"
+                  : "Configure Personal OpenRouter API Key"
+              }
+            >
+              <Key className="h-3.5 w-3.5" />
+              {customApiKey && (
+                <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              )}
+            </Button>
+
             {messages.length > 0 && (
               <Button
                 variant="ghost"
@@ -833,11 +895,37 @@ export function ChatView({ user }: ChatViewProps) {
                           <span>ExamForge AI is formulating the answer...</span>
                         </div>
                       ) : (
-                        <ChatMarkdown
-                          content={m.content}
-                          reasoning={m.reasoning}
-                          isStreaming={isGenerating && m.id === messages[messages.length - 1]?.id}
-                        />
+                        <div>
+                          <ChatMarkdown
+                            content={m.content}
+                            reasoning={m.reasoning}
+                            isStreaming={isGenerating && m.id === messages[messages.length - 1]?.id}
+                          />
+                          {m.isError && (
+                            <div className="mt-2.5 pt-2 border-t border-destructive/20 flex flex-wrap items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs border-destructive/40 text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setApiKeyInput(customApiKey);
+                                  setApiKeyModalOpen(true);
+                                }}
+                              >
+                                <Key className="mr-1.5 h-3.5 w-3.5" />
+                                Configure Personal API Key
+                              </Button>
+                              <a
+                                href="https://openrouter.ai/keys"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                              >
+                                Get free key <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -915,6 +1003,88 @@ export function ChatView({ user }: ChatViewProps) {
           </p>
         </div>
       </div>
+
+      {/* ─── API Key Configuration Modal ─── */}
+      <Dialog open={apiKeyModalOpen} onOpenChange={setApiKeyModalOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+              <Key className="h-5 w-5" />
+            </div>
+            <DialogTitle className="text-center text-lg font-bold">
+              OpenRouter AI Settings
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs">
+              ExamForge AI uses OpenRouter free models. To avoid shared daily rate limits, you can connect your personal free OpenRouter API key.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="apiKeyInput" className="text-xs font-semibold">
+                  Personal API Key
+                </Label>
+                <a
+                  href="https://openrouter.ai/keys"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:underline"
+                >
+                  Get a free key <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+              <Input
+                id="apiKeyInput"
+                type="password"
+                placeholder="sk-or-v1-..."
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                className="font-mono text-xs"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Your key is stored securely only in your browser&apos;s local storage and is never shared.
+              </p>
+            </div>
+
+            {customApiKey && (
+              <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 p-2.5 text-xs text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Check className="h-4 w-4" /> Personal key active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem("examforge_custom_openrouter_key");
+                    setCustomApiKey("");
+                    setApiKeyInput("");
+                    toast.success("Personal API key cleared");
+                  }}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Remove Key
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 text-xs"
+                onClick={() => setApiKeyModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                onClick={handleSaveApiKey}
+              >
+                Save Key
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

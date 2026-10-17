@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ChatMarkdown } from "./chat-markdown";
-import { getDefaultOpenRouterKey, type ChatMessage } from "@/lib/openrouter";
+import { type ChatMessage } from "@/lib/openrouter";
 import type { AuthUser } from "./lib";
 
 interface FloatingChatWidgetProps {
@@ -153,7 +153,10 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
     abortControllerRef.current = new AbortController();
 
     try {
-      const apiKey = getDefaultOpenRouterKey();
+      const apiKey =
+        typeof window !== "undefined"
+          ? localStorage.getItem("examforge_custom_openrouter_key")?.trim() || undefined
+          : undefined;
 
       const response = await fetch("/api/chat", {
         method: "POST",

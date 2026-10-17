@@ -41,8 +41,15 @@ export async function POST(req: NextRequest) {
       stream = true,
     } = body;
 
+    const clientKey =
+      typeof userApiKey === "string" &&
+      userApiKey.trim() &&
+      userApiKey.trim() !== DEFAULT_OPENROUTER_API_KEY
+        ? userApiKey.trim()
+        : null;
+
     const apiKey =
-      (typeof userApiKey === "string" && userApiKey.trim()) ||
+      clientKey ||
       process.env.OPENROUTER_API_KEY?.trim() ||
       DEFAULT_OPENROUTER_API_KEY;
 
@@ -50,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Missing OpenRouter API key. Please add OPENROUTER_API_KEY in your Vercel project environment variables, or enter your key in Chat Settings.",
+            "Missing OpenRouter API key. Click the Key icon in AI Chat to paste your free OpenRouter API key, or set OPENROUTER_API_KEY in Vercel.",
         },
         { status: 401 }
       );
@@ -116,7 +123,12 @@ export async function POST(req: NextRequest) {
         } else {
           // Model error (e.g. 429 rate limit, 503 capacity, 404 deprecated)
           const errText = await res.text().catch(() => "");
-          lastError = `Model ${candidate} returned ${res.status}: ${errText.slice(0, 150)}`;
+          if (res.status === 429) {
+            lastError =
+              "OpenRouter daily free-tier limit reached (50 requests/day). Click the Key icon at the top to enter your personal OpenRouter API key (free at openrouter.ai/keys) or upgrade credits.";
+          } else {
+            lastError = `Model ${candidate} returned ${res.status}: ${errText.slice(0, 150)}`;
+          }
           // continue to next candidate
         }
       } catch (err) {
@@ -129,7 +141,7 @@ export async function POST(req: NextRequest) {
         {
           error:
             lastError ||
-            "All free models are currently at capacity. Please try again in a few moments or provide a personal OpenRouter API key in settings.",
+            "All free models are currently at capacity. Please try again in a few moments or click the Key icon to provide your personal OpenRouter key.",
         },
         { status: 503 }
       );
