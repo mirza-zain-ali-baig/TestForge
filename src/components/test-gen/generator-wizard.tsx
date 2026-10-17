@@ -35,6 +35,7 @@ import {
   Printer,
   ListTree,
   CheckSquare,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -301,19 +302,10 @@ export function GeneratorWizard({
     }
   }, [classId, tree, subjectId]);
 
-  /* -------------------- When subject changes, auto-select all its chapters -------------------- */
+  /* -------------------- When subject changes, deselect chapters by default -------------------- */
   useEffect(() => {
     if (!subjectId || tree.length === 0) return;
-    let found: CurriculumNode | undefined;
-    for (const cls of tree) {
-      found = cls.subjects?.find((s) => s.id === subjectId);
-      if (found) break;
-    }
-    if (found?.chapters?.length) {
-      setChapterIds(found.chapters.map((c) => c.id));
-    } else {
-      setChapterIds([]);
-    }
+    setChapterIds([]);
     setTopicIds([]);
     setQuestionSources([]);
   }, [subjectId, tree]);
@@ -425,10 +417,24 @@ export function GeneratorWizard({
     }
   };
 
-  const toggleTopic = (id: string) => {
-    setTopicIds(
-      topicIds.includes(id) ? topicIds.filter((x) => x !== id) : [...topicIds, id]
-    );
+  const toggleTopic = (chapId: string, topicId: string) => {
+    if (topicIds.includes(topicId)) {
+      const nextTopics = topicIds.filter((x) => x !== topicId);
+      setTopicIds(nextTopics);
+      const chap = chapters.find((c) => c.id === chapId);
+      const remainingInChap = (chap?.topics ?? []).filter((t) => nextTopics.includes(t.id));
+      if (remainingInChap.length === 0) {
+        setChapterIds((prev) => prev.filter((x) => x !== chapId));
+      }
+    } else {
+      setTopicIds((prev) => [...prev, topicId]);
+      setChapterIds((prev) => (prev.includes(chapId) ? prev : [...prev, chapId]));
+    }
+  };
+
+  const handleStepNavigate = (targetStep: WizardStep) => {
+    setStep(targetStep);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   /* -------------------- Preset click -------------------- */
@@ -662,10 +668,15 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "class" && (
             <div className="space-y-6">
+              <WizardBreadcrumbs
+                step="class"
+                onNavigate={handleStepNavigate}
+                chapterCount={chapterIds.length}
+              />
               <div className="text-center sm:text-left">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Select Class</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                  Choose a class below to view subjects, chapters, and the available question bank.
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pick a class to continue.
                 </p>
               </div>
 
@@ -691,10 +702,9 @@ export function GeneratorWizard({
                         setClassId(cls.id);
                         if (cls.subjects && cls.subjects.length > 0) {
                           setSubjectId(cls.subjects[0].id);
-                          if (cls.subjects[0].chapters?.length) {
-                            setChapterIds(cls.subjects[0].chapters.map((c) => c.id));
-                          }
                         }
+                        setChapterIds([]);
+                        setTopicIds([]);
                       }}
                       className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
@@ -783,10 +793,9 @@ export function GeneratorWizard({
                               setClassId(cls.id);
                               if (cls.subjects && cls.subjects.length > 0) {
                                 setSubjectId(cls.subjects[0].id);
-                                if (cls.subjects[0].chapters?.length) {
-                                  setChapterIds(cls.subjects[0].chapters.map((c) => c.id));
-                                }
                               }
+                              setChapterIds([]);
+                              setTopicIds([]);
                             }}
                             className="w-full text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 h-9"
                           >
@@ -806,27 +815,22 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "subject" && (
             <div className="space-y-6">
+              <WizardBreadcrumbs
+                step="subject"
+                currentClass={currentClass}
+                onNavigate={handleStepNavigate}
+                chapterCount={chapterIds.length}
+              />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
                 <div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setStep("class");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="mb-2 -ml-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Classes
-                  </Button>
                   <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold tracking-tight">Select Subject</h2>
-                    <Badge variant="secondary" className="font-semibold">
+                    <Badge variant="secondary" className="font-semibold text-xs">
                       {currentClass?.class_name}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Choose a subject for {currentClass?.class_name} to view its syllabus and select chapters.
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Choose a subject for {currentClass?.class_name} to view its syllabus.
                   </p>
                 </div>
               </div>
@@ -842,11 +846,8 @@ export function GeneratorWizard({
                       key={sub.id}
                       onClick={() => {
                         setSubjectId(sub.id);
-                        if (sub.chapters?.length) {
-                          setChapterIds(sub.chapters.map((c) => c.id));
-                        } else {
-                          setChapterIds([]);
-                        }
+                        setChapterIds([]);
+                        setTopicIds([]);
                         setStep("syllabus");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
@@ -858,7 +859,7 @@ export function GeneratorWizard({
                     >
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
                             <BookOpen className="h-6 w-6" />
                           </div>
                           {isSelected && (
@@ -873,11 +874,11 @@ export function GeneratorWizard({
                         </h3>
 
                         <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium text-slate-700 dark:text-slate-200">
                             <Layers className="h-3.5 w-3.5 text-emerald-600" />
                             {chapCount} {chapCount === 1 ? "Chapter" : "Chapters"}
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium text-slate-700 dark:text-slate-200">
                             <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
                             {qCount.toLocaleString()} Questions
                           </span>
@@ -886,7 +887,7 @@ export function GeneratorWizard({
                         {sub.chapters && sub.chapters.length > 0 && (
                           <div className="mt-4 space-y-1">
                             <div className="text-[11px] font-medium text-muted-foreground">
-                              Syllabus Preview:
+                              Syllabus:
                             </div>
                             <div className="space-y-1">
                               {sub.chapters.slice(0, 3).map((ch, idx) => (
@@ -911,7 +912,7 @@ export function GeneratorWizard({
                       </div>
 
                       <div className="mt-6 flex items-center justify-between border-t pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span>Select Syllabus & Topics</span>
+                        <span>Select Syllabus</span>
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </div>
                     </div>
@@ -926,32 +927,28 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "syllabus" && (
             <div className="space-y-6">
+              <WizardBreadcrumbs
+                step="syllabus"
+                currentClass={currentClass}
+                currentSubject={currentSubject}
+                onNavigate={handleStepNavigate}
+                chapterCount={chapterIds.length}
+              />
               {/* Header with back button and breadcrumb */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
                 <div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setStep("subject");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="mb-2 -ml-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Subjects
-                  </Button>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight">Select Syllabus & Subtopics</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">Select Syllabus</h2>
                     <Badge variant="outline" className="font-semibold text-xs">
                       {currentClass?.class_name}
                     </Badge>
-                    <span className="text-muted-foreground">›</span>
+                    <span className="text-muted-foreground text-xs">›</span>
                     <Badge className="bg-emerald-600 text-white font-semibold text-xs border-0">
                       {currentSubject?.subject_name}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select the chapters and specific subtopics you want to include in this test or practice session.
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Select chapters and subtopics for your test.
                   </p>
                 </div>
 
@@ -971,7 +968,7 @@ export function GeneratorWizard({
                       className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                     />
                     <span>
-                      {areAllChaptersSelected ? "Deselect All Chapters & Subtopics" : "Select All Chapters & Subtopics"}
+                      {areAllChaptersSelected ? "Deselect All" : "Select All"}
                     </span>
                     <Badge variant="secondary" className="text-[10px] ml-1 font-bold">
                       {chapterIds.length}/{chapters.length}
@@ -1016,6 +1013,8 @@ export function GeneratorWizard({
                   const isChecked = chapterIds.includes(chap.id);
                   const topics = chap.topics ?? [];
                   const chapNo = chap.chapter_number || idx + 1;
+                  const formattedChapNo = String(chapNo).padStart(2, "0");
+                  const selectedTopicsInChap = topics.filter((t) => topicIds.includes(t.id));
 
                   return (
                     <Card
@@ -1023,7 +1022,7 @@ export function GeneratorWizard({
                       className={`overflow-hidden transition-all border-2 ${
                         isChecked
                           ? "border-emerald-500/80 bg-card shadow-sm ring-1 ring-emerald-500/20"
-                          : "border-border bg-card/60 opacity-80 hover:opacity-100"
+                          : "border-border bg-card/60 hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >
                       {/* Chapter Card Header */}
@@ -1031,7 +1030,7 @@ export function GeneratorWizard({
                         className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 cursor-pointer transition-colors ${
                           isChecked
                             ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-b border-emerald-200/50 dark:border-emerald-900/50"
-                            : "hover:bg-accent/40"
+                            : "border-b border-border/40 hover:bg-accent/40"
                         }`}
                         onClick={() => toggleChapter(chap.id)}
                       >
@@ -1039,21 +1038,24 @@ export function GeneratorWizard({
                           <Checkbox
                             checked={isChecked}
                             onCheckedChange={() => toggleChapter(chap.id)}
-                            className="mt-0.5 sm:mt-0 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            className="mt-1 sm:mt-0 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
                           />
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <Badge
-                                variant={isChecked ? "default" : "secondary"}
-                                className={isChecked ? "bg-emerald-600 text-white" : ""}
+                              <span
+                                className={`px-2.5 py-0.5 rounded-md text-xs font-black tracking-wider uppercase ${
+                                  isChecked
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                                }`}
                               >
-                                Chapter {chapNo}
-                              </Badge>
-                              <h3 className="text-base font-bold text-foreground">
+                                CH {formattedChapNo}
+                              </span>
+                              <h3 className="text-base sm:text-lg font-bold text-foreground">
                                 {chap.chapter_name}
                               </h3>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
+                            <div className="text-xs text-muted-foreground font-medium mt-1">
                               {topics.length} Subtopics · {chap.questionCount ?? 0} Questions Available
                             </div>
                           </div>
@@ -1063,96 +1065,86 @@ export function GeneratorWizard({
                           <Button
                             type="button"
                             size="sm"
-                            variant="ghost"
+                            variant={isChecked ? "outline" : "secondary"}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleChapter(chap.id);
                             }}
-                            className="h-7 text-xs font-medium"
+                            className={`h-7 text-xs font-semibold ${
+                              isChecked
+                                ? "border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
+                                : "hover:bg-accent"
+                            }`}
                           >
                             {isChecked ? "Deselect Chapter" : "Select Chapter"}
                           </Button>
                         </div>
                       </div>
 
-                      {/* Subtopics Section inside Chapter Card */}
-                      {isChecked && (
-                        <div className="p-4 bg-background/50">
-                          <div className="mb-2.5 flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <ListTree className="h-3.5 w-3.5 text-emerald-600" />
-                              Subtopics / Articles ({topics.length})
+                      {/* Subtopics Section inside Chapter Card (always visible by default) */}
+                      <div className="p-4 bg-background/50">
+                        <div className="mb-2.5 flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <ListTree className="h-3.5 w-3.5 text-emerald-600" />
+                            Subtopics ({selectedTopicsInChap.length}/{topics.length} selected)
+                          </span>
+                          {topics.length > 0 && (
+                            <span className="text-[11px] text-muted-foreground">
+                              Click any subtopic to select chapter & topic
                             </span>
-                            {topics.length > 0 && (
-                              <span className="text-[11px] text-muted-foreground">
-                                Click any subtopic to include/exclude specifically
-                              </span>
-                            )}
-                          </div>
-
-                          {topics.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                              {topics.map((t, topicIdx) => {
-                                const isTopicSelected = topicIds.includes(t.id);
-                                const articleNo = t.topic_article_no || `${chapNo}.${topicIdx + 1}`;
-
-                                return (
-                                  <div
-                                    key={t.id}
-                                    onClick={() => {
-                                      if (topicIds.includes(t.id)) {
-                                        setTopicIds(topicIds.filter((id) => id !== t.id));
-                                      } else {
-                                        setTopicIds([...topicIds, t.id]);
-                                      }
-                                    }}
-                                    className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-all cursor-pointer ${
-                                      isTopicSelected
-                                        ? "border-emerald-600 bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
-                                        : "border-border bg-card hover:border-emerald-400 hover:bg-accent/50"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <Checkbox
-                                        checked={isTopicSelected}
-                                        onCheckedChange={() => {
-                                          if (topicIds.includes(t.id)) {
-                                            setTopicIds(topicIds.filter((id) => id !== t.id));
-                                          } else {
-                                            setTopicIds([...topicIds, t.id]);
-                                          }
-                                        }}
-                                        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
-                                      />
-                                      <Badge
-                                        variant="outline"
-                                        className="font-mono text-[10px] px-1.5 py-0 shrink-0"
-                                      >
-                                        {articleNo}
-                                      </Badge>
-                                      <span className="truncate" title={t.topic_name}>
-                                        {t.topic_name}
-                                      </span>
-                                    </div>
-                                    {t.questionCount != null && t.questionCount > 0 && (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-[10px] shrink-0"
-                                      >
-                                        {t.questionCount} Qs
-                                      </Badge>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
-                              All questions in this chapter are included in the test pool.
-                            </div>
                           )}
                         </div>
-                      )}
+
+                        {topics.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {topics.map((t, topicIdx) => {
+                              const isTopicSelected = topicIds.includes(t.id);
+                              const articleNo = t.topic_article_no || `${chapNo}.${topicIdx + 1}`;
+
+                              return (
+                                <div
+                                  key={t.id}
+                                  onClick={() => toggleTopic(chap.id, t.id)}
+                                  className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-all cursor-pointer ${
+                                    isTopicSelected
+                                      ? "border-emerald-600 bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
+                                      : "border-border bg-card hover:border-emerald-400 hover:bg-accent/50 text-foreground"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Checkbox
+                                      checked={isTopicSelected}
+                                      onCheckedChange={() => toggleTopic(chap.id, t.id)}
+                                      className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
+                                    />
+                                    <Badge
+                                      variant="outline"
+                                      className="font-mono text-[10px] px-1.5 py-0 shrink-0 font-bold bg-muted/60"
+                                    >
+                                      {articleNo}
+                                    </Badge>
+                                    <span className="truncate font-medium" title={t.topic_name}>
+                                      {t.topic_name}
+                                    </span>
+                                  </div>
+                                  {t.questionCount != null && t.questionCount > 0 && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px] shrink-0 font-semibold"
+                                    >
+                                      {t.questionCount} Qs
+                                    </Badge>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
+                            All questions in this chapter are included in the test pool.
+                          </div>
+                        )}
+                      </div>
                     </Card>
                   );
                 })}
@@ -1181,7 +1173,7 @@ export function GeneratorWizard({
                     }}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow"
                   >
-                    Continue to Test Setup & Generation <ArrowRight className="ml-2 h-4 w-4" />
+                    Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -1193,23 +1185,18 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "setup" && (
             <div className="space-y-6">
-              {/* Header with back button & quick breadcrumbs */}
+              <WizardBreadcrumbs
+                step="setup"
+                currentClass={currentClass}
+                currentSubject={currentSubject}
+                chapterCount={chapterIds.length}
+                onNavigate={handleStepNavigate}
+              />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
                 <div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setStep("syllabus");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="mb-1.5 -ml-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Syllabus Selection
-                  </Button>
-                  <h2 className="text-2xl font-bold tracking-tight">Test Setup & Blueprint</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">Test Setup</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Customize your question counts, marks, duration, and generate your test paper.
+                    Configure question counts, marks, duration, and generate your test.
                   </p>
                 </div>
 
@@ -1228,10 +1215,7 @@ export function GeneratorWizard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setStep("syllabus");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onClick={() => handleStepNavigate("syllabus")}
                     className="h-6 px-2 text-[11px] text-emerald-700 dark:text-emerald-300 hover:text-emerald-800"
                   >
                     Change
@@ -1243,15 +1227,15 @@ export function GeneratorWizard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
                 <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Question Source Engine, Category Filter & Presets in Clean Dropdowns */}
+                  {/* Card 1: Question Source Engine, Category Filter, Difficulty, Presets & Duration */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div>
                         <h3 className="text-sm font-bold flex items-center gap-2">
-                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup & Question Filters
+                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup & Filters
                         </h3>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Select generation engine, filter by source categories, and choose exam blueprints.
+                          Engine, source categories, difficulty distribution, presets & time duration.
                         </p>
                       </div>
                       <Badge variant="outline" className="text-[10px] font-semibold capitalize">
@@ -1259,16 +1243,16 @@ export function GeneratorWizard({
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
                       {/* Dropdown 1: Generation Engine */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
                           <Bot className="h-3.5 w-3.5 text-emerald-600" />
-                          Question Source Engine
+                          Source Engine
                         </Label>
                         <Select value={source} onValueChange={(v) => setSource(v as any)}>
                           <SelectTrigger className="h-9 text-xs font-semibold bg-background">
-                            <SelectValue placeholder="Select Source" />
+                            <SelectValue placeholder="Source" />
                           </SelectTrigger>
                           <SelectContent>
                             {SOURCES.map((s) => (
@@ -1287,7 +1271,7 @@ export function GeneratorWizard({
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
                           <Filter className="h-3.5 w-3.5 text-emerald-600" />
-                          Question Source Filter
+                          Source Filter
                         </Label>
                         <SourceFilterDropdown
                           subjectId={subjectId}
@@ -1298,11 +1282,26 @@ export function GeneratorWizard({
                         />
                       </div>
 
-                      {/* Dropdown 3: Exam Preset */}
+                      {/* Dropdown 3: Difficulty Distribution & Analytics */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
+                          Difficulty
+                        </Label>
+                        <DifficultyDistributionDropdown
+                          blueprint={blueprint}
+                          setBlueprint={setBlueprint}
+                          totalQuestions={totalQuestions}
+                          totalMarks={totalMarks}
+                          setSelectedPreset={setSelectedPreset}
+                        />
+                      </div>
+
+                      {/* Dropdown 4: Exam Preset */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
                           <Wand2 className="h-3.5 w-3.5 text-emerald-600" />
-                          Exam Preset
+                          Preset
                         </Label>
                         <Select
                           value={selectedPreset || "custom"}
@@ -1316,19 +1315,31 @@ export function GeneratorWizard({
                           }}
                         >
                           <SelectTrigger className="h-9 text-xs font-semibold bg-background">
-                            <SelectValue placeholder="Custom Blueprint" />
+                            <SelectValue placeholder="Custom" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="custom" className="text-xs font-medium">
-                              ⚙️ Custom Blueprint
+                              ⚙️ Custom
                             </SelectItem>
                             {PRESETS.map((p) => (
                               <SelectItem key={p.id} value={p.id} className="text-xs font-medium">
-                                {p.emoji} {p.name} ({p.marks}m · {p.duration}m)
+                                {p.emoji} {p.name} ({p.marks}m)
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+
+                      {/* Dropdown 5: Exam Duration */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-emerald-600" />
+                          Duration
+                        </Label>
+                        <DurationDropdown
+                          durationMins={durationMins}
+                          setDurationMins={setDurationMins}
+                        />
                       </div>
                     </div>
                   </div>
@@ -1456,95 +1467,51 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  {/* Card 3: Exam Details (Title & Duration with Custom Input) */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold flex items-center gap-2">
-                      <Settings2 className="h-4 w-4 text-emerald-600" /> Exam Details & Duration
-                    </h3>
-
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="exam-title" className="text-xs font-semibold">
-                          Exam Title (Optional)
-                        </Label>
-                        <Input
-                          id="exam-title"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          placeholder={`${currentClass?.class_name ?? ""} ${currentSubject?.subject_name ?? ""} Examination`}
-                          className="mt-1 h-9 text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                            Exam Time Duration: <span className="font-bold text-emerald-600 dark:text-emerald-400">{durationMins} Minutes</span>
-                          </Label>
-                        </div>
-                        {/* Quick duration chips + Custom input */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {[15, 20, 30, 45, 60, 90, 120].map((mins) => (
-                            <button
-                              key={mins}
-                              type="button"
-                              onClick={() => setDurationMins(mins)}
-                              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
-                                durationMins === mins
-                                  ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
-                                  : "border-border bg-background hover:bg-accent text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              {mins}m
-                            </button>
-                          ))}
-
-                          {/* Specific Custom Time Input */}
-                          <div className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 shadow-xs">
-                            <input
-                              type="number"
-                              min={1}
-                              max={360}
-                              value={durationMins === 0 ? "" : durationMins}
-                              placeholder="Custom"
-                              onChange={(e) => {
-                                const raw = e.target.value;
-                                if (raw === "") {
-                                  setDurationMins(0);
-                                  return;
-                                }
-                                const n = parseInt(raw, 10);
-                                if (!isNaN(n)) setDurationMins(Math.max(1, Math.min(360, n)));
-                              }}
-                              onBlur={() => {
-                                if (durationMins < 1) setDurationMins(30);
-                              }}
-                              onFocus={(e) => e.target.select()}
-                              className="h-6 w-14 bg-transparent text-center text-xs font-bold focus:outline-none"
-                              title="Enter custom duration in minutes"
-                            />
-                            <span className="text-[11px] font-medium text-muted-foreground">min</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Collapsible Advanced Options */}
-                    <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen} className="border-t pt-3">
+                  {/* Advanced Options (Title, Instructions, Shuffle, Cell-by-Cell Editor, Templates, AI Suggester) */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
+                    <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                       <CollapsibleTrigger asChild>
                         <button
                           type="button"
-                          className="flex w-full items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground py-1"
+                          className="flex w-full items-center justify-between text-xs font-semibold text-foreground hover:text-emerald-600 py-1"
                         >
-                          <span className="flex items-center gap-1.5">
-                            <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
-                            Advanced Options (Shuffle, Difficulty Distribution, Instructions, AI Suggester)
+                          <span className="flex items-center gap-2">
+                            <Settings2 className="h-4 w-4 text-emerald-600" />
+                            Advanced Options (Title, Instructions, Shuffle & AI Suggester)
                           </span>
-                          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
                         </button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-3 space-y-4">
+                      <CollapsibleContent className="pt-4 space-y-4 border-t mt-3">
+                        {/* Title */}
+                        <div>
+                          <Label htmlFor="exam-title" className="text-xs font-semibold">
+                            Exam Title (Optional)
+                          </Label>
+                          <Input
+                            id="exam-title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder={`${currentClass?.class_name ?? ""} ${currentSubject?.subject_name ?? ""} Examination`}
+                            className="mt-1 h-9 text-xs"
+                          />
+                        </div>
+
+                        {/* Instructions */}
+                        <div>
+                          <Label htmlFor="inst" className="text-xs font-semibold">
+                            Instructions for Students
+                          </Label>
+                          <Textarea
+                            id="inst"
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            rows={2}
+                            placeholder="e.g. Attempt all questions. Calculators not allowed."
+                            className="mt-1 text-xs"
+                          />
+                        </div>
+
                         {/* Shuffle switch */}
                         <div className="flex items-center justify-between rounded-lg border bg-background p-2.5">
                           <div className="flex items-center gap-2">
@@ -1554,17 +1521,17 @@ export function GeneratorWizard({
                           <Switch checked={shuffle} onCheckedChange={setShuffle} />
                         </div>
 
-                        {/* Difficulty breakdown */}
+                        {/* Fine-tune difficulty cell-by-cell */}
                         <div className="rounded-lg border bg-background p-3 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">Difficulty Distribution</span>
+                            <span className="text-xs font-semibold">Fine-Tune Question Difficulties</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => setDifficultyOpen(!difficultyOpen)}
                               className="h-6 text-[11px]"
                             >
-                              {difficultyOpen ? "Hide" : "Fine-Tune (Easy/Med/Hard)"}
+                              {difficultyOpen ? "Hide" : "Edit Cell-by-Cell"}
                             </Button>
                           </div>
                           {difficultyOpen && (
@@ -1589,22 +1556,8 @@ export function GeneratorWizard({
                           />
                         </div>
 
-                        {/* Instructions */}
-                        <div>
-                          <Label htmlFor="inst" className="text-xs font-medium">
-                            Instructions for Students
-                          </Label>
-                          <Textarea
-                            id="inst"
-                            value={instructions}
-                            onChange={(e) => setInstructions(e.target.value)}
-                            rows={2}
-                            className="mt-1 text-xs"
-                          />
-                        </div>
-
-                        {/* Templates & AI Suggester as standalone clean blocks */}
-                        <div className="space-y-3 pt-1">
+                        {/* Templates & AI Suggester */}
+                        <div className="space-y-3 pt-1 border-t">
                           <BlueprintTemplates
                             blueprint={blueprint}
                             onApply={(bp) => {
@@ -1690,10 +1643,10 @@ export function GeneratorWizard({
                   {/* PRIMARY GENERATION ACTION CARDS */}
                   <div className="space-y-3">
                     {/* Action 1: Practice Online */}
-                    <div className="rounded-2xl border-2 border-blue-500/40 bg-gradient-to-br from-blue-50/70 via-background to-card p-4 shadow-sm hover:border-blue-500 transition-all dark:from-blue-950/30">
+                    <div className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-background to-card p-4 shadow-sm hover:border-emerald-500 transition-all dark:from-emerald-950/30">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
-                          <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-sm">
+                          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                             <Play className="h-4 w-4 fill-current" />
                             Practice Online
                           </div>
@@ -1701,7 +1654,7 @@ export function GeneratorWizard({
                             Interactive in-browser test with live timer and instant scoring.
                           </div>
                         </div>
-                        <Badge className="bg-blue-600 text-white border-0 text-[10px] shrink-0">
+                        <Badge className="bg-emerald-600 text-white border-0 text-[10px] shrink-0 font-semibold">
                           Online
                         </Badge>
                       </div>
@@ -1710,7 +1663,7 @@ export function GeneratorWizard({
                         size="lg"
                         disabled={generating || (!!user && !canGenerate)}
                         onClick={() => handleGenerate("practice")}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-sm mt-2"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 shadow-sm mt-2"
                       >
                         {!user ? (
                           <>
@@ -1730,10 +1683,10 @@ export function GeneratorWizard({
                     </div>
 
                     {/* Action 2: Generate & Print */}
-                    <div className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-background to-card p-4 shadow-sm hover:border-emerald-500 transition-all dark:from-emerald-950/30">
+                    <div className="rounded-2xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-50/70 via-background to-card p-4 shadow-sm hover:border-teal-500 transition-all dark:from-teal-950/30">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
-                          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                          <div className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 font-bold text-sm">
                             <Printer className="h-4 w-4" />
                             Generate & Print Paper
                           </div>
@@ -1741,7 +1694,7 @@ export function GeneratorWizard({
                             Official exam paper with school logo, header, 2-column layout & PDF export.
                           </div>
                         </div>
-                        <Badge className="bg-emerald-600 text-white border-0 text-[10px] shrink-0">
+                        <Badge className="bg-teal-600 text-white border-0 text-[10px] shrink-0 font-semibold">
                           Print / PDF
                         </Badge>
                       </div>
@@ -1749,8 +1702,8 @@ export function GeneratorWizard({
                       <Button
                         size="lg"
                         disabled={generating || (!!user && !canGenerate)}
-                        onClick={() => handleGenerate("print")}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 shadow-sm mt-2"
+                        onClick={() => handleGenerate("preview")}
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold h-11 shadow-sm mt-2"
                       >
                         {!user ? (
                           <>
@@ -2029,6 +1982,436 @@ function DifficultyEditor(props: {
         );
       })}
     </div>
+  );
+}
+
+/* ========================================================================= */
+/*                          Wizard Breadcrumbs                               */
+/* ========================================================================= */
+
+function WizardBreadcrumbs({
+  step,
+  currentClass,
+  currentSubject,
+  chapterCount,
+  onNavigate,
+}: {
+  step: WizardStep;
+  currentClass?: CurriculumNode;
+  currentSubject?: CurriculumNode;
+  chapterCount: number;
+  onNavigate: (step: WizardStep) => void;
+}) {
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground"
+    >
+      {step === "class" && (
+        <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
+          Class
+        </span>
+      )}
+
+      {step === "subject" && (
+        <>
+          <button
+            type="button"
+            onClick={() => onNavigate("class")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            {currentClass?.class_name || "Class"}
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
+            Subject
+          </span>
+        </>
+      )}
+
+      {step === "syllabus" && (
+        <>
+          <button
+            type="button"
+            onClick={() => onNavigate("class")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            {currentClass?.class_name || "Class"}
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <button
+            type="button"
+            onClick={() => onNavigate("subject")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            {currentSubject?.subject_name || "Subject"}
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
+            Syllabus
+          </span>
+        </>
+      )}
+
+      {step === "setup" && (
+        <>
+          <button
+            type="button"
+            onClick={() => onNavigate("class")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            {currentClass?.class_name || "Class"}
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <button
+            type="button"
+            onClick={() => onNavigate("subject")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            {currentSubject?.subject_name || "Subject"}
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <button
+            type="button"
+            onClick={() => onNavigate("syllabus")}
+            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
+          >
+            Syllabus ({chapterCount} Ch)
+          </button>
+          <span className="text-muted-foreground/60 select-none text-xs">›</span>
+          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
+            Test Setup
+          </span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+/* ========================================================================= */
+/*                   Difficulty Distribution & Analytics Dropdown            */
+/* ========================================================================= */
+
+function DifficultyDistributionDropdown(props: {
+  blueprint: Blueprint;
+  setBlueprint: (bp: Blueprint) => void;
+  totalQuestions: number;
+  totalMarks: number;
+  setSelectedPreset: (p: string) => void;
+}) {
+  const { blueprint, setBlueprint, totalQuestions, setSelectedPreset } = props;
+  const [open, setOpen] = useState(false);
+
+  const stats = useMemo(() => {
+    let easy = 0,
+      medium = 0,
+      hard = 0;
+    let easyMarks = 0,
+      mediumMarks = 0,
+      hardMarks = 0;
+
+    for (const t of TYPE_NAMES) {
+      const cfg = blueprint[t];
+      easy += cfg.difficulties.Easy;
+      medium += cfg.difficulties.Medium;
+      hard += cfg.difficulties.Hard;
+      easyMarks += cfg.difficulties.Easy * cfg.marksPerQuestion;
+      mediumMarks += cfg.difficulties.Medium * cfg.marksPerQuestion;
+      hardMarks += cfg.difficulties.Hard * cfg.marksPerQuestion;
+    }
+
+    const total = easy + medium + hard;
+    const weighted = easy * 1 + medium * 2 + hard * 3;
+    const index = total > 0 ? Math.round((weighted / (total * 3)) * 100) : 0;
+    const higherOrderPct =
+      total > 0 ? Math.round(((medium + hard) / total) * 100) : 0;
+
+    return {
+      easy,
+      medium,
+      hard,
+      easyMarks,
+      mediumMarks,
+      hardMarks,
+      total,
+      index,
+      higherOrderPct,
+    };
+  }, [blueprint]);
+
+  const indexLabel =
+    stats.index <= 35
+      ? "Easy"
+      : stats.index <= 65
+      ? "Balanced"
+      : "Challenging";
+  const indexColor =
+    stats.index <= 35
+      ? "text-emerald-600"
+      : stats.index <= 65
+      ? "text-amber-600"
+      : "text-rose-600";
+
+  const applyRatio = (easyPct: number, medPct: number, hardPct: number) => {
+    setSelectedPreset("");
+    const updated = { ...blueprint };
+    for (const t of TYPE_NAMES) {
+      const count =
+        updated[t].difficulties.Easy +
+        updated[t].difficulties.Medium +
+        updated[t].difficulties.Hard;
+      if (count === 0) continue;
+      const easy = Math.round((count * easyPct) / 100);
+      const hard = Math.round((count * hardPct) / 100);
+      const med = Math.max(0, count - easy - hard);
+      updated[t] = {
+        ...updated[t],
+        difficulties: { Easy: easy, Medium: med, Hard: hard },
+      };
+    }
+    setBlueprint(updated);
+    toast.success("Difficulty distribution updated");
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold shadow-xs hover:bg-accent/40 focus:outline-hidden"
+        >
+          <span className="truncate flex items-center gap-1.5 min-w-0">
+            <BarChart3 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">
+              {stats.total > 0
+                ? `${stats.easy}E · ${stats.medium}M · ${stats.hard}H`
+                : "Balanced"}
+            </span>
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 sm:w-96 p-4 space-y-3.5" align="start">
+        <div className="flex items-center justify-between border-b pb-2">
+          <div>
+            <h4 className="text-xs font-bold text-foreground">
+              Difficulty Analytics
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Distribution across {stats.total} total questions
+            </p>
+          </div>
+          <Badge variant="outline" className={`font-bold text-xs ${indexColor}`}>
+            {stats.index}% · {indexLabel}
+          </Badge>
+        </div>
+
+        {/* Stacked Visual Bar */}
+        <div className="space-y-1">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-muted flex">
+            {stats.total > 0 && (
+              <>
+                <div
+                  style={{ width: `${(stats.easy / stats.total) * 100}%` }}
+                  className="bg-emerald-500 h-full transition-all"
+                  title={`Easy: ${stats.easy}`}
+                />
+                <div
+                  style={{ width: `${(stats.medium / stats.total) * 100}%` }}
+                  className="bg-amber-500 h-full transition-all"
+                  title={`Medium: ${stats.medium}`}
+                />
+                <div
+                  style={{ width: `${(stats.hard / stats.total) * 100}%` }}
+                  className="bg-rose-500 h-full transition-all"
+                  title={`Hard: ${stats.hard}`}
+                />
+              </>
+            )}
+          </div>
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+              ● Easy ({stats.total > 0 ? Math.round((stats.easy / stats.total) * 100) : 0}%)
+            </span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">
+              ● Med ({stats.total > 0 ? Math.round((stats.medium / stats.total) * 100) : 0}%)
+            </span>
+            <span className="text-rose-600 dark:text-rose-400 font-medium">
+              ● Hard ({stats.total > 0 ? Math.round((stats.hard / stats.total) * 100) : 0}%)
+            </span>
+          </div>
+        </div>
+
+        {/* Analytics Breakdown Cards */}
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-2">
+            <div className="font-bold text-emerald-700 dark:text-emerald-300">
+              Easy
+            </div>
+            <div className="text-base font-extrabold text-foreground">
+              {stats.easy}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {stats.easyMarks} marks
+            </div>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-2">
+            <div className="font-bold text-amber-700 dark:text-amber-300">
+              Medium
+            </div>
+            <div className="text-base font-extrabold text-foreground">
+              {stats.medium}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {stats.mediumMarks} marks
+            </div>
+          </div>
+          <div className="rounded-lg border border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 p-2">
+            <div className="font-bold text-rose-700 dark:text-rose-300">
+              Hard
+            </div>
+            <div className="text-base font-extrabold text-foreground">
+              {stats.hard}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {stats.hardMarks} marks
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Presets */}
+        <div className="space-y-1.5 pt-1 border-t">
+          <div className="text-[11px] font-semibold text-muted-foreground">
+            Apply Quick Distribution:
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyRatio(50, 35, 15)}
+              className="text-[10px] h-7 px-1 font-semibold"
+            >
+              Easy (50/35/15)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyRatio(35, 45, 20)}
+              className="text-[10px] h-7 px-1 font-semibold"
+            >
+              Balanced (35/45/20)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyRatio(20, 40, 40)}
+              className="text-[10px] h-7 px-1 font-semibold"
+            >
+              Hard (20/40/40)
+            </Button>
+          </div>
+        </div>
+
+        {/* Higher Order Thinking Footer */}
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
+          <span>Higher-order thinking questions:</span>
+          <span className="font-bold text-foreground">
+            {stats.higherOrderPct}%
+          </span>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ========================================================================= */
+/*                          DurationDropdown                                 */
+/* ========================================================================= */
+
+function DurationDropdown(props: {
+  durationMins: number;
+  setDurationMins: (mins: number) => void;
+}) {
+  const { durationMins, setDurationMins } = props;
+  const [open, setOpen] = useState(false);
+  const presets = [15, 20, 30, 45, 60, 90, 120, 180];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold shadow-xs hover:bg-accent/40 focus:outline-hidden"
+        >
+          <span className="truncate flex items-center gap-1.5 min-w-0">
+            <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">{durationMins} Minutes</span>
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3 space-y-3" align="start">
+        <div className="flex items-center justify-between border-b pb-2">
+          <span className="text-xs font-bold text-foreground">Exam Duration</span>
+          <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+            {durationMins}m
+          </span>
+        </div>
+
+        {/* Presets Grid */}
+        <div className="grid grid-cols-4 gap-1.5">
+          {presets.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setDurationMins(m);
+                setOpen(false);
+              }}
+              className={`rounded-md border py-1.5 text-xs font-semibold transition-all ${
+                durationMins === m
+                  ? "border-emerald-600 bg-emerald-600 text-white"
+                  : "border-border bg-background hover:bg-accent text-foreground"
+              }`}
+            >
+              {m}m
+            </button>
+          ))}
+        </div>
+
+        {/* Custom Input */}
+        <div className="flex items-center gap-2 border-t pt-2">
+          <span className="text-xs text-muted-foreground shrink-0">Custom:</span>
+          <div className="flex items-center gap-1 rounded-md border bg-background px-2 py-1 flex-1">
+            <input
+              type="number"
+              min={1}
+              max={360}
+              value={durationMins === 0 ? "" : durationMins}
+              placeholder="e.g. 75"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setDurationMins(0);
+                  return;
+                }
+                const n = parseInt(val, 10);
+                if (!isNaN(n)) setDurationMins(Math.max(1, Math.min(360, n)));
+              }}
+              onBlur={() => {
+                if (durationMins < 1) setDurationMins(30);
+              }}
+              onFocus={(e) => e.target.select()}
+              className="w-full text-xs font-bold bg-transparent focus:outline-none"
+            />
+            <span className="text-[11px] text-muted-foreground">min</span>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
