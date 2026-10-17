@@ -217,7 +217,6 @@ export function GeneratorWizard({
   const [topicIds, setTopicIds] = useState<string[]>([]);
 
   // details
-  const [title, setTitle] = useState("");
   const [durationMins, setDurationMins] = useState(60);
   const [instructions, setInstructions] = useState(
     "Read each question carefully. Attempt all questions. Write your answers in the space provided. No electronic devices allowed."
@@ -336,6 +335,78 @@ export function GeneratorWizard({
       ),
     [blueprint]
   );
+
+  /* -------------------- Difficulty Analytics for Card 3 -------------------- */
+  const difficultyStats = useMemo(() => {
+    let easy = 0,
+      medium = 0,
+      hard = 0;
+    let easyMarks = 0,
+      mediumMarks = 0,
+      hardMarks = 0;
+
+    for (const t of TYPE_NAMES) {
+      const cfg = blueprint[t];
+      easy += cfg.difficulties.Easy;
+      medium += cfg.difficulties.Medium;
+      hard += cfg.difficulties.Hard;
+      easyMarks += cfg.difficulties.Easy * cfg.marksPerQuestion;
+      mediumMarks += cfg.difficulties.Medium * cfg.marksPerQuestion;
+      hardMarks += cfg.difficulties.Hard * cfg.marksPerQuestion;
+    }
+
+    const total = easy + medium + hard;
+    const weighted = easy * 1 + medium * 2 + hard * 3;
+    const index = total > 0 ? Math.round((weighted / (total * 3)) * 100) : 0;
+    const higherOrderPct =
+      total > 0 ? Math.round(((medium + hard) / total) * 100) : 0;
+
+    return {
+      easy,
+      medium,
+      hard,
+      easyMarks,
+      mediumMarks,
+      hardMarks,
+      total,
+      index,
+      higherOrderPct,
+    };
+  }, [blueprint]);
+
+  const difficultyIndexLabel =
+    difficultyStats.index <= 35
+      ? "Easy"
+      : difficultyStats.index <= 65
+      ? "Balanced"
+      : "Challenging";
+  const difficultyIndexColor =
+    difficultyStats.index <= 35
+      ? "text-emerald-600"
+      : difficultyStats.index <= 65
+      ? "text-amber-600"
+      : "text-rose-600";
+
+  const applyDifficultyRatio = (easyPct: number, medPct: number, hardPct: number) => {
+    setSelectedPreset("");
+    const updated = { ...blueprint };
+    for (const t of TYPE_NAMES) {
+      const count =
+        updated[t].difficulties.Easy +
+        updated[t].difficulties.Medium +
+        updated[t].difficulties.Hard;
+      if (count === 0) continue;
+      const easy = Math.round((count * easyPct) / 100);
+      const hard = Math.round((count * hardPct) / 100);
+      const med = Math.max(0, count - easy - hard);
+      updated[t] = {
+        ...updated[t],
+        difficulties: { Easy: easy, Medium: med, Hard: hard },
+      };
+    }
+    setBlueprint(updated);
+    toast.success("Difficulty distribution updated");
+  };
 
   /* -------------------- Blueprint setters -------------------- */
   const setTypeCount = (t: QuestionTypeName, total: number) => {
@@ -471,7 +542,7 @@ export function GeneratorWizard({
         className: currentClass.class_name ?? "",
         subjectId,
         subjectName: currentSubject.subject_name ?? "",
-        title: title.trim() || `${currentClass.class_name} ${currentSubject.subject_name} Exam`,
+        title: `${currentClass.class_name ?? ""} ${currentSubject.subject_name ?? ""} Examination`,
         durationMins,
         instructions,
         chapterIds,
@@ -1227,15 +1298,15 @@ export function GeneratorWizard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
                 <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Question Source Engine, Category Filter, Difficulty, Presets & Duration */}
+                  {/* Card 1: Question Source Engine, Presets & Duration */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div>
                         <h3 className="text-sm font-bold flex items-center gap-2">
-                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup & Filters
+                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup
                         </h3>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Engine, source categories, difficulty distribution, presets & time duration.
+                          Engine, exam preset & time duration.
                         </p>
                       </div>
                       <Badge variant="outline" className="text-[10px] font-semibold capitalize">
@@ -1243,7 +1314,7 @@ export function GeneratorWizard({
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Dropdown 1: Generation Engine */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
@@ -1267,37 +1338,7 @@ export function GeneratorWizard({
                         </Select>
                       </div>
 
-                      {/* Dropdown 2: Question Source Filter (question_from) */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <Filter className="h-3.5 w-3.5 text-emerald-600" />
-                          Source Filter
-                        </Label>
-                        <SourceFilterDropdown
-                          subjectId={subjectId}
-                          chapterIds={chapterIds}
-                          topicIds={topicIds}
-                          questionSources={questionSources}
-                          setQuestionSources={setQuestionSources}
-                        />
-                      </div>
-
-                      {/* Dropdown 3: Difficulty Distribution & Analytics */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
-                          Difficulty
-                        </Label>
-                        <DifficultyDistributionDropdown
-                          blueprint={blueprint}
-                          setBlueprint={setBlueprint}
-                          totalQuestions={totalQuestions}
-                          totalMarks={totalMarks}
-                          setSelectedPreset={setSelectedPreset}
-                        />
-                      </div>
-
-                      {/* Dropdown 4: Exam Preset */}
+                      {/* Dropdown 2: Exam Preset */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
                           <Wand2 className="h-3.5 w-3.5 text-emerald-600" />
@@ -1330,7 +1371,7 @@ export function GeneratorWizard({
                         </Select>
                       </div>
 
-                      {/* Dropdown 5: Exam Duration */}
+                      {/* Dropdown 3: Exam Duration */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-emerald-600" />
@@ -1467,7 +1508,170 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  {/* Advanced Options (Title, Instructions, Shuffle, Cell-by-Cell Editor, Templates, AI Suggester) */}
+                  {/* Card 3: Difficulty Distribution & Analytics */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 text-emerald-600" /> Difficulty Distribution & Analytics
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Balance questions across Easy, Medium, and Hard difficulty levels.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className={`font-bold text-xs ${difficultyIndexColor}`}>
+                        {difficultyStats.index}% · {difficultyIndexLabel}
+                      </Badge>
+                    </div>
+
+                    {/* Stacked Visual Bar */}
+                    <div className="space-y-1.5">
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted flex">
+                        {difficultyStats.total > 0 && (
+                          <>
+                            <div
+                              style={{ width: `${(difficultyStats.easy / difficultyStats.total) * 100}%` }}
+                              className="bg-emerald-500 h-full transition-all"
+                              title={`Easy: ${difficultyStats.easy}`}
+                            />
+                            <div
+                              style={{ width: `${(difficultyStats.medium / difficultyStats.total) * 100}%` }}
+                              className="bg-amber-500 h-full transition-all"
+                              title={`Medium: ${difficultyStats.medium}`}
+                            />
+                            <div
+                              style={{ width: `${(difficultyStats.hard / difficultyStats.total) * 100}%` }}
+                              className="bg-rose-500 h-full transition-all"
+                              title={`Hard: ${difficultyStats.hard}`}
+                            />
+                          </>
+                        )}
+                      </div>
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          ● Easy ({difficultyStats.total > 0 ? Math.round((difficultyStats.easy / difficultyStats.total) * 100) : 0}%)
+                        </span>
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          ● Medium ({difficultyStats.total > 0 ? Math.round((difficultyStats.medium / difficultyStats.total) * 100) : 0}%)
+                        </span>
+                        <span className="text-rose-600 dark:text-rose-400 font-medium">
+                          ● Hard ({difficultyStats.total > 0 ? Math.round((difficultyStats.hard / difficultyStats.total) * 100) : 0}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Metrics Breakdown Cards */}
+                    <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
+                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-2.5">
+                        <div className="font-bold text-emerald-700 dark:text-emerald-300">
+                          Easy
+                        </div>
+                        <div className="text-lg font-extrabold text-foreground">
+                          {difficultyStats.easy}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {difficultyStats.easyMarks} marks
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
+                        <div className="font-bold text-amber-700 dark:text-amber-300">
+                          Medium
+                        </div>
+                        <div className="text-lg font-extrabold text-foreground">
+                          {difficultyStats.medium}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {difficultyStats.mediumMarks} marks
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 p-2.5">
+                        <div className="font-bold text-rose-700 dark:text-rose-300">
+                          Hard
+                        </div>
+                        <div className="text-lg font-extrabold text-foreground">
+                          {difficultyStats.hard}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {difficultyStats.hardMarks} marks
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Distribution Profiles */}
+                    <div className="space-y-1.5 pt-1 border-t">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          Quick Presets:
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDifficultyOpen(!difficultyOpen)}
+                          className="h-7 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                        >
+                          {difficultyOpen ? "Hide Cell-by-Cell" : "Fine-Tune Cell-by-Cell"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyDifficultyRatio(50, 35, 15)}
+                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                        >
+                          Easy (50/35/15)
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyDifficultyRatio(35, 45, 20)}
+                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                        >
+                          Balanced (35/45/20)
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyDifficultyRatio(20, 40, 40)}
+                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                        >
+                          Hard (20/40/40)
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Expandable Fine-tune cell-by-cell */}
+                    {difficultyOpen && (
+                      <div className="pt-2 border-t">
+                        <DifficultyEditor
+                          blueprint={blueprint}
+                          setBlueprint={(bp) => {
+                            setSelectedPreset("");
+                            setBlueprint(bp);
+                          }}
+                          setCount={setCount}
+                          subjectId={subjectId}
+                          chapterIds={chapterIds}
+                          topicIds={topicIds}
+                          selectedChapters={selectedChapters}
+                          allTopics={allTopics}
+                        />
+                      </div>
+                    )}
+
+                    {/* Higher-order thinking footer */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-2.5">
+                      <span>Higher-order thinking questions (Medium + Hard):</span>
+                      <span className="font-bold text-foreground">
+                        {difficultyStats.higherOrderPct}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Advanced Options (Instructions, Sources, Shuffle & AI Suggester) */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
                     <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                       <CollapsibleTrigger asChild>
@@ -1477,23 +1681,24 @@ export function GeneratorWizard({
                         >
                           <span className="flex items-center gap-2">
                             <Settings2 className="h-4 w-4 text-emerald-600" />
-                            Advanced Options (Title, Instructions, Shuffle & AI Suggester)
+                            Advanced Options (Instructions, Sources, Shuffle & AI Suggester)
                           </span>
                           <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
                         </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-4 space-y-4 border-t mt-3">
-                        {/* Title */}
-                        <div>
-                          <Label htmlFor="exam-title" className="text-xs font-semibold">
-                            Exam Title (Optional)
+                        {/* Question Source Filter */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold flex items-center gap-1.5">
+                            <Filter className="h-3.5 w-3.5 text-emerald-600" />
+                            Question Source Filter
                           </Label>
-                          <Input
-                            id="exam-title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder={`${currentClass?.class_name ?? ""} ${currentSubject?.subject_name ?? ""} Examination`}
-                            className="mt-1 h-9 text-xs"
+                          <SourceFilterDropdown
+                            subjectId={subjectId}
+                            chapterIds={chapterIds}
+                            topicIds={topicIds}
+                            questionSources={questionSources}
+                            setQuestionSources={setQuestionSources}
                           />
                         </div>
 
@@ -1519,41 +1724,6 @@ export function GeneratorWizard({
                             <span className="text-xs font-medium">Shuffle Question Order</span>
                           </div>
                           <Switch checked={shuffle} onCheckedChange={setShuffle} />
-                        </div>
-
-                        {/* Fine-tune difficulty cell-by-cell */}
-                        <div className="rounded-lg border bg-background p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold">Fine-Tune Question Difficulties</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setDifficultyOpen(!difficultyOpen)}
-                              className="h-6 text-[11px]"
-                            >
-                              {difficultyOpen ? "Hide" : "Edit Cell-by-Cell"}
-                            </Button>
-                          </div>
-                          {difficultyOpen && (
-                            <DifficultyEditor
-                              blueprint={blueprint}
-                              setBlueprint={(bp) => {
-                                setSelectedPreset("");
-                                setBlueprint(bp);
-                              }}
-                              setCount={setCount}
-                              subjectId={subjectId}
-                              chapterIds={chapterIds}
-                              topicIds={topicIds}
-                              selectedChapters={selectedChapters}
-                              allTopics={allTopics}
-                            />
-                          )}
-                          <DifficultyPreview
-                            blueprint={blueprint}
-                            totalQuestions={totalQuestions}
-                            totalMarks={totalMarks}
-                          />
                         </div>
 
                         {/* Templates & AI Suggester */}
@@ -2437,12 +2607,14 @@ function SourceFilterDropdown(props: {
     try {
       const data = await fetchQuestionSources({ subjectId, chapterIds, topicIds });
       setSourceCounts(data.sources);
+      // Select all sources by default
+      setQuestionSources(data.sources.map((s) => s.name));
     } catch {
       toast.error("Could not load question sources");
     } finally {
       setLoading(false);
     }
-  }, [subjectId, chapterIds, topicIds]);
+  }, [subjectId, chapterIds, topicIds, setQuestionSources]);
 
   useEffect(() => {
     loadSources();
@@ -2453,7 +2625,7 @@ function SourceFilterDropdown(props: {
     if (sourceCounts.length === 0) return;
     const valid = new Set(sourceCounts.map((s) => s.name));
     const pruned = questionSources.filter((s) => valid.has(s));
-    if (pruned.length !== questionSources.length) {
+    if (pruned.length !== questionSources.length && pruned.length > 0) {
       setQuestionSources(pruned);
     }
   }, [sourceCounts, questionSources, setQuestionSources]);
@@ -2466,10 +2638,8 @@ function SourceFilterDropdown(props: {
     }
   };
 
-  const label =
-    questionSources.length === 0
-      ? "All Sources (Default)"
-      : `${questionSources.length} Source${questionSources.length > 1 ? "s" : ""} Active`;
+  const areAllSelected =
+    sourceCounts.length > 0 && questionSources.length === sourceCounts.length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -2480,23 +2650,18 @@ function SourceFilterDropdown(props: {
         >
           <span className="truncate flex items-center gap-1.5 min-w-0">
             <Filter className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span className="truncate">{label}</span>
+            <span className="truncate">Source Filter</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3 space-y-2.5" align="start">
         <div className="flex items-center justify-between border-b pb-2">
-          <span className="text-xs font-bold text-foreground">Question Category Filter</span>
-          {questionSources.length > 0 && (
-            <Badge variant="secondary" className="text-[10px]">
-              {questionSources.length} active
-            </Badge>
-          )}
+          <span className="text-xs font-bold text-foreground">Question Source Filter</span>
         </div>
 
         <p className="text-[11px] text-muted-foreground leading-tight">
-          Restrict bank questions to specific categories (e.g. past paper). Leave empty to use all questions.
+          Filter bank questions by source category. All categories selected by default.
         </p>
 
         {loading ? (
@@ -2544,7 +2709,8 @@ function SourceFilterDropdown(props: {
             size="sm"
             variant="ghost"
             onClick={() => setQuestionSources(sourceCounts.map((s) => s.name))}
-            className="h-7 text-[11px] px-2 text-emerald-600 hover:text-emerald-700"
+            disabled={areAllSelected}
+            className="h-7 text-[11px] px-2 text-emerald-600 hover:text-emerald-700 font-medium"
           >
             Select All
           </Button>
@@ -2554,9 +2720,9 @@ function SourceFilterDropdown(props: {
             variant="ghost"
             onClick={() => setQuestionSources([])}
             disabled={questionSources.length === 0}
-            className="h-7 text-[11px] px-2 text-muted-foreground hover:text-foreground"
+            className="h-7 text-[11px] px-2 text-muted-foreground hover:text-foreground font-medium"
           >
-            Reset to All
+            Deselect All
           </Button>
         </div>
       </PopoverContent>
