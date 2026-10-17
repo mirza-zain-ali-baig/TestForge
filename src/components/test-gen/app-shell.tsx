@@ -41,7 +41,8 @@ import { ScrollToTop } from "./scroll-to-top";
 import { ChatView } from "./chat-view";
 import { FloatingChatWidget } from "./floating-chat-widget";
 import { AuthDialog } from "./auth-dialog";
-import { fetchCurrentUser, logoutApi, type AuthUser } from "./lib";
+import { fetchCurrentUser, logoutApi, oauthSyncApi, type AuthUser } from "./lib";
+import { supabaseBrowser } from "@/lib/supabase-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,9 +79,52 @@ export function TestGeneratorApp() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
 
-  // Load authenticated user on mount
+  // Load authenticated user on mount & listen for Google OAuth redirect
   useEffect(() => {
-    fetchCurrentUser().then((u) => setUser(u));
+    // 1. Initial check via session cookie
+    fetchCurrentUser().then((u) => {
+      if (u) setUser(u);
+    });
+
+    // 2. Handle Google OAuth redirect (Supabase token in URL hash / storage)
+    if (typeof window !== "undefined") {
+      const syncOAuth = async (session: any) => {
+        if (!session?.user?.email) return;
+        const u = session.user;
+        try {
+          const synced = await oauthSyncApi({
+            email: u.email,
+            name: u.user_metadata?.full_name || u.user_metadata?.name || u.email.split("@")[0],
+            provider: "google",
+          });
+          setUser(synced);
+          toast.success(`Welcome, ${synced.name || synced.email}!`);
+          if (window.location.hash.includes("access_token=")) {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+        } catch (e) {
+          console.error("OAuth sync failed:", e);
+        }
+      };
+
+      supabaseBrowser.auth.getSession().then(({ data }) => {
+        if (data?.session) {
+          syncOAuth(data.session);
+        }
+      });
+
+      const { data: authListener } = supabaseBrowser.auth.onAuthStateChange(
+        (event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            syncOAuth(session);
+          }
+        }
+      );
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    }
   }, []);
 
   const preview = variants[activeVariant] ?? null;
