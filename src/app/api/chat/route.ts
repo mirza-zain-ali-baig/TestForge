@@ -43,8 +43,18 @@ export async function POST(req: NextRequest) {
 
     const apiKey =
       (typeof userApiKey === "string" && userApiKey.trim()) ||
-      process.env.OPENROUTER_API_KEY ||
+      process.env.OPENROUTER_API_KEY?.trim() ||
       DEFAULT_OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing OpenRouter API key. Please add OPENROUTER_API_KEY in your Vercel project environment variables, or enter your key in Chat Settings.",
+        },
+        { status: 401 }
+      );
+    }
 
     // Determine sequence of models to try
     let candidateModels: string[];

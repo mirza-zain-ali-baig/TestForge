@@ -39,6 +39,7 @@ import { ChatMarkdown } from "./chat-markdown";
 import {
   CURATED_FREE_MODELS,
   SYSTEM_PROMPT_PRESETS,
+  getDefaultOpenRouterKey,
   type ChatMessage,
   type ModelInfo,
 } from "@/lib/openrouter";
@@ -100,7 +101,12 @@ export function ChatView() {
   useEffect(() => {
     try {
       const savedKey = localStorage.getItem("examforge_or_key");
-      if (savedKey) setApiKey(savedKey);
+      if (savedKey) {
+        setApiKey(savedKey);
+      } else {
+        const defaultKey = getDefaultOpenRouterKey();
+        if (defaultKey) setApiKey(defaultKey);
+      }
 
       const savedModel = localStorage.getItem("examforge_or_model");
       if (savedModel) setActiveModel(savedModel);

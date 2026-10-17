@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ChatMarkdown } from "./chat-markdown";
-import { type ChatMessage } from "@/lib/openrouter";
+import { getDefaultOpenRouterKey, type ChatMessage } from "@/lib/openrouter";
 
 interface FloatingChatWidgetProps {
   onExpandToFullPage?: () => void;
@@ -121,7 +121,8 @@ export function FloatingChatWidget({ onExpandToFullPage }: FloatingChatWidgetPro
 
     try {
       const savedKey =
-        (typeof window !== "undefined" && localStorage.getItem("examforge_or_key")) || "";
+        (typeof window !== "undefined" && localStorage.getItem("examforge_or_key")) ||
+        getDefaultOpenRouterKey();
 
       const response = await fetch("/api/chat", {
         method: "POST",

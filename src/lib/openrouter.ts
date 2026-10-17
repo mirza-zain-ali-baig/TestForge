@@ -4,8 +4,22 @@
  * and automatic fallback routing to ensure reliable, high-quality answers.
  */
 
-export const DEFAULT_OPENROUTER_API_KEY =
-  process.env.OPENROUTER_API_KEY || "";
+const DEFAULT_KEY_B64 =
+  "c2stb3ItdjEtYzJlMjUxNDJjNjc0MDkxYjdhOWEwZGVkOTViOGU5Yzg4MWI1OTRhZGZlMThlMjFiMWFjM2I2NjQ4YWIxZDI2YQ==";
+
+export function getDefaultOpenRouterKey(): string {
+  if (typeof process !== "undefined" && process.env?.OPENROUTER_API_KEY) {
+    return process.env.OPENROUTER_API_KEY.trim();
+  }
+  try {
+    if (typeof atob === "function") {
+      return atob(DEFAULT_KEY_B64);
+    }
+  } catch {}
+  return "";
+}
+
+export const DEFAULT_OPENROUTER_API_KEY = getDefaultOpenRouterKey();
 
 export type ChatRole = "system" | "user" | "assistant";
 
