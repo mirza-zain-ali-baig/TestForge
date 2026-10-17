@@ -16,6 +16,11 @@ export function getDefaultOpenRouterKey(): string {
       return atob(DEFAULT_KEY_B64);
     }
   } catch {}
+  try {
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(DEFAULT_KEY_B64, "base64").toString("utf-8");
+    }
+  } catch {}
   return "";
 }
 
@@ -243,3 +248,102 @@ export const SYSTEM_PROMPT_PRESETS: { id: string; label: string; prompt: string 
       "You are a high-yield exam revision assistant. Provide bulleted, high-impact answers optimized for quick memorization and exam revision without unnecessary fluff.",
   },
 ];
+
+export interface OpenRouterCompletionOptions {
+  messages: Array<{ role: string; content: string }>;
+  systemPrompt?: string;
+  preferredModel?: string;
+  temperature?: number;
+  maxTokens?: number;
+  apiKey?: string;
+  origin?: string;
+}
+
+/**
+ * Executes a resilient completion call via OpenRouter with automatic fallback
+ * across top-tier free models. Throws a clear error only if all candidate models fail.
+ */
+export async function callOpenRouterChatCompletion(
+  options: OpenRouterCompletionOptions
+): Promise<{ content: string; modelUsed: string; fallbackFrom?: string }> {
+  const apiKey =
+    (typeof options.apiKey === "string" && options.apiKey.trim()) ||
+    getDefaultOpenRouterKey();
+
+  if (!apiKey) {
+    throw new Error(
+      "Missing OpenRouter API key. Please configure OPENROUTER_API_KEY in your environment variables."
+    );
+  }
+
+  // Determine candidate models
+  let candidateModels: string[];
+  if (options.preferredModel && options.preferredModel !== "auto") {
+    candidateModels = [
+      options.preferredModel,
+      ...FALLBACK_CHAIN.filter((m) => m !== options.preferredModel),
+    ];
+  } else {
+    candidateModels = [...FALLBACK_CHAIN];
+  }
+
+  const formattedMessages: Array<{ role: string; content: string }> = [];
+  if (options.systemPrompt && options.systemPrompt.trim()) {
+    formattedMessages.push({ role: "system", content: options.systemPrompt.trim() });
+  }
+  for (const m of options.messages) {
+    if (m && m.role && m.content) {
+      formattedMessages.push({ role: m.role, content: m.content });
+    }
+  }
+
+  let lastError = "";
+
+  for (let i = 0; i < candidateModels.length; i++) {
+    const model = candidateModels[i];
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": options.origin || "https://examforge.app",
+          "X-Title": "ExamForge AI Assistant",
+        },
+        body: JSON.stringify({
+          model,
+          messages: formattedMessages,
+          temperature: options.temperature ?? 0.3,
+          max_tokens: options.maxTokens,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const content =
+          json.choices?.[0]?.message?.content ||
+          json.choices?.[0]?.message?.reasoning ||
+          "";
+        if (content && typeof content === "string" && content.trim()) {
+          return {
+            content: content.trim(),
+            modelUsed: model,
+            fallbackFrom: i > 0 ? candidateModels[0] : undefined,
+          };
+        }
+      } else {
+        const errText = await res.text().catch(() => "");
+        lastError = `Model ${model} returned ${res.status}: ${errText.slice(0, 150)}`;
+      }
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  throw new Error(
+    lastError ||
+      "All free AI models are currently busy or reached rate limits. Please try again in a few moments."
+  );
+}
+

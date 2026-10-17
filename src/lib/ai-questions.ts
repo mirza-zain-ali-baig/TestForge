@@ -1,4 +1,4 @@
-import ZAI from "z-ai-web-dev-sdk";
+import { callOpenRouterChatCompletion } from "./openrouter";
 import type {
   QuestionTypeName,
   DifficultyName,
@@ -6,7 +6,7 @@ import type {
 } from "./types";
 
 /**
- * AI-powered question generation using z-ai-web-dev-sdk (backend only).
+ * AI-powered question generation using OpenRouter (backend only).
  * Generates fresh questions for a given topic/chapter when the question bank
  * doesn't have enough, or when the user explicitly chooses "AI" source.
  */
@@ -37,8 +37,6 @@ export async function generateAIQuestions(opts: {
 }): Promise<GeneratedQuestion[]> {
   const { subjectName, className, chapterName, topicName, typeName, difficultyName, count, marks } =
     opts;
-
-  const zai = await ZAI.create();
 
   const context = [
     `Class: ${className}`,
@@ -75,20 +73,14 @@ Return STRICT JSON ONLY (no markdown fences, no commentary) in this exact shape:
     : '{"question_text":"...","blooms_taxonomy":"...","tags":"...","model_answer":"..."}'}
 ]}`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      {
-        role: "assistant",
-        content:
-          "You are a precise JSON generator for exam questions. Output only valid JSON.",
-      },
-      { role: "user", content: prompt },
-    ],
-    thinking: { type: "disabled" },
+  const { content } = await callOpenRouterChatCompletion({
+    messages: [{ role: "user", content: prompt }],
+    systemPrompt: "You are a precise JSON generator for exam questions. Output only valid JSON.",
+    preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+    temperature: 0.3,
   });
 
-  const raw = completion.choices[0]?.message?.content ?? "";
-  const parsed = safeParseQuestions(raw);
+  const parsed = safeParseQuestions(content);
 
   return parsed.slice(0, count).map<GeneratedQuestion>((q, i) => ({
     id: `ai-${Date.now()}-${i}`,

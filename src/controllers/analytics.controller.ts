@@ -10,7 +10,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { findAllTests, parseTestJson } from "@/models/test.model";
-import ZAI from "z-ai-web-dev-sdk";
+import { callOpenRouterChatCompletion } from "@/lib/openrouter";
 import type { GeneratedTest, GeneratedQuestion } from "@/lib/types";
 
 // ─── Dashboard stats ─────────────────────────────────────────────────────────
@@ -278,7 +278,6 @@ export async function detectSimilarQuestions(
   if (questions.length < 2) return [];
 
   const qs = questions.slice(0, 30);
-  const zai = await ZAI.create();
 
   const questionList = qs
     .map((q, i) => `${i + 1}. [${q.type_name}/${q.difficulty_name}] ${q.question_text}`)
@@ -300,30 +299,32 @@ Return STRICT JSON ONLY (no markdown, no commentary) in this exact shape:
 
 The "a" and "b" values are the 1-based question numbers from the list above.`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "assistant", content: "You are a precise JSON generator for exam quality analysis. Output only valid JSON." },
-      { role: "user", content: prompt },
-    ],
-    thinking: { type: "disabled" },
-  });
+  try {
+    const { content } = await callOpenRouterChatCompletion({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: "You are a precise JSON generator for exam quality analysis. Output only valid JSON.",
+      preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+      temperature: 0.1,
+    });
 
-  const raw = completion.choices[0]?.message?.content ?? "";
-  const parsed = safeParse(raw);
-  if (!parsed?.pairs || !Array.isArray(parsed.pairs)) return [];
+    const parsed = safeParse(content);
+    if (!parsed?.pairs || !Array.isArray(parsed.pairs)) return [];
 
-  return (parsed.pairs as { a: number; b: number; similarity?: string; reason?: string }[])
-    .filter((p) => p.a >= 1 && p.a <= qs.length && p.b >= 1 && p.b <= qs.length)
-    .map((p) => ({
-      a: qs[p.a - 1].id,
-      b: qs[p.b - 1].id,
-      aIndex: p.a - 1,
-      bIndex: p.b - 1,
-      aText: qs[p.a - 1].question_text,
-      bText: qs[p.b - 1].question_text,
-      similarity: (p.similarity ?? "medium") as "high" | "medium" | "low",
-      reason: p.reason ?? "Similar question content",
-    }));
+    return (parsed.pairs as { a: number; b: number; similarity?: string; reason?: string }[])
+      .filter((p) => p.a >= 1 && p.a <= qs.length && p.b >= 1 && p.b <= qs.length)
+      .map((p) => ({
+        a: qs[p.a - 1].id,
+        b: qs[p.b - 1].id,
+        aIndex: p.a - 1,
+        bIndex: p.b - 1,
+        aText: qs[p.a - 1].question_text,
+        bText: qs[p.b - 1].question_text,
+        similarity: (p.similarity ?? "medium") as "high" | "medium" | "low",
+        reason: p.reason ?? "Similar question content",
+      }));
+  } catch {
+    return [];
+  }
 }
 
 // ─── LLM answer explanation ───────────────────────────────────────────────────
@@ -338,52 +339,52 @@ export async function explainQuestion(opts: {
   subjectName?: string;
 }): Promise<string> {
   const { question: q } = opts;
-  const zai = await ZAI.create();
 
   let prompt: string;
   if (q.options) {
+    const correctLetter = (q.options.correct_option || "A").toUpperCase();
     const correctText =
       q.options[
-        `option_${q.options.correct_option.toLowerCase()}` as
+        `option_${correctLetter.toLowerCase()}` as
           | "option_a"
           | "option_b"
           | "option_c"
           | "option_d"
-      ];
-    prompt = `You are an expert teacher. Explain why the correct answer to this MCQ is correct, in 2-3 sentences suitable for a student.
+      ] || "";
+    prompt = `You are an expert teacher. Explain why the correct answer to this MCQ is correct, in 2-3 clear, educational sentences suitable for a school student.
 
 Question: ${q.question_text}
 A. ${q.options.option_a}
 B. ${q.options.option_b}
 C. ${q.options.option_c}
 D. ${q.options.option_d}
-Correct answer: ${q.options.correct_option}. ${correctText}
+Correct answer: Option ${correctLetter}. ${correctText}
 
 Context: ${opts.className ?? ""} ${opts.subjectName ?? ""}
 
-Write a clear, concise explanation. Do NOT repeat the question or options. Start directly with the explanation.`;
+Write a clear, concise explanation. Do NOT repeat the question or all options. Start directly with why the answer is correct and explain the core concept.`;
   } else {
-    prompt = `You are an expert teacher. Provide a brief teaching note (2-3 sentences) for this ${q.type_name} question, explaining what a good answer should cover.
+    prompt = `You are an expert teacher. Provide a brief teaching note and explanation (2-3 sentences) for this ${q.type_name} question, explaining what a good answer must cover.
 
 Question: ${q.question_text}
 ${q.model_answer ? `Model answer: ${q.model_answer}` : ""}
 
 Context: ${opts.className ?? ""} ${opts.subjectName ?? ""}
 
-Write a clear, concise teaching note. Do NOT repeat the question. Start directly with the note.`;
+Write a clear, concise teaching note. Do NOT repeat the question. Start directly with the explanation.`;
   }
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "assistant", content: "You are an expert educator who writes clear, concise teaching explanations." },
-      { role: "user", content: prompt },
-    ],
-    thinking: { type: "disabled" },
+  const { content } = await callOpenRouterChatCompletion({
+    messages: [{ role: "user", content: prompt }],
+    systemPrompt: "You are an expert educator who writes clear, concise teaching explanations and exam answer keys.",
+    preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+    temperature: 0.3,
   });
 
-  const explanation = completion.choices[0]?.message?.content?.trim() ?? "";
-  if (!explanation) throw new Error("AI could not generate an explanation. Please try again.");
-  return explanation;
+  if (!content) {
+    throw new Error("AI could not generate an explanation. Please try again.");
+  }
+  return content;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

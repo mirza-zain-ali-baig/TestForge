@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
             messages: formattedMessages,
             stream: stream,
           }),
+          signal: AbortSignal.timeout(25000),
         });
 
         if (res.ok) {

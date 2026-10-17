@@ -6,7 +6,7 @@
  * the LLM to return an optimal question distribution.
  */
 
-import ZAI from "z-ai-web-dev-sdk";
+import { callOpenRouterChatCompletion } from "@/lib/openrouter";
 import type { Blueprint, QuestionTypeName, DifficultyName } from "@/lib/types";
 
 export type BlueprintSuggestionRequest = {
@@ -52,7 +52,6 @@ export async function suggestBlueprint(
     throw new Error("totalMarks must be >= 1");
   }
 
-  const zai = await ZAI.create();
   const profile = PROFILES[req.difficultyTarget] ?? PROFILES.balanced;
 
   const prompt = `You are an expert examination designer for school-level computer science.
@@ -80,19 +79,14 @@ Return STRICT JSON ONLY (no markdown, no commentary) in this exact shape:
   "rationale": "1-2 sentence explanation of the distribution choice"
 }`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      {
-        role: "assistant",
-        content: "You are a precise JSON generator for exam blueprints. Output only valid JSON.",
-      },
-      { role: "user", content: prompt },
-    ],
-    thinking: { type: "disabled" },
+  const { content } = await callOpenRouterChatCompletion({
+    messages: [{ role: "user", content: prompt }],
+    systemPrompt: "You are a precise JSON generator for exam blueprints. Output only valid JSON.",
+    preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+    temperature: 0.2,
   });
 
-  const raw = completion.choices[0]?.message?.content ?? "";
-  const parsed = safeParse(raw);
+  const parsed = safeParse(content);
 
   if (!parsed?.blueprint) {
     throw new Error("AI could not generate a valid blueprint. Please try again.");
