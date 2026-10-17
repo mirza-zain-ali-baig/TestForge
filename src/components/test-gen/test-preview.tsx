@@ -511,10 +511,19 @@ export function TestPreview({
                 </Label>
                 <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
               </div>
+              {onPrintExport && (
+                <Button
+                  size="sm"
+                  onClick={onPrintExport}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm"
+                >
+                  <FileDown className="mr-1.5 h-4 w-4" /> Print & Export
+                </Button>
+              )}
               <Button
+                variant="outline"
                 size="sm"
                 onClick={handlePrint}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
               >
                 <Printer className="mr-1 h-4 w-4" /> Print
               </Button>
