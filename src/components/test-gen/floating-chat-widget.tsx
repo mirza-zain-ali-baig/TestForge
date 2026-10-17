@@ -153,11 +153,6 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
     abortControllerRef.current = new AbortController();
 
     try {
-      const apiKey =
-        typeof window !== "undefined"
-          ? localStorage.getItem("examforge_custom_openrouter_key")?.trim() || undefined
-          : undefined;
-
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,7 +162,6 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
             content: m.content,
           })),
           model: "auto",
-          apiKey,
           systemPrompt:
             "You are ExamForge AI, an expert school exam tutor. Answer questions accurately and concisely. Render math using LaTeX ($...$ or $$...$$) and render comparisons using Markdown tables.",
           stream: true,
