@@ -5,6 +5,10 @@ import {
   CURATED_FREE_MODELS,
   fetchLiveOpenRouterModels,
 } from "@/lib/openrouter";
+import {
+  streamGeminiChatCompletion,
+  callGeminiChatCompletion,
+} from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -28,7 +32,9 @@ export async function GET() {
 
 /**
  * POST /api/chat
- * Handles chat completions with smart model selection and automatic fallback.
+ * Handles chat completions with smart model selection and automatic fallback:
+ * 1. Primary: Google Gemini 3.5 Flash (1,500 free requests/day with ultra-fast streaming).
+ * 2. Secondary: OpenRouter curated free models fallback chain.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +54,48 @@ export async function POST(req: NextRequest) {
         ? userApiKey.trim()
         : null;
 
+    const isAutoOrGemini =
+      !model ||
+      model === "auto" ||
+      model.includes("gemini") ||
+      !clientKey;
+
+    // ─── 1. Primary Engine: Google Gemini (1,500 free requests/day) ─────────
+    if (isAutoOrGemini) {
+      try {
+        if (stream) {
+          const geminiStream = await streamGeminiChatCompletion({
+            messages,
+            systemPrompt,
+          });
+
+          return new Response(geminiStream, {
+            headers: {
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Cache-Control": "no-cache, no-transform",
+              Connection: "keep-alive",
+              "X-Accel-Buffering": "no",
+            },
+          });
+        } else {
+          const result = await callGeminiChatCompletion({
+            messages,
+            systemPrompt,
+          });
+
+          return NextResponse.json({
+            reply: result.content,
+            modelUsed: "ExamForge AI (1,500/day)",
+            fallbackFrom: null,
+          });
+        }
+      } catch (geminiErr) {
+        console.warn("Gemini engine failed, falling back to OpenRouter:", geminiErr);
+        // Seamlessly continue to OpenRouter fallback below
+      }
+    }
+
+    // ─── 2. Secondary Engine: OpenRouter Free Models Chain ──────────────────
     const apiKey =
       clientKey ||
       process.env.OPENROUTER_API_KEY?.trim() ||
@@ -57,7 +105,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Missing OpenRouter API key. Click the Key icon in AI Chat to paste your free OpenRouter API key, or set OPENROUTER_API_KEY in Vercel.",
+            "Missing AI API key. Please configure your key in environment variables.",
         },
         { status: 401 }
       );
@@ -65,12 +113,11 @@ export async function POST(req: NextRequest) {
 
     // Determine sequence of models to try
     let candidateModels: string[];
-    const isAuto = !model || model === "auto";
+    const isAuto = !model || model === "auto" || model.includes("gemini");
 
     if (isAuto) {
       candidateModels = [...FALLBACK_CHAIN];
     } else {
-      // If user selected a specific model, try it first, but fallback to free router if it fails
       candidateModels = [model];
       if (model.endsWith(":free") || model === "openrouter/free") {
         candidateModels.push("openrouter/free");
@@ -121,7 +168,6 @@ export async function POST(req: NextRequest) {
           successfulResponse = res;
           break;
         } else {
-          // Model error (e.g. 429 rate limit, 503 capacity, 404 deprecated)
           const errText = await res.text().catch(() => "");
           if (res.status === 429) {
             lastError =
@@ -129,25 +175,54 @@ export async function POST(req: NextRequest) {
           } else {
             lastError = `Model ${candidate} returned ${res.status}: ${errText.slice(0, 150)}`;
           }
-          // continue to next candidate
         }
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
       }
     }
 
+    // ─── 3. Final Rescue: If OpenRouter failed (e.g. 429 limit), try Gemini ─
     if (!successfulResponse) {
+      try {
+        if (stream) {
+          const rescueStream = await streamGeminiChatCompletion({
+            messages,
+            systemPrompt,
+          });
+          return new Response(rescueStream, {
+            headers: {
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Cache-Control": "no-cache, no-transform",
+              Connection: "keep-alive",
+              "X-Accel-Buffering": "no",
+            },
+          });
+        } else {
+          const rescueRes = await callGeminiChatCompletion({
+            messages,
+            systemPrompt,
+          });
+          return NextResponse.json({
+            reply: rescueRes.content,
+            modelUsed: "ExamForge AI (1,500/day)",
+            fallbackFrom: "openrouter",
+          });
+        }
+      } catch (rescueErr) {
+        console.error("Rescue Gemini also failed:", rescueErr);
+      }
+
       return NextResponse.json(
         {
           error:
             lastError ||
-            "All free models are currently at capacity. Please try again in a few moments or click the Key icon to provide your personal OpenRouter key.",
+            "All AI services are currently busy. Please try again in a moment.",
         },
         { status: 503 }
       );
     }
 
-    // If streaming was requested
+    // If streaming was requested via OpenRouter
     if (stream && successfulResponse.body) {
       const upstreamBody = successfulResponse.body;
       const encoder = new TextEncoder();
@@ -155,7 +230,6 @@ export async function POST(req: NextRequest) {
       // Transform stream to inject model metadata at the start
       const transformStream = new TransformStream({
         start(controller) {
-          // First chunk announces model metadata
           const metaChunk = `data: ${JSON.stringify({
             meta: {
               model: activeModel,
@@ -181,7 +255,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Non-streaming JSON response
+    // Non-streaming JSON response from OpenRouter
     const json = await successfulResponse.json();
     const reply =
       json.choices?.[0]?.message?.content ||

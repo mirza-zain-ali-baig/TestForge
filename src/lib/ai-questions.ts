@@ -76,7 +76,7 @@ Return STRICT JSON ONLY (no markdown fences, no commentary) in this exact shape:
   const { content } = await callOpenRouterChatCompletion({
     messages: [{ role: "user", content: prompt }],
     systemPrompt: "You are a precise JSON generator for exam questions. Output only valid JSON.",
-    preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+    preferredModel: "auto",
     temperature: 0.3,
   });
 

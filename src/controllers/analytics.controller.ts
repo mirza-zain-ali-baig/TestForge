@@ -303,7 +303,7 @@ The "a" and "b" values are the 1-based question numbers from the list above.`;
     const { content } = await callOpenRouterChatCompletion({
       messages: [{ role: "user", content: prompt }],
       systemPrompt: "You are a precise JSON generator for exam quality analysis. Output only valid JSON.",
-      preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+      preferredModel: "auto",
       temperature: 0.1,
     });
 
@@ -377,7 +377,7 @@ Write a clear, concise teaching note. Do NOT repeat the question. Start directly
   const { content } = await callOpenRouterChatCompletion({
     messages: [{ role: "user", content: prompt }],
     systemPrompt: "You are an expert educator who writes clear, concise teaching explanations and exam answer keys.",
-    preferredModel: "nvidia/nemotron-3.5-super-vl:free",
+    preferredModel: "auto",
     temperature: 0.3,
   });
 

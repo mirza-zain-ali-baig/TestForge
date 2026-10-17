@@ -82,13 +82,14 @@ const STARTER_PROMPTS = [
 ];
 
 const FREE_MODEL_OPTIONS = [
-  { id: "auto", name: "Auto (Best Free AI - Recommended)", badge: "Free" },
-  { id: "nvidia/nemotron-3.5-super-vl:free", name: "ExamForge Ultra (Nemotron 3.5)", badge: "Fast" },
+  { id: "auto", name: "Auto (ExamForge 1,500/day AI)", badge: "1500/day" },
+  { id: "gemini-flash-lite-latest", name: "Google Gemini 3.5 Flash", badge: "Google" },
+  { id: "nvidia/nemotron-3.5-super-vl:free", name: "ExamForge Ultra (Nemotron 3.5)", badge: "Free" },
   { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "ExamForge Reasoning (Nemotron 120B)", badge: "Deep" },
   { id: "liquid/lfm-2.5-2.6b:free", name: "ExamForge Fast (LiquidAI LFM)", badge: "Speed" },
   { id: "google/gemma-4-26b-a4b-it:free", name: "ExamForge Smart (Google Gemma 4)", badge: "Google" },
   { id: "cohere/north-mini-code:free", name: "ExamForge Code (Cohere North)", badge: "Code" },
-  { id: "openrouter/free", name: "OpenRouter Free Router", badge: "Auto" },
+  { id: "openrouter/free", name: "OpenRouter Free Router", badge: "Backup" },
 ];
 
 interface ChatViewProps {
@@ -999,7 +1000,7 @@ export function ChatView({ user }: ChatViewProps) {
             )}
           </form>
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-            ExamForge AI • 100% Free AI Assistance • Powered by high-speed OpenRouter free models
+            ExamForge AI • 1,500 Free Requests/Day • Powered by Google Gemini & OpenRouter
           </p>
         </div>
       </div>

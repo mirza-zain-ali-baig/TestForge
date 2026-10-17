@@ -53,7 +53,17 @@ export interface ModelInfo {
  * Curated ranking of OpenRouter free models.
  * Higher quality score = tried first when in "Auto (Best Free Model)" mode.
  */
+import { callGeminiChatCompletion } from "./gemini";
+
 export const CURATED_FREE_MODELS: ModelInfo[] = [
+  {
+    id: "gemini-flash-lite-latest",
+    name: "ExamForge AI (Google Gemini)",
+    badge: "1,500 req/day (Fast)",
+    quality: 105,
+    isFree: true,
+    category: "recommended",
+  },
   {
     id: "nvidia/nemotron-3.5-super-vl:free",
     name: "NVIDIA Nemotron 3.5 Super VL",
@@ -267,6 +277,31 @@ export interface OpenRouterCompletionOptions {
 export async function callOpenRouterChatCompletion(
   options: OpenRouterCompletionOptions
 ): Promise<{ content: string; modelUsed: string; fallbackFrom?: string }> {
+  // 1. Prioritize Gemini (1,500 free req/day) when in auto mode or using default backend keys
+  const isAutoOrGemini =
+    !options.preferredModel ||
+    options.preferredModel === "auto" ||
+    options.preferredModel.includes("gemini");
+
+  if (!options.apiKey || isAutoOrGemini) {
+    try {
+      const geminiRes = await callGeminiChatCompletion({
+        messages: options.messages,
+        systemPrompt: options.systemPrompt,
+        temperature: options.temperature,
+        maxTokens: options.maxTokens,
+      });
+      if (geminiRes?.content) {
+        return {
+          content: geminiRes.content,
+          modelUsed: geminiRes.modelUsed,
+        };
+      }
+    } catch {
+      // Fall through to OpenRouter candidate models
+    }
+  }
+
   const apiKey =
     (typeof options.apiKey === "string" && options.apiKey.trim()) ||
     getDefaultOpenRouterKey();
@@ -341,6 +376,23 @@ export async function callOpenRouterChatCompletion(
       lastError = err instanceof Error ? err.message : String(err);
     }
   }
+
+  // Final rescue attempt: try Gemini if OpenRouter hit limits
+  try {
+    const rescueRes = await callGeminiChatCompletion({
+      messages: options.messages,
+      systemPrompt: options.systemPrompt,
+      temperature: options.temperature,
+      maxTokens: options.maxTokens,
+    });
+    if (rescueRes?.content) {
+      return {
+        content: rescueRes.content,
+        modelUsed: rescueRes.modelUsed,
+        fallbackFrom: "openrouter",
+      };
+    }
+  } catch {}
 
   throw new Error(
     lastError ||
