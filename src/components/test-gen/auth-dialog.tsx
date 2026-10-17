@@ -25,7 +25,7 @@ import {
   User,
 } from "lucide-react";
 import { toast } from "sonner";
-import { loginApi, registerApi, oauthSyncApi, type AuthUser } from "./lib";
+import { loginApi, registerApi, type AuthUser } from "./lib";
 import { supabaseBrowser } from "@/lib/supabase-client";
 
 export function AuthDialog({
@@ -58,29 +58,6 @@ export function AuthDialog({
     }
   }, [open, defaultTab]);
 
-  // Check if returning from Google OAuth redirect
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    supabaseBrowser.auth.getSession().then(async ({ data }) => {
-      if (data?.session?.user) {
-        const u = data.session.user;
-        const userEmail = u.email;
-        if (userEmail) {
-          try {
-            const synced = await oauthSyncApi({
-              email: userEmail,
-              name: u.user_metadata?.full_name || u.user_metadata?.name || userEmail.split("@")[0],
-              provider: "google",
-            });
-            onSuccess(synced);
-            onClose();
-          } catch {}
-        }
-      }
-    });
-  }, [onSuccess, onClose]);
-
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -95,7 +72,7 @@ export function AuthDialog({
     setLoading(true);
     try {
       const user = await loginApi({ email: email.trim().toLowerCase(), password });
-      toast.success(`Welcome back, ${user.name || user.email}!`);
+      toast.success(`Welcome back, ${user.name || user.email}!`, { id: "auth-action" });
       onSuccess(user);
       onClose();
       resetForm();
@@ -116,7 +93,7 @@ export function AuthDialog({
         password,
         name: name.trim(),
       });
-      toast.success(`Account created! Welcome, ${user.name || user.email}!`);
+      toast.success(`Account created! Welcome, ${user.name || user.email}!`, { id: "auth-action" });
       onSuccess(user);
       onClose();
       resetForm();

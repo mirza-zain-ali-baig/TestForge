@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   LayoutDashboard,
   Wand2,
@@ -78,6 +78,7 @@ export function TestGeneratorApp() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
+  const syncedTokenRef = useRef<string | null>(null);
 
   // Load authenticated user on mount & listen for Google OAuth redirect
   useEffect(() => {
@@ -90,6 +91,10 @@ export function TestGeneratorApp() {
     if (typeof window !== "undefined") {
       const syncOAuth = async (session: any) => {
         if (!session?.user?.email) return;
+        const token = session.access_token || session.user.id;
+        if (syncedTokenRef.current === token) return;
+        syncedTokenRef.current = token;
+
         const u = session.user;
         try {
           const synced = await oauthSyncApi({
@@ -98,7 +103,7 @@ export function TestGeneratorApp() {
             provider: "google",
           });
           setUser(synced);
-          toast.success(`Welcome, ${synced.name || synced.email}!`);
+          toast.success(`Welcome, ${synced.name || synced.email}!`, { id: "auth-welcome" });
           if (window.location.hash.includes("access_token=")) {
             window.history.replaceState(null, "", window.location.pathname);
           }
@@ -107,15 +112,9 @@ export function TestGeneratorApp() {
         }
       };
 
-      supabaseBrowser.auth.getSession().then(({ data }) => {
-        if (data?.session) {
-          syncOAuth(data.session);
-        }
-      });
-
       const { data: authListener } = supabaseBrowser.auth.onAuthStateChange(
         (event, session) => {
-          if (event === "SIGNED_IN" && session) {
+          if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
             syncOAuth(session);
           }
         }
