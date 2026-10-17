@@ -107,6 +107,7 @@ import {
   type SimilarityPair,
 } from "./lib";
 import { TYPE_NAMES, DIFF_NAMES, TYPE_META } from "./lib";
+import { formatDuration } from "./generator-wizard";
 
 const LETTERS = ["A", "B", "C", "D"] as const;
 
@@ -126,7 +127,7 @@ export function TestPreview({
   initialMode?: "preview" | "practice" | "print";
 }) {
   const [showAnswers, setShowAnswers] = useState(false);
-  const [hidePaper, setHidePaper] = useState(true); // auto-enabled: hide paper by default
+  const [hidePaper, setHidePaper] = useState(false); // default: show paper
   const [printAnswerKey, setPrintAnswerKey] = useState(true);
   const [printStudentInfo, setPrintStudentInfo] = useState(true);
   const [institutionName, setInstitutionName] = useState("");
@@ -500,7 +501,7 @@ export function TestPreview({
               </Badge>
               <Badge variant="secondary">{test.totalQuestions} Q</Badge>
               <Badge variant="secondary">{test.totalMarks} marks</Badge>
-              <Badge variant="secondary">{test.durationMins} min</Badge>
+              <Badge variant="secondary">{formatDuration(test.durationMins)}</Badge>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5">
@@ -511,49 +512,35 @@ export function TestPreview({
                 <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
               </div>
               <Button
+                size="sm"
+                onClick={handlePrint}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              >
+                <Printer className="mr-1 h-4 w-4" /> Print
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setHidePaper(!hidePaper)}
+                onClick={handleExportPDF}
               >
-                {hidePaper ? <Eye className="mr-1 h-4 w-4" /> : <EyeOff className="mr-1 h-4 w-4" />}
-                {hidePaper ? "Show paper" : "Hide paper"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={onRegenerate}>
-                <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadText}>
-                <FileText className="mr-1 h-4 w-4" /> Text
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadJSON}>
-                <Download className="mr-1 h-4 w-4" /> JSON
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF}>
                 <Download className="mr-1 h-4 w-4" /> PDF
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportWord}>
-                <FileText className="mr-1 h-4 w-4" /> Word
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportExcel}>
-                <FileSpreadsheet className="mr-1 h-4 w-4" /> Excel
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setSharing(true)}>
-                <Share2 className="mr-1 h-4 w-4" /> Share
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCheckingDupes(true)}>
-                <CopyCheck className="mr-1 h-4 w-4" /> Dedupe
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
-                <Upload className="mr-1 h-4 w-4" /> Import
               </Button>
               <Button
                 size="sm"
+                onClick={() => setPracticing(true)}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold"
+              >
+                <Play className="mr-1 h-4 w-4 fill-current" /> Practice Online
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={handleSave}
                 disabled={saving || saved}
-                className="bg-emerald-600 hover:bg-emerald-700"
               >
                 {saved ? (
                   <>
-                    <CheckCircle2 className="mr-1 h-4 w-4" /> Saved
+                    <CheckCircle2 className="mr-1 h-4 w-4 text-emerald-600" /> Saved
                   </>
                 ) : (
                   <>
@@ -561,82 +548,11 @@ export function TestPreview({
                   </>
                 )}
               </Button>
-              <Button size="sm" onClick={handlePrint} className="bg-emerald-600 hover:bg-emerald-700">
-                <Printer className="mr-1 h-4 w-4" /> Print
-              </Button>
-              {onPrintExport && (
-                <Button
-                  size="sm"
-                  onClick={onPrintExport}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-                >
-                  <FileDown className="mr-1 h-4 w-4" /> Print &amp; Export
-                </Button>
-              )}
-              <Button
-                size="sm"
-                onClick={() => setPracticing(true)}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-              >
-                <Play className="mr-1 h-4 w-4" /> Practice
+              <Button variant="ghost" size="sm" onClick={onRegenerate}>
+                <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
               </Button>
             </div>
           </div>
-
-          {/* Print customization */}
-          <PrintCustomization
-            // toggles
-            printAnswerKey={printAnswerKey}
-            setPrintAnswerKey={setPrintAnswerKey}
-            printStudentInfo={printStudentInfo}
-            setPrintStudentInfo={setPrintStudentInfo}
-            showBubbleSheet={showBubbleSheet}
-            setShowBubbleSheet={setShowBubbleSheet}
-            // academy
-            academyName={academyName}
-            setAcademyName={setAcademyName}
-            academyLocation={academyLocation}
-            setAcademyLocation={setAcademyLocation}
-            logoDataUrl={logoDataUrl}
-            setLogoDataUrl={setLogoDataUrl}
-            // student info grid
-            studentName={studentName}
-            setStudentName={setStudentName}
-            rollNumber={rollNumber}
-            setRollNumber={setRollNumber}
-            classNameInput={classNameInput}
-            setClassNameInput={setClassNameInput}
-            paperCode={paperCode}
-            setPaperCode={setPaperCode}
-            subjectNameInput={subjectNameInput}
-            setSubjectNameInput={setSubjectNameInput}
-            timeAllowed={timeAllowed}
-            setTimeAllowed={setTimeAllowed}
-            totalMarksInput={totalMarksInput}
-            setTotalMarksInput={setTotalMarksInput}
-            examDate={examDate}
-            setExamDate={setExamDate}
-            examSyllabus={examSyllabus}
-            setExamSyllabus={setExamSyllabus}
-            examLabel={examLabel}
-            setExamLabel={setExamLabel}
-            showExamLabel={showExamLabel}
-            setShowExamLabel={setShowExamLabel}
-            // styling
-            fontSize={fontSize}
-            setFontSize={setFontSize}
-            headerSize={headerSize}
-            setHeaderSize={setHeaderSize}
-            watermarkText={watermarkText}
-            setWatermarkText={setWatermarkText}
-            // borders
-            mcqBorder={mcqBorder}
-            setMcqBorder={setMcqBorder}
-            shortBorder={shortBorder}
-            setShortBorder={setShortBorder}
-            longBorder={longBorder}
-            setLongBorder={setLongBorder}
-          />
         </CardContent>
       </Card>
 
@@ -657,7 +573,7 @@ export function TestPreview({
             </h1>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>
-                Time: <strong className="text-foreground">{test.durationMins} minutes</strong>
+                Time: <strong className="text-foreground">{formatDuration(test.durationMins)}</strong>
               </span>
               <span>
                 Total Marks: <strong className="text-foreground">{test.totalMarks}</strong>
@@ -1028,16 +944,7 @@ function SortableQuestion({
           </div>
         )}
 
-        {/* Answer lines when not showing answers for written questions */}
-        {!options && !showAnswers && (
-          <div className="mt-3 space-y-3">
-            {Array.from({
-              length: q.type_name === "Long" ? 5 : 2,
-            }).map((_, i) => (
-              <div key={i} className="border-b border-muted-foreground/25" style={{ height: 0 }} />
-            ))}
-          </div>
-        )}
+
 
         {/* Meta tags */}
         {showAnswers && (
@@ -1672,12 +1579,14 @@ function PracticeMode({
   test: GeneratedTest;
   onClose: () => void;
 }) {
-  // Flatten all questions into a single list with section + marks context
+  // Flatten ONLY MCQ questions into a single list with section + marks context
   const flat = useMemo(() => {
     const out: { q: GeneratedQuestion; section: string; marks: number; globalIndex: number }[] = [];
     let gi = 0;
     for (const sec of test.sections) {
+      if (sec.type_name !== "MCQ") continue;
       for (const q of sec.questions) {
+        if (!q.options) continue;
         out.push({ q, section: sec.type_name, marks: q.marks, globalIndex: gi++ });
       }
     }
@@ -1727,7 +1636,12 @@ function PracticeMode({
   const toggleFlag = (qi: number) =>
     setAnswers((a) => ({ ...a, [qi]: { ...a[qi], flagged: !a[qi]?.flagged } }));
 
-  // Grading (only MCQs are auto-graded; written are self-assessed)
+  // Grading (MCQs only in practice mode)
+  const totalMcqMarks = useMemo(
+    () => flat.reduce((sum, item) => sum + item.marks, 0),
+    [flat]
+  );
+
   const grade = useMemo(() => {
     let correct = 0;
     let incorrect = 0;
@@ -1737,32 +1651,21 @@ function PracticeMode({
     for (const item of flat) {
       const ans = answers[item.globalIndex];
       const chosen = ans?.mcq ?? null;
-      if (item.q.options) {
-        if (!chosen) {
-          unanswered++;
-          perQuestion.push({ q: item, correct: null, chosen: null });
-        } else if (chosen === item.q.options.correct_option) {
-          correct++;
-          marksEarned += item.marks;
-          perQuestion.push({ q: item, correct: true, chosen });
-        } else {
-          incorrect++;
-          perQuestion.push({ q: item, correct: false, chosen });
-        }
+      if (!chosen) {
+        unanswered++;
+        perQuestion.push({ q: item, correct: null, chosen: null });
+      } else if (chosen === item.q.options?.correct_option) {
+        correct++;
+        marksEarned += item.marks;
+        perQuestion.push({ q: item, correct: true, chosen });
       } else {
-        // written — count as answered if text exists
-        if (ans?.text?.trim()) {
-          perQuestion.push({ q: item, correct: null, chosen: null });
-        } else {
-          unanswered++;
-          perQuestion.push({ q: item, correct: null, chosen: null });
-        }
+        incorrect++;
+        perQuestion.push({ q: item, correct: false, chosen });
       }
     }
-    const mcqTotal = flat.filter((f) => f.q.options).length;
-    const scorePct = test.totalMarks > 0 ? Math.round((marksEarned / test.totalMarks) * 100) : 0;
-    return { correct, incorrect, unanswered, marksEarned, perQuestion, mcqTotal, scorePct };
-  }, [flat, answers, test.totalMarks]);
+    const scorePct = totalMcqMarks > 0 ? Math.round((marksEarned / totalMcqMarks) * 100) : 0;
+    return { correct, incorrect, unanswered, marksEarned, perQuestion, mcqTotal: flat.length, scorePct };
+  }, [flat, answers, totalMcqMarks]);
 
   const answeredCount = Object.values(answers).filter(
     (a) => a.mcq || (a.text && a.text.trim())
@@ -1995,6 +1898,10 @@ function PracticeIntro({
     .filter((s) => s.type_name === "MCQ")
     .reduce((sum, s) => sum + s.questions.length, 0);
 
+  const mcqMarks = test.sections
+    .filter((s) => s.type_name === "MCQ")
+    .reduce((sum, s) => sum + s.sectionMarks, 0);
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-8 sm:py-14 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
@@ -2006,15 +1913,15 @@ function PracticeIntro({
           Choose How You Want to Practice
         </h2>
         <p className="text-sm text-muted-foreground max-w-lg">
-          Take the complete timed exam under exam conditions, or prepare and study MCQs at your own pace with instant answer reveals and explanations.
+          Practice online with multiple-choice questions (MCQs). Take a timed test with automatic scoring or study at your own pace with instant explanations.
         </p>
       </div>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-        <IntroStat label="Questions" value={`${totalQuestions}`} />
-        <IntroStat label="Total Marks" value={`${test.totalMarks}`} />
-        <IntroStat label="Exam Duration" value={`${test.durationMins} min`} />
-        <IntroStat label="Available MCQs" value={`${mcqCount}`} />
+        <IntroStat label="Total MCQs" value={`${mcqCount}`} />
+        <IntroStat label="Total Marks" value={`${mcqMarks}`} />
+        <IntroStat label="Duration" value={formatDuration(test.durationMins)} />
+        <IntroStat label="Format" value="Online MCQs" />
       </div>
 
       {test.instructions && (
@@ -2036,18 +1943,19 @@ function PracticeIntro({
                 <Timer className="h-5 w-5" />
               </span>
               <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                Timed Exam
+                Timed MCQs
               </Badge>
             </div>
-            <h3 className="text-base font-bold text-foreground">Give Timed Test</h3>
+            <h3 className="text-base font-bold text-foreground">Give Timed MCQ Test</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Full exam simulation with live countdown timer ({test.durationMins}m), question navigation, flagging, and automated scorecard at the end.
+              Full timed practice simulation with live countdown timer ({formatDuration(test.durationMins)}), question flagging, and instant automated scorecard.
             </p>
           </div>
           <Button
             size="lg"
+            disabled={mcqCount === 0}
             onClick={onStartExam}
-            className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+            className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm disabled:opacity-50"
           >
             <Play className="mr-1.5 h-4 w-4 fill-current" /> Start Timed Test
           </Button>
@@ -2647,6 +2555,7 @@ function PracticeResults({
   onRetake: () => void;
   onExit: () => void;
 }) {
+  const totalMcqMarks = flat.reduce((s, f) => s + f.marks, 0);
   const fmtTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -2682,7 +2591,7 @@ function PracticeResults({
             <div className="mt-1 text-sm text-white/85">{gradeLabel}</div>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-white/90">
               <span>
-                Score: <strong>{grade.marksEarned}/{test.totalMarks}</strong> marks
+                Score: <strong>{grade.marksEarned}/{totalMcqMarks}</strong> marks
               </span>
               <span>
                 Time: <strong>{fmtTime(elapsedSec)}</strong>

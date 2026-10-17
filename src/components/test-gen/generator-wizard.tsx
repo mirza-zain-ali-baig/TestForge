@@ -192,6 +192,21 @@ function distributeEvenly(total: number): Record<DifficultyName, number> {
   return { Easy: easy, Medium: medium, Hard: hard };
 }
 
+export function formatDuration(mins: number): string {
+  if (mins <= 0) return "0 mins";
+  if (mins < 60) return `${mins} mins`;
+  const hours = mins / 60;
+  if (mins % 60 === 0) {
+    return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+  }
+  if (mins % 30 === 0) {
+    return `${hours} hours`;
+  }
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h} hr ${m} mins`;
+}
+
 /* ========================================================================= */
 /*                              GeneratorWizard                              */
 /* ========================================================================= */
@@ -1298,7 +1313,7 @@ export function GeneratorWizard({
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
                 <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Question Source Engine, Presets & Duration */}
+                  {/* Card 1: Question Source Filter, Presets & Duration */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3.5">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div>
@@ -1306,36 +1321,28 @@ export function GeneratorWizard({
                           <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup
                         </h3>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Engine, exam preset & time duration.
+                          Source filter, exam preset & time duration.
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-[10px] font-semibold capitalize">
-                        Engine: {source}
+                      <Badge variant="outline" className="text-[10px] font-semibold">
+                        {formatDuration(durationMins)} · {selectedPreset || "Custom"}
                       </Badge>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {/* Dropdown 1: Generation Engine */}
+                      {/* Dropdown 1: Question Source Filter */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <Bot className="h-3.5 w-3.5 text-emerald-600" />
-                          Source Engine
+                          <Filter className="h-3.5 w-3.5 text-emerald-600" />
+                          Source Filter
                         </Label>
-                        <Select value={source} onValueChange={(v) => setSource(v as any)}>
-                          <SelectTrigger className="h-9 text-xs font-semibold bg-background">
-                            <SelectValue placeholder="Source" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SOURCES.map((s) => (
-                              <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
-                                <span className="flex items-center gap-2">
-                                  <s.icon className="h-3.5 w-3.5 text-emerald-600" />
-                                  <span>{s.label}</span>
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <SourceFilterDropdown
+                          subjectId={subjectId}
+                          chapterIds={chapterIds}
+                          topicIds={topicIds}
+                          questionSources={questionSources}
+                          setQuestionSources={setQuestionSources}
+                        />
                       </div>
 
                       {/* Dropdown 2: Exam Preset */}
@@ -1508,170 +1515,7 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  {/* Card 3: Difficulty Distribution & Analytics */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <h3 className="text-sm font-bold flex items-center gap-2">
-                          <BarChart3 className="h-4 w-4 text-emerald-600" /> Difficulty Distribution & Analytics
-                        </h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Balance questions across Easy, Medium, and Hard difficulty levels.
-                        </p>
-                      </div>
-                      <Badge variant="outline" className={`font-bold text-xs ${difficultyIndexColor}`}>
-                        {difficultyStats.index}% · {difficultyIndexLabel}
-                      </Badge>
-                    </div>
-
-                    {/* Stacked Visual Bar */}
-                    <div className="space-y-1.5">
-                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted flex">
-                        {difficultyStats.total > 0 && (
-                          <>
-                            <div
-                              style={{ width: `${(difficultyStats.easy / difficultyStats.total) * 100}%` }}
-                              className="bg-emerald-500 h-full transition-all"
-                              title={`Easy: ${difficultyStats.easy}`}
-                            />
-                            <div
-                              style={{ width: `${(difficultyStats.medium / difficultyStats.total) * 100}%` }}
-                              className="bg-amber-500 h-full transition-all"
-                              title={`Medium: ${difficultyStats.medium}`}
-                            />
-                            <div
-                              style={{ width: `${(difficultyStats.hard / difficultyStats.total) * 100}%` }}
-                              className="bg-rose-500 h-full transition-all"
-                              title={`Hard: ${difficultyStats.hard}`}
-                            />
-                          </>
-                        )}
-                      </div>
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                          ● Easy ({difficultyStats.total > 0 ? Math.round((difficultyStats.easy / difficultyStats.total) * 100) : 0}%)
-                        </span>
-                        <span className="text-amber-600 dark:text-amber-400 font-medium">
-                          ● Medium ({difficultyStats.total > 0 ? Math.round((difficultyStats.medium / difficultyStats.total) * 100) : 0}%)
-                        </span>
-                        <span className="text-rose-600 dark:text-rose-400 font-medium">
-                          ● Hard ({difficultyStats.total > 0 ? Math.round((difficultyStats.hard / difficultyStats.total) * 100) : 0}%)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Metrics Breakdown Cards */}
-                    <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
-                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-2.5">
-                        <div className="font-bold text-emerald-700 dark:text-emerald-300">
-                          Easy
-                        </div>
-                        <div className="text-lg font-extrabold text-foreground">
-                          {difficultyStats.easy}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {difficultyStats.easyMarks} marks
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-2.5">
-                        <div className="font-bold text-amber-700 dark:text-amber-300">
-                          Medium
-                        </div>
-                        <div className="text-lg font-extrabold text-foreground">
-                          {difficultyStats.medium}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {difficultyStats.mediumMarks} marks
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 p-2.5">
-                        <div className="font-bold text-rose-700 dark:text-rose-300">
-                          Hard
-                        </div>
-                        <div className="text-lg font-extrabold text-foreground">
-                          {difficultyStats.hard}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {difficultyStats.hardMarks} marks
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Distribution Profiles */}
-                    <div className="space-y-1.5 pt-1 border-t">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          Quick Presets:
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setDifficultyOpen(!difficultyOpen)}
-                          className="h-7 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-                        >
-                          {difficultyOpen ? "Hide Cell-by-Cell" : "Fine-Tune Cell-by-Cell"}
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => applyDifficultyRatio(50, 35, 15)}
-                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                        >
-                          Easy (50/35/15)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => applyDifficultyRatio(35, 45, 20)}
-                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                        >
-                          Balanced (35/45/20)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => applyDifficultyRatio(20, 40, 40)}
-                          className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                        >
-                          Hard (20/40/40)
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Expandable Fine-tune cell-by-cell */}
-                    {difficultyOpen && (
-                      <div className="pt-2 border-t">
-                        <DifficultyEditor
-                          blueprint={blueprint}
-                          setBlueprint={(bp) => {
-                            setSelectedPreset("");
-                            setBlueprint(bp);
-                          }}
-                          setCount={setCount}
-                          subjectId={subjectId}
-                          chapterIds={chapterIds}
-                          topicIds={topicIds}
-                          selectedChapters={selectedChapters}
-                          allTopics={allTopics}
-                        />
-                      </div>
-                    )}
-
-                    {/* Higher-order thinking footer */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-2.5">
-                      <span>Higher-order thinking questions (Medium + Hard):</span>
-                      <span className="font-bold text-foreground">
-                        {difficultyStats.higherOrderPct}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Advanced Options (Instructions, Sources, Shuffle & AI Suggester) */}
+                  {/* Advanced Options (Source Engine, Difficulty & Analytics, Instructions & Shuffle) */}
                   <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
                     <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                       <CollapsibleTrigger asChild>
@@ -1681,25 +1525,182 @@ export function GeneratorWizard({
                         >
                           <span className="flex items-center gap-2">
                             <Settings2 className="h-4 w-4 text-emerald-600" />
-                            Advanced Options (Instructions, Sources, Shuffle & AI Suggester)
+                            Advanced Options (Source Engine, Difficulty & Analytics, Instructions & Shuffle)
                           </span>
                           <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
                         </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-4 space-y-4 border-t mt-3">
-                        {/* Question Source Filter */}
+                        {/* Generation Engine */}
                         <div className="space-y-1.5">
                           <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            <Filter className="h-3.5 w-3.5 text-emerald-600" />
-                            Question Source Filter
+                            <Bot className="h-3.5 w-3.5 text-emerald-600" />
+                            Source Engine
                           </Label>
-                          <SourceFilterDropdown
-                            subjectId={subjectId}
-                            chapterIds={chapterIds}
-                            topicIds={topicIds}
-                            questionSources={questionSources}
-                            setQuestionSources={setQuestionSources}
-                          />
+                          <Select value={source} onValueChange={(v) => setSource(v as any)}>
+                            <SelectTrigger className="h-9 text-xs font-semibold bg-background">
+                              <SelectValue placeholder="Source" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SOURCES.map((s) => (
+                                <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
+                                  <span className="flex items-center gap-2">
+                                    <s.icon className="h-3.5 w-3.5 text-emerald-600" />
+                                    <span>{s.label}</span>
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-[11px] text-muted-foreground">
+                            Choose question source: Curated Question Bank, AI Generation, or Hybrid.
+                          </p>
+                        </div>
+
+                        {/* Difficulty Distribution & Analytics */}
+                        <div className="rounded-xl border bg-background/60 p-4 space-y-3.5 shadow-xs">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5">
+                            <div>
+                              <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                <BarChart3 className="h-4 w-4 text-emerald-600" />
+                                Difficulty Distribution & Analytics
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                Default is <strong>Balanced</strong> (35% Easy · 45% Medium · 20% Hard) for standard exam difficulty.
+                              </p>
+                            </div>
+                            <Badge variant="outline" className={`font-bold text-xs shrink-0 self-start sm:self-auto ${difficultyIndexColor}`}>
+                              {difficultyStats.index}% · {difficultyIndexLabel}
+                            </Badge>
+                          </div>
+
+                          {/* Visual Stacked Bar */}
+                          <div className="space-y-1.5">
+                            <div className="h-3 w-full overflow-hidden rounded-full bg-muted flex">
+                              {difficultyStats.total > 0 && (
+                                <>
+                                  <div
+                                    style={{ width: `${(difficultyStats.easy / difficultyStats.total) * 100}%` }}
+                                    className="bg-emerald-500 h-full transition-all"
+                                    title={`Easy: ${difficultyStats.easy} questions`}
+                                  />
+                                  <div
+                                    style={{ width: `${(difficultyStats.medium / difficultyStats.total) * 100}%` }}
+                                    className="bg-amber-500 h-full transition-all"
+                                    title={`Medium: ${difficultyStats.medium} questions`}
+                                  />
+                                  <div
+                                    style={{ width: `${(difficultyStats.hard / difficultyStats.total) * 100}%` }}
+                                    className="bg-rose-500 h-full transition-all"
+                                    title={`Hard: ${difficultyStats.hard} questions`}
+                                  />
+                                </>
+                              )}
+                            </div>
+                            <div className="flex justify-between text-[11px] text-muted-foreground">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                ● Easy ({difficultyStats.total > 0 ? Math.round((difficultyStats.easy / difficultyStats.total) * 100) : 35}%)
+                              </span>
+                              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                ● Medium ({difficultyStats.total > 0 ? Math.round((difficultyStats.medium / difficultyStats.total) * 100) : 45}%)
+                              </span>
+                              <span className="text-rose-600 dark:text-rose-400 font-medium">
+                                ● Hard ({difficultyStats.total > 0 ? Math.round((difficultyStats.hard / difficultyStats.total) * 100) : 20}%)
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Metric summary cards */}
+                          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div className="rounded-lg border border-emerald-500/25 bg-emerald-50/40 dark:bg-emerald-950/20 p-2">
+                              <div className="font-semibold text-emerald-700 dark:text-emerald-300">Easy</div>
+                              <div className="text-base font-extrabold text-foreground">{difficultyStats.easy}</div>
+                              <div className="text-[10px] text-muted-foreground">{difficultyStats.easyMarks} marks</div>
+                            </div>
+                            <div className="rounded-lg border border-amber-500/25 bg-amber-50/40 dark:bg-amber-950/20 p-2">
+                              <div className="font-semibold text-amber-700 dark:text-amber-300">Medium</div>
+                              <div className="text-base font-extrabold text-foreground">{difficultyStats.medium}</div>
+                              <div className="text-[10px] text-muted-foreground">{difficultyStats.mediumMarks} marks</div>
+                            </div>
+                            <div className="rounded-lg border border-rose-500/25 bg-rose-50/40 dark:bg-rose-950/20 p-2">
+                              <div className="font-semibold text-rose-700 dark:text-rose-300">Hard</div>
+                              <div className="text-base font-extrabold text-foreground">{difficultyStats.hard}</div>
+                              <div className="text-[10px] text-muted-foreground">{difficultyStats.hardMarks} marks</div>
+                            </div>
+                          </div>
+
+                          {/* Quick 1-click profiles */}
+                          <div className="space-y-1.5 pt-1 border-t">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground">
+                                Quick Difficulty Profiles:
+                              </span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setDifficultyOpen(!difficultyOpen)}
+                                className="h-6 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold"
+                              >
+                                {difficultyOpen ? "Hide Cell-by-Cell" : "Fine-Tune Cell-by-Cell"}
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => applyDifficultyRatio(50, 35, 15)}
+                                className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              >
+                                🌱 Easy (50/35/15)
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => applyDifficultyRatio(35, 45, 20)}
+                                className="text-xs h-8 font-semibold border-emerald-600/40 bg-emerald-50/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                              >
+                                ⚖️ Balanced (35/45/20)
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => applyDifficultyRatio(20, 40, 40)}
+                                className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              >
+                                🔥 Hard (20/40/40)
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Expandable fine-tune matrix */}
+                          {difficultyOpen && (
+                            <div className="pt-2 border-t">
+                              <DifficultyEditor
+                                blueprint={blueprint}
+                                setBlueprint={(bp) => {
+                                  setSelectedPreset("");
+                                  setBlueprint(bp);
+                                }}
+                                setCount={setCount}
+                                subjectId={subjectId}
+                                chapterIds={chapterIds}
+                                topicIds={topicIds}
+                                selectedChapters={selectedChapters}
+                                allTopics={allTopics}
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
+                            <span>Higher-order thinking questions (Medium + Hard):</span>
+                            <span className="font-bold text-foreground">
+                              {difficultyStats.higherOrderPct}%
+                            </span>
+                          </div>
                         </div>
 
                         {/* Instructions */}
@@ -1782,7 +1783,7 @@ export function GeneratorWizard({
                         <div className="text-[10px] uppercase font-bold text-muted-foreground">Marks</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-black text-foreground">{durationMins}m</div>
+                        <div className="text-xl sm:text-2xl font-black text-foreground">{formatDuration(durationMins)}</div>
                         <div className="text-[10px] uppercase font-bold text-muted-foreground">Duration</div>
                       </div>
                     </div>
@@ -2518,7 +2519,7 @@ function DurationDropdown(props: {
         >
           <span className="truncate flex items-center gap-1.5 min-w-0">
             <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span className="truncate">{durationMins} Minutes</span>
+            <span className="truncate">{formatDuration(durationMins)}</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-1" />
         </button>
@@ -2527,7 +2528,7 @@ function DurationDropdown(props: {
         <div className="flex items-center justify-between border-b pb-2">
           <span className="text-xs font-bold text-foreground">Exam Duration</span>
           <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-            {durationMins}m
+            {formatDuration(durationMins)}
           </span>
         </div>
 
@@ -2547,7 +2548,7 @@ function DurationDropdown(props: {
                   : "border-border bg-background hover:bg-accent text-foreground"
               }`}
             >
-              {m}m
+              {formatDuration(m)}
             </button>
           ))}
         </div>
@@ -2579,6 +2580,11 @@ function DurationDropdown(props: {
             />
             <span className="text-[11px] text-muted-foreground">min</span>
           </div>
+          {durationMins >= 60 && (
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+              ({formatDuration(durationMins)})
+            </span>
+          )}
         </div>
       </PopoverContent>
     </Popover>
