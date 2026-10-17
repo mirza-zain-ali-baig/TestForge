@@ -49,18 +49,10 @@ export interface ModelInfo {
  */
 export const CURATED_FREE_MODELS: ModelInfo[] = [
   {
-    id: "nvidia/nemotron-3-ultra-550b-a55b:free",
-    name: "NVIDIA Nemotron 3 Ultra 550B",
-    badge: "550B Flagship",
+    id: "nvidia/nemotron-3.5-super-vl:free",
+    name: "NVIDIA Nemotron 3.5 Super VL",
+    badge: "1M Context & Fast",
     quality: 100,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "google/gemma-4-31b-it:free",
-    name: "Google Gemma 4 31B",
-    badge: "Google AI",
-    quality: 95,
     isFree: true,
     category: "recommended",
   },
@@ -68,31 +60,23 @@ export const CURATED_FREE_MODELS: ModelInfo[] = [
     id: "nvidia/nemotron-3-super-120b-a12b:free",
     name: "NVIDIA Nemotron 3 Super 120B",
     badge: "120B Reasoning",
+    quality: 98,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "xingchen-agi/xing4.0-29b-a4b:free",
+    name: "XingChen 29B Chat",
+    badge: "29B Chat",
+    quality: 95,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "liquid/lfm-2.5-2.6b:free",
+    name: "LiquidAI LFM 2.5",
+    badge: "Lightning Fast",
     quality: 92,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-    name: "Nemotron Omni 30B Reasoning",
-    badge: "Reasoning",
-    quality: 90,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "thinkingmachines/inkling:free",
-    name: "Thinking Machines Inkling",
-    badge: "1M Context",
-    quality: 88,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "nvidia/nemotron-3.5-lightning:free",
-    name: "NVIDIA Nemotron 3.5 Lightning",
-    badge: "Ultra Fast",
-    quality: 86,
     isFree: true,
     category: "recommended",
   },
@@ -100,7 +84,23 @@ export const CURATED_FREE_MODELS: ModelInfo[] = [
     id: "google/gemma-4-26b-a4b-it:free",
     name: "Google Gemma 4 26B",
     badge: "Google AI",
-    quality: 84,
+    quality: 90,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "google/gemma-4-31b-it:free",
+    name: "Google Gemma 4 31B",
+    badge: "Google AI",
+    quality: 88,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    name: "Nemotron Omni 30B Reasoning",
+    badge: "Reasoning",
+    quality: 86,
     isFree: true,
     category: "recommended",
   },
@@ -108,30 +108,22 @@ export const CURATED_FREE_MODELS: ModelInfo[] = [
     id: "cohere/north-mini-code:free",
     name: "Cohere North Mini Code",
     badge: "Code Expert",
+    quality: 84,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "thinkingmachines/inkling:free",
+    name: "Thinking Machines Inkling",
+    badge: "1M Context",
     quality: 82,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "thinkingmachines/inkling-small:free",
-    name: "Thinking Machines Inkling Small",
-    badge: "Fast 1M",
-    quality: 80,
-    isFree: true,
-    category: "recommended",
-  },
-  {
-    id: "poolside/laguna-s-2.1:free",
-    name: "Poolside Laguna S 2.1",
-    badge: "Speed",
-    quality: 75,
     isFree: true,
     category: "recommended",
   },
   {
     id: "openrouter/free",
     name: "OpenRouter Free Router",
-    badge: "Auto-Free (Always Available)",
+    badge: "Auto-Free Router",
     quality: 70,
     isFree: true,
     category: "recommended",
@@ -150,11 +142,12 @@ export const PAID_POPULAR_MODELS: ModelInfo[] = [
  * or if a chosen free model is rate-limited (429), down (503), or deprecated (404).
  */
 export const FALLBACK_CHAIN = [
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "google/gemma-4-31b-it:free",
+  "nvidia/nemotron-3.5-super-vl:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
-  "thinkingmachines/inkling:free",
-  "nvidia/nemotron-3.5-lightning:free",
+  "xingchen-agi/xing4.0-29b-a4b:free",
+  "liquid/lfm-2.5-2.6b:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "google/gemma-4-31b-it:free",
   "openrouter/free",
 ];
 
@@ -190,7 +183,12 @@ export async function fetchLiveOpenRouterModels(): Promise<{
         m.id.endsWith(":free") ||
         (m.pricing && String(m.pricing.prompt) === "0" && String(m.pricing.completion) === "0");
 
-      if (isFree && !curatedIds.has(m.id)) {
+      if (
+        isFree &&
+        !curatedIds.has(m.id) &&
+        !m.id.toLowerCase().includes("safety") &&
+        !m.id.toLowerCase().includes("clip")
+      ) {
         liveFree.push({
           id: m.id,
           name: (m.name || m.id).replace(/\s*\(free\)\s*/i, ""),

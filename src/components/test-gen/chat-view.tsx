@@ -269,6 +269,11 @@ export function ChatView() {
             try {
               const parsed = JSON.parse(payloadStr);
 
+              // Throw if stream returned an error object
+              if (parsed.error) {
+                throw new Error(parsed.error.message || "Model error");
+              }
+
               // Check for metadata chunk
               if (parsed.meta) {
                 setMessages((prev) =>
@@ -285,10 +290,13 @@ export function ChatView() {
                 continue;
               }
 
-              // Text delta
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                assistantContent += delta;
+              // Text & reasoning delta
+              const delta = parsed.choices?.[0]?.delta;
+              const textChunk = delta?.content ?? delta?.text ?? parsed.choices?.[0]?.text ?? "";
+              const reasoningChunk = delta?.reasoning ?? "";
+
+              if (textChunk) {
+                assistantContent += textChunk;
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantPlaceholderId
@@ -296,15 +304,61 @@ export function ChatView() {
                       : m
                   )
                 );
+              } else if (reasoningChunk && !assistantContent) {
+                // If model is streaming thought/reasoning before or instead of content
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantPlaceholderId
+                      ? { ...m, content: (m.content || "") + reasoningChunk }
+                      : m
+                  )
+                );
               }
-            } catch {
-              // Ignore partial JSON chunks
+            } catch (parseErr) {
+              if (parseErr instanceof Error && parseErr.message.includes("Model error")) {
+                throw parseErr;
+              }
             }
           }
         }
 
+        // If stream ended empty, immediately try non-streaming fallback
+        if (!assistantContent.trim()) {
+          try {
+            const fallbackRes = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+                model: modelToUse,
+                apiKey: apiKey.trim(),
+                systemPrompt: systemPrompt.trim(),
+                stream: false,
+              }),
+            });
+            if (fallbackRes.ok) {
+              const data = await fallbackRes.json();
+              if (data.reply) {
+                assistantContent = data.reply;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantPlaceholderId
+                      ? {
+                          ...m,
+                          content: assistantContent,
+                          modelUsed: data.modelUsed || m.modelUsed,
+                          fallbackFrom: data.fallbackFrom || m.fallbackFrom,
+                        }
+                      : m
+                  )
+                );
+              }
+            }
+          } catch {}
+        }
+
         if (!assistantContent) {
-          assistantContent = "*(No response generated)*";
+          assistantContent = "*(The model didn't return text. Please try again or switch model from the dropdown above.)*";
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantPlaceholderId ? { ...m, content: assistantContent } : m

@@ -163,14 +163,19 @@ export async function POST(req: NextRequest) {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
           Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
         },
       });
     }
 
     // Non-streaming JSON response
     const json = await successfulResponse.json();
+    const reply =
+      json.choices?.[0]?.message?.content ||
+      json.choices?.[0]?.message?.reasoning ||
+      "";
     return NextResponse.json({
-      reply: json.choices?.[0]?.message?.content || "",
+      reply,
       modelUsed: activeModel,
       fallbackFrom: fallbackFrom || null,
       usage: json.usage || null,

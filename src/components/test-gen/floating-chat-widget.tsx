@@ -166,6 +166,10 @@ export function FloatingChatWidget({ onExpandToFullPage }: FloatingChatWidgetPro
             try {
               const parsed = JSON.parse(payloadStr);
 
+              if (parsed.error) {
+                throw new Error(parsed.error.message || "Model error");
+              }
+
               if (parsed.meta) {
                 setMessages((prev) =>
                   prev.map((m) =>
@@ -181,9 +185,12 @@ export function FloatingChatWidget({ onExpandToFullPage }: FloatingChatWidgetPro
                 continue;
               }
 
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                assistantContent += delta;
+              const delta = parsed.choices?.[0]?.delta;
+              const textChunk = delta?.content ?? delta?.text ?? parsed.choices?.[0]?.text ?? "";
+              const reasoningChunk = delta?.reasoning ?? "";
+
+              if (textChunk) {
+                assistantContent += textChunk;
                 setMessages((prev) =>
                   prev.map((m) =>
                     m.id === assistantPlaceholderId
@@ -191,13 +198,58 @@ export function FloatingChatWidget({ onExpandToFullPage }: FloatingChatWidgetPro
                       : m
                   )
                 );
+              } else if (reasoningChunk && !assistantContent) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantPlaceholderId
+                      ? { ...m, content: (m.content || "") + reasoningChunk }
+                      : m
+                  )
+                );
               }
-            } catch {}
+            } catch (err) {
+              if (err instanceof Error && err.message.includes("Model error")) {
+                throw err;
+              }
+            }
           }
         }
 
+        if (!assistantContent.trim()) {
+          try {
+            const fallbackRes = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+                model: activeModel,
+                apiKey: savedKey,
+                stream: false,
+              }),
+            });
+            if (fallbackRes.ok) {
+              const data = await fallbackRes.json();
+              if (data.reply) {
+                assistantContent = data.reply;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantPlaceholderId
+                      ? {
+                          ...m,
+                          content: assistantContent,
+                          modelUsed: data.modelUsed || m.modelUsed,
+                          fallbackFrom: data.fallbackFrom || m.fallbackFrom,
+                        }
+                      : m
+                  )
+                );
+              }
+            }
+          } catch {}
+        }
+
         if (!assistantContent) {
-          assistantContent = "*(No response generated)*";
+          assistantContent = "*(The model didn't return text. Please try asking again or switch model from the full Chat page.)*";
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantPlaceholderId ? { ...m, content: assistantContent } : m
