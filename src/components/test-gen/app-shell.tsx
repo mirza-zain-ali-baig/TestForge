@@ -121,7 +121,7 @@ export function TestGeneratorApp() {
       );
 
       return () => {
-        authListener.subscription.unsubscribe();
+        authListener?.subscription?.unsubscribe();
       };
     }
   }, []);

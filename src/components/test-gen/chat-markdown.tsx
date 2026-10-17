@@ -375,7 +375,7 @@ function TextFormatted({ text }: { text: string }) {
 // ─── Inline Styles & Math Parsing ─────────────────────────────────────────────
 
 export function renderInlineStyles(str: string): React.ReactNode {
-  if (!str) return "";
+  if (!str || typeof str !== "string") return typeof str === "number" ? String(str) : "";
 
   // Tokens:
   // 1. Math block `$$...$$` inside lines

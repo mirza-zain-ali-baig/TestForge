@@ -5,14 +5,12 @@ import { createClient } from "@supabase/supabase-js";
  * Reads from the shared question-bank database using the public anon key.
  * All queries are performed inside API routes — never in client components.
  */
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const DEFAULT_SUPABASE_URL = "https://hpzuvqoviudcgwqcsdog.supabase.co";
+const DEFAULT_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwenV2cW92aXVkY2d3cWNzZG9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NDA3NDYsImV4cCI6MjEwMTUxNjc0Nn0.9IeE1vncfiezqGc9WWRuny8RiMHTUUVzXziMpabc-Zc";
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env and fill in the values."
-  );
-}
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_ANON_KEY;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: false },
