@@ -1,0 +1,233 @@
+/**
+ * OpenRouter AI Integration for ExamForge
+ * Provides smart model selection, dynamic free model discovery,
+ * and automatic fallback routing to ensure reliable, high-quality answers.
+ */
+
+export const DEFAULT_OPENROUTER_API_KEY =
+  process.env.OPENROUTER_API_KEY || "";
+
+export type ChatRole = "system" | "user" | "assistant";
+
+export interface ChatMessage {
+  id?: string;
+  role: ChatRole;
+  content: string;
+  modelUsed?: string;
+  fallbackFrom?: string;
+  timestamp?: number;
+  isError?: boolean;
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  badge?: string;
+  context_length?: number;
+  quality?: number;
+  isFree: boolean;
+  category?: "recommended" | "live-free" | "paid" | "custom";
+}
+
+/**
+ * Curated ranking of OpenRouter free models.
+ * Higher quality score = tried first when in "Auto (Best Free Model)" mode.
+ */
+export const CURATED_FREE_MODELS: ModelInfo[] = [
+  {
+    id: "nvidia/nemotron-3-ultra-550b-a55b:free",
+    name: "NVIDIA Nemotron 3 Ultra 550B",
+    badge: "550B Flagship",
+    quality: 100,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "google/gemma-4-31b-it:free",
+    name: "Google Gemma 4 31B",
+    badge: "Google AI",
+    quality: 95,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "nvidia/nemotron-3-super-120b-a12b:free",
+    name: "NVIDIA Nemotron 3 Super 120B",
+    badge: "120B Reasoning",
+    quality: 92,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    name: "Nemotron Omni 30B Reasoning",
+    badge: "Reasoning",
+    quality: 90,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "thinkingmachines/inkling:free",
+    name: "Thinking Machines Inkling",
+    badge: "1M Context",
+    quality: 88,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "nvidia/nemotron-3.5-lightning:free",
+    name: "NVIDIA Nemotron 3.5 Lightning",
+    badge: "Ultra Fast",
+    quality: 86,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "google/gemma-4-26b-a4b-it:free",
+    name: "Google Gemma 4 26B",
+    badge: "Google AI",
+    quality: 84,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "cohere/north-mini-code:free",
+    name: "Cohere North Mini Code",
+    badge: "Code Expert",
+    quality: 82,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "thinkingmachines/inkling-small:free",
+    name: "Thinking Machines Inkling Small",
+    badge: "Fast 1M",
+    quality: 80,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "poolside/laguna-s-2.1:free",
+    name: "Poolside Laguna S 2.1",
+    badge: "Speed",
+    quality: 75,
+    isFree: true,
+    category: "recommended",
+  },
+  {
+    id: "openrouter/free",
+    name: "OpenRouter Free Router",
+    badge: "Auto-Free (Always Available)",
+    quality: 70,
+    isFree: true,
+    category: "recommended",
+  },
+];
+
+export const PAID_POPULAR_MODELS: ModelInfo[] = [
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", badge: "Paid", isFree: false, category: "paid" },
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", badge: "Paid", isFree: false, category: "paid" },
+  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku", badge: "Paid", isFree: false, category: "paid" },
+  { id: "openrouter/auto", name: "Auto Router", badge: "Paid", isFree: false, category: "paid" },
+];
+
+/**
+ * Ordered fallback chain to ensure requests never fail when in "Auto" mode
+ * or if a chosen free model is rate-limited (429), down (503), or deprecated (404).
+ */
+export const FALLBACK_CHAIN = [
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "google/gemma-4-31b-it:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "thinkingmachines/inkling:free",
+  "nvidia/nemotron-3.5-lightning:free",
+  "openrouter/free",
+];
+
+/**
+ * Fetch live active models from OpenRouter and extract free models
+ */
+export async function fetchLiveOpenRouterModels(): Promise<{
+  recommended: ModelInfo[];
+  liveFree: ModelInfo[];
+  paid: ModelInfo[];
+}> {
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/models", {
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) {
+      return {
+        recommended: CURATED_FREE_MODELS,
+        liveFree: [],
+        paid: PAID_POPULAR_MODELS,
+      };
+    }
+    const json = (await res.json()) as { data?: Array<{ id: string; name?: string; context_length?: number; pricing?: { prompt?: string | number; completion?: string | number } }> };
+    const rawList = Array.isArray(json.data) ? json.data : [];
+
+    const curatedIds = new Set(CURATED_FREE_MODELS.map((m) => m.id));
+
+    const liveFree: ModelInfo[] = [];
+
+    for (const m of rawList) {
+      const isFree =
+        m.id === "openrouter/free" ||
+        m.id.endsWith(":free") ||
+        (m.pricing && String(m.pricing.prompt) === "0" && String(m.pricing.completion) === "0");
+
+      if (isFree && !curatedIds.has(m.id)) {
+        liveFree.push({
+          id: m.id,
+          name: (m.name || m.id).replace(/\s*\(free\)\s*/i, ""),
+          context_length: m.context_length,
+          badge: "Free",
+          isFree: true,
+          category: "live-free",
+        });
+      }
+    }
+
+    return {
+      recommended: CURATED_FREE_MODELS,
+      liveFree: liveFree.slice(0, 30),
+      paid: PAID_POPULAR_MODELS,
+    };
+  } catch {
+    return {
+      recommended: CURATED_FREE_MODELS,
+      liveFree: [],
+      paid: PAID_POPULAR_MODELS,
+    };
+  }
+}
+
+/**
+ * Format system prompts for educational & exam use cases
+ */
+export const SYSTEM_PROMPT_PRESETS: { id: string; label: string; prompt: string }[] = [
+  {
+    id: "tutor",
+    label: "ExamPrep Tutor (Recommended)",
+    prompt:
+      "You are ExamForge AI, an expert academic tutor for school exams (Classes 9, 10, 11, 12). Provide clear, structured, accurate, and easy-to-understand explanations. Include formulas, definitions, key points, and examples where helpful.",
+  },
+  {
+    id: "solver",
+    label: "Step-by-Step Problem Solver",
+    prompt:
+      "You are a rigorous academic problem solver. Solve any math, science, or computer science problem step-by-step with clear reasoning, formulas, and verified final answers.",
+  },
+  {
+    id: "question-gen",
+    label: "Question & MCQ Generator",
+    prompt:
+      "You are an exam paper setter. When asked to generate questions, create high-quality exam-standard questions with clear marks, model answers, and explanations. For MCQs, provide 4 options (A, B, C, D) and indicate the correct answer with reasoning.",
+  },
+  {
+    id: "concise",
+    label: "Concise Exam Revision",
+    prompt:
+      "You are a high-yield exam revision assistant. Provide bulleted, high-impact answers optimized for quick memorization and exam revision without unnecessary fluff.",
+  },
+];
