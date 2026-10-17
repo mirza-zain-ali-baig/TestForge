@@ -4,24 +4,25 @@
  * and automatic fallback routing to ensure reliable, high-quality answers.
  */
 
-const DEFAULT_KEY_B64 =
+/**
+ * Backend OpenRouter API Key provided for ExamForge.
+ * Decoded at runtime so requests work automatically out-of-the-box on backend.
+ */
+const BACKEND_KEY_B64 =
   "c2stb3ItdjEtYzJlMjUxNDJjNjc0MDkxYjdhOWEwZGVkOTViOGU5Yzg4MWI1OTRhZGZlMThlMjFiMWFjM2I2NjQ4YWIxZDI2YQ==";
+
+export const BACKEND_OPENROUTER_KEY =
+  typeof Buffer !== "undefined"
+    ? Buffer.from(BACKEND_KEY_B64, "base64").toString("utf-8")
+    : typeof atob === "function"
+    ? atob(BACKEND_KEY_B64)
+    : "";
 
 export function getDefaultOpenRouterKey(): string {
   if (typeof process !== "undefined" && process.env?.OPENROUTER_API_KEY) {
     return process.env.OPENROUTER_API_KEY.trim();
   }
-  try {
-    if (typeof atob === "function") {
-      return atob(DEFAULT_KEY_B64);
-    }
-  } catch {}
-  try {
-    if (typeof Buffer !== "undefined") {
-      return Buffer.from(DEFAULT_KEY_B64, "base64").toString("utf-8");
-    }
-  } catch {}
-  return "";
+  return BACKEND_OPENROUTER_KEY;
 }
 
 export const DEFAULT_OPENROUTER_API_KEY = getDefaultOpenRouterKey();
