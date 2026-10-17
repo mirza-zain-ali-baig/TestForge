@@ -131,13 +131,37 @@ export function AuthDialog({
     setError(null);
     setGoogleLoading(true);
     try {
-      const { error: gErr } = await supabaseBrowser.auth.signInWithOAuth({
+      const { data, error: gErr } = await supabaseBrowser.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+          skipBrowserRedirect: true,
         },
       });
       if (gErr) throw gErr;
+      if (!data?.url) {
+        throw new Error("Unable to initialize Google Sign-In.");
+      }
+
+      // Check if provider is enabled before full page navigation to prevent raw JSON error screen
+      try {
+        const testRes = await fetch(data.url, { method: "GET" });
+        if (!testRes.ok) {
+          const body = await testRes.json().catch(() => null);
+          if (body?.msg?.includes("not enabled") || testRes.status === 400) {
+            throw new Error(
+              "Google Sign-In is not enabled yet in your Supabase project (hpzuvqoviudcgwqcsdog). Please enable Google in Supabase Dashboard → Authentication → Providers → Google (with Google Client ID & Secret)."
+            );
+          }
+        }
+      } catch (checkErr) {
+        if (checkErr instanceof Error && checkErr.message.includes("not enabled")) {
+          throw checkErr;
+        }
+        // If it's just a redirect or network restriction, proceed safely to URL
+      }
+
+      window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initiate Google Sign-In.");
       setGoogleLoading(false);
