@@ -426,7 +426,7 @@ export function TestGeneratorApp() {
             />
           ))}
         {view === "bank" && <QuestionBank />}
-        {view === "chat" && <ChatView />}
+        {view === "chat" && <ChatView user={user} />}
         {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}
         {view === "history" && <TestHistoryView />}
         {view === "print" && preview && (
@@ -446,15 +446,7 @@ export function TestGeneratorApp() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span>Powered by Supabase · Next.js · Z.ai LLM</span>
-            <a
-              href="https://z.ai"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 hover:text-foreground"
-            >
-              <Github className="h-3.5 w-3.5" /> Z.ai
-            </a>
+            <span>Powered by Supabase · Next.js · ExamForge AI</span>
           </div>
         </div>
       </footer>
@@ -464,7 +456,7 @@ export function TestGeneratorApp() {
 
       {/* Floating AI Chatbox Widget (shown on all pages except full Chat page) */}
       {view !== "chat" && (
-        <FloatingChatWidget onExpandToFullPage={() => setView("chat")} />
+        <FloatingChatWidget user={user} onExpandToFullPage={() => setView("chat")} />
       )}
 
       {/* Keyboard shortcuts help */}

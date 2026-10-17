@@ -70,13 +70,31 @@ export function QuestionBank() {
     fetchCurriculum()
       .then((d) => {
         setTree(d.tree);
-        if (d.tree[0]) {
-          setClassId(d.tree[0].id);
-          if (d.tree[0].subjects?.[0]) setSubjectId(d.tree[0].subjects[0].id);
+        if (d.tree && d.tree.length > 0) {
+          const firstClass = d.tree[0];
+          setClassId((prev) => prev || firstClass.id);
+          if (firstClass.subjects && firstClass.subjects.length > 0) {
+            setSubjectId((prev) => prev || firstClass.subjects![0].id);
+          }
         }
       })
       .catch((e) => toast.error(e.message));
   }, []);
+
+  const handleClassChange = (newClassId: string) => {
+    setClassId(newClassId);
+    if (newClassId === "all") {
+      setSubjectId("all");
+    } else {
+      const cls = tree.find((c) => c.id === newClassId);
+      if (cls && cls.subjects && cls.subjects.length > 0) {
+        setSubjectId(cls.subjects[0].id);
+      } else {
+        setSubjectId("all");
+      }
+    }
+    setChapterIds([]);
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350);
@@ -92,22 +110,21 @@ export function QuestionBank() {
   }, [classId, subjectId, chapterIds, typeName, diffName, debouncedSearch]);
 
   const load = useCallback(async () => {
-    if (!subjectId) return;
     setLoading(true);
     try {
       const res = await fetchQuestions({
-        subjectId,
-        chapterIds,
+        subjectId: subjectId && subjectId !== "all" ? subjectId : undefined,
+        chapterIds: chapterIds.length > 0 ? chapterIds : undefined,
         questionType: typeName === "all" ? undefined : typeName,
         difficulty: diffName === "all" ? undefined : diffName,
         search: debouncedSearch || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       });
-      setQuestions(res.questions);
-      setTotal(res.total);
+      setQuestions(res.questions ?? []);
+      setTotal(res.total ?? 0);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load");
+      toast.error(e instanceof Error ? e.message : "Failed to load questions");
     } finally {
       setLoading(false);
     }
@@ -146,8 +163,15 @@ export function QuestionBank() {
     toast.success(text.trim() ? "Note saved" : "Note removed");
   };
 
-  const currentClass = tree.find((c) => c.id === classId);
-  const subjects = currentClass?.subjects ?? [];
+  const currentClass =
+    classId && classId !== "all" ? tree.find((c) => c.id === classId) : null;
+  const subjects = currentClass
+    ? currentClass.subjects ?? []
+    : Array.from(
+        new Map(
+          tree.flatMap((c) => c.subjects ?? []).map((s) => [s.id, s])
+        ).values()
+      );
   const chapters =
     subjects.find((s) => s.id === subjectId)?.chapters ?? [];
 
@@ -172,9 +196,10 @@ export function QuestionBank() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Class</Label>
-              <Select value={classId} onValueChange={setClassId}>
-                <SelectTrigger><SelectValue placeholder="Class" /></SelectTrigger>
+              <Select value={classId || "all"} onValueChange={handleClassChange}>
+                <SelectTrigger><SelectValue placeholder="All Classes" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
                   {tree.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>
                   ))}
@@ -183,9 +208,10 @@ export function QuestionBank() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Subject</Label>
-              <Select value={subjectId} onValueChange={setSubjectId}>
-                <SelectTrigger><SelectValue placeholder="Subject" /></SelectTrigger>
+              <Select value={subjectId || "all"} onValueChange={setSubjectId}>
+                <SelectTrigger><SelectValue placeholder="All Subjects" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
                   {subjects.map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.subject_name}</SelectItem>
                   ))}

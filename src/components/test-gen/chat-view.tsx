@@ -2,47 +2,49 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Bot,
   Send,
   Square,
   Sparkles,
-  Settings,
   Trash2,
   Copy,
   Check,
   ChevronDown,
-  Key,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Lightbulb,
-  ArrowRight,
+  ArrowDown,
+  MessageSquare,
+  Plus,
+  PanelLeftClose,
+  PanelLeftOpen,
+  User,
   ShieldCheck,
-  Zap,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChatMarkdown } from "./chat-markdown";
 import {
   CURATED_FREE_MODELS,
-  SYSTEM_PROMPT_PRESETS,
   getDefaultOpenRouterKey,
   type ChatMessage,
-  type ModelInfo,
 } from "@/lib/openrouter";
+import type { AuthUser } from "./lib";
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessage[];
+  model?: string;
+}
 
 const STARTER_PROMPTS = [
   {
@@ -69,120 +71,181 @@ const STARTER_PROMPTS = [
   },
 ];
 
-export function ChatView() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const FREE_MODEL_OPTIONS = [
+  { id: "auto", name: "Auto (Best Free AI - Recommended)", badge: "Free" },
+  { id: "nvidia/nemotron-3.5-super-vl:free", name: "ExamForge Ultra (Nemotron 3.5)", badge: "Fast" },
+  { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "ExamForge Reasoning (Nemotron 120B)", badge: "Deep" },
+  { id: "liquid/lfm-2.5-2.6b:free", name: "ExamForge Fast (LiquidAI LFM)", badge: "Speed" },
+  { id: "google/gemma-4-26b-a4b-it:free", name: "ExamForge Smart (Google Gemma 4)", badge: "Google" },
+  { id: "cohere/north-mini-code:free", name: "ExamForge Code (Cohere North)", badge: "Code" },
+  { id: "openrouter/free", name: "OpenRouter Free Router", badge: "Auto" },
+];
+
+interface ChatViewProps {
+  user?: AuthUser | null;
+}
+
+export function ChatView({ user }: ChatViewProps) {
+  const userEmail = user?.email ? user.email.toLowerCase().trim() : "guest";
+  const SESSIONS_KEY = `examforge_chat_sessions_${userEmail}`;
+  const ACTIVE_KEY = `examforge_active_session_${userEmail}`;
+
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeModel, setActiveModel] = useState("auto");
-  const [customModelId, setCustomModelId] = useState("");
-  const [models, setModels] = useState<{
-    recommended: ModelInfo[];
-    liveFree: ModelInfo[];
-    paid: ModelInfo[];
-  }>({
-    recommended: CURATED_FREE_MODELS,
-    liveFree: [],
-    paid: [],
-  });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Settings
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [selectedPresetId, setSelectedPresetId] = useState("tutor");
-  const [systemPrompt, setSystemPrompt] = useState(SYSTEM_PROMPT_PRESETS[0].prompt);
-  const [useStream, setUseStream] = useState(true);
-
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Scroll tracking
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+  const isAtBottomRef = useRef(true);
+  const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Load saved state from localStorage
-  useEffect(() => {
-    try {
-      const savedKey = localStorage.getItem("examforge_or_key");
-      if (savedKey) {
-        setApiKey(savedKey);
-      } else {
-        const defaultKey = getDefaultOpenRouterKey();
-        if (defaultKey) setApiKey(defaultKey);
-      }
+  // Active session and its messages
+  const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  const messages = activeSession?.messages ?? [];
 
-      const savedModel = localStorage.getItem("examforge_or_model");
-      if (savedModel) setActiveModel(savedModel);
-
-      const savedHistory = localStorage.getItem("examforge_chat_history");
-      if (savedHistory) {
-        const parsed = JSON.parse(savedHistory);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
-        }
-      }
-    } catch {
-      // ignore storage errors
-    }
-
-    // Fetch models list from API
-    fetch("/api/chat")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.recommended) {
-          setModels(data);
-        }
-      })
-      .catch(() => {});
+  // Helper to create a new session
+  const createNewSession = useCallback((customTitle?: string): ChatSession => {
+    return {
+      id: "sess-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+      title: customTitle || "New Conversation",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages: [],
+      model: "auto",
+    };
   }, []);
 
-  // Save history on change
+  // Load sessions on mount or when user changes
   useEffect(() => {
-    if (messages.length > 0) {
+    try {
+      const raw = localStorage.getItem(SESSIONS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed);
+          const savedActive = localStorage.getItem(ACTIVE_KEY);
+          if (savedActive && parsed.some((s: ChatSession) => s.id === savedActive)) {
+            setActiveSessionId(savedActive);
+          } else {
+            setActiveSessionId(parsed[0].id);
+          }
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: create fresh session
+    const fresh = createNewSession();
+    setSessions([fresh]);
+    setActiveSessionId(fresh.id);
+  }, [SESSIONS_KEY, ACTIVE_KEY, createNewSession]);
+
+  // Persist sessions
+  useEffect(() => {
+    if (sessions.length > 0) {
       try {
-        localStorage.setItem("examforge_chat_history", JSON.stringify(messages));
+        localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
       } catch {}
     }
-  }, [messages]);
+  }, [sessions, SESSIONS_KEY]);
 
-  const scrollToBottom = useCallback(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
+  // Persist active session id
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (activeSessionId) {
+      try {
+        localStorage.setItem(ACTIVE_KEY, activeSessionId);
+      } catch {}
+    }
+  }, [activeSessionId, ACTIVE_KEY]);
 
-  const handleModelChange = (val: string) => {
-    setActiveModel(val);
-    try {
-      localStorage.setItem("examforge_or_model", val);
-    } catch {}
+  // Handle scroll detection
+  const handleScroll = () => {
+    const el = chatScrollContainerRef.current;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceToBottom < 70;
+    isAtBottomRef.current = atBottom;
+    setShowScrollBottomBtn(!atBottom);
   };
 
-  const handleSaveApiKey = (keyVal: string) => {
-    setApiKey(keyVal);
-    try {
-      localStorage.setItem("examforge_or_key", keyVal.trim());
-    } catch {}
+  const scrollToBottom = (smooth = true) => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+      });
+      isAtBottomRef.current = true;
+      setShowScrollBottomBtn(false);
+    }
   };
 
-  const handleClearHistory = () => {
+  // Switch session
+  const handleSelectSession = (id: string) => {
     if (isGenerating && abortControllerRef.current) {
       abortControllerRef.current.abort();
+      setIsGenerating(false);
     }
-    setMessages([]);
-    try {
-      localStorage.removeItem("examforge_chat_history");
-    } catch {}
-    toast.success("Chat conversation cleared");
+    setActiveSessionId(id);
+    setTimeout(() => scrollToBottom(false), 50);
   };
 
-  const handlePresetSelect = (id: string) => {
-    setSelectedPresetId(id);
-    const p = SYSTEM_PROMPT_PRESETS.find((preset) => preset.id === id);
-    if (p) {
-      setSystemPrompt(p.prompt);
+  // Add new session
+  const handleNewChat = () => {
+    if (isGenerating && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsGenerating(false);
     }
+    const fresh = createNewSession();
+    setSessions((prev) => [fresh, ...prev]);
+    setActiveSessionId(fresh.id);
+    setInput("");
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      scrollToBottom(false);
+    }, 50);
   };
 
+  // Delete session
+  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const remaining = sessions.filter((s) => s.id !== id);
+    if (remaining.length === 0) {
+      const fresh = createNewSession();
+      setSessions([fresh]);
+      setActiveSessionId(fresh.id);
+    } else {
+      setSessions(remaining);
+      if (activeSessionId === id) {
+        setActiveSessionId(remaining[0].id);
+      }
+    }
+    toast.success("Conversation removed");
+  };
+
+  // Clear current chat
+  const handleClearCurrentChat = () => {
+    if (isGenerating && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsGenerating(false);
+    }
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId
+          ? { ...s, messages: [], updatedAt: Date.now() }
+          : s
+      )
+    );
+    toast.success("Conversation cleared");
+  };
+
+  // Stop generation
   const handleStop = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -190,6 +253,15 @@ export function ChatView() {
     }
   };
 
+  // Copy message
+  const handleCopyMessage = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success("Copied to clipboard");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Send message
   const handleSendMessage = async (textToSend?: string) => {
     const prompt = (textToSend || input).trim();
     if (!prompt || isGenerating) return;
@@ -206,35 +278,59 @@ export function ChatView() {
       timestamp: Date.now(),
     };
 
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-
     const assistantPlaceholderId = "a-" + Date.now();
-    const modelToUse = activeModel === "custom" ? customModelId.trim() || "auto" : activeModel;
-
     const initialAssistantMessage: ChatMessage = {
       id: assistantPlaceholderId,
       role: "assistant",
       content: "",
-      modelUsed: modelToUse === "auto" ? "Best Free Model" : modelToUse,
+      modelUsed: "ExamForge AI",
       timestamp: Date.now(),
     };
 
-    setMessages([...newMessages, initialAssistantMessage]);
+    const updatedMessages = [...messages, userMessage, initialAssistantMessage];
+
+    // Determine session title if this is the first message
+    const currentTitle =
+      activeSession?.messages.length === 0
+        ? prompt.slice(0, 32) + (prompt.length > 32 ? "…" : "")
+        : activeSession?.title || "Conversation";
+
+    // Update session state
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId
+          ? {
+              ...s,
+              title: currentTitle,
+              messages: updatedMessages,
+              updatedAt: Date.now(),
+            }
+          : s
+      )
+    );
+
     setIsGenerating(true);
+    isAtBottomRef.current = true;
+    setTimeout(() => scrollToBottom(true), 50);
 
     abortControllerRef.current = new AbortController();
 
     try {
+      const apiKey = getDefaultOpenRouterKey();
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
-          model: modelToUse,
-          apiKey: apiKey.trim(),
-          systemPrompt: systemPrompt.trim(),
-          stream: useStream,
+          messages: [...messages, userMessage].map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          model: activeModel,
+          apiKey,
+          systemPrompt:
+            "You are ExamForge AI, an expert academic tutor for school exams (Classes 9, 10, 11, 12). Provide clear, structured, accurate, and easy-to-understand explanations. Format math using LaTeX ($...$ or $$...$$), use clean markdown tables where comparing concepts, and provide step-by-step reasoning for problems.",
+          stream: true,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -244,10 +340,11 @@ export function ChatView() {
         throw new Error(errJson?.error || `Server responded with ${response.status}`);
       }
 
-      if (useStream && response.body) {
+      if (response.body) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let assistantContent = "";
+        let assistantReasoning = "";
         let buffer = "";
 
         while (true) {
@@ -260,7 +357,7 @@ export function ChatView() {
 
           for (const line of lines) {
             const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith(":")) continue; // Skip comments/keepalives
+            if (!trimmed || trimmed.startsWith(":")) continue;
             if (!trimmed.startsWith("data:")) continue;
 
             const payloadStr = trimmed.slice(5).trim();
@@ -269,50 +366,46 @@ export function ChatView() {
             try {
               const parsed = JSON.parse(payloadStr);
 
-              // Throw if stream returned an error object
               if (parsed.error) {
                 throw new Error(parsed.error.message || "Model error");
               }
 
-              // Check for metadata chunk
-              if (parsed.meta) {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantPlaceholderId
-                      ? {
-                          ...m,
-                          modelUsed: parsed.meta.model,
-                          fallbackFrom: parsed.meta.fallbackFrom,
-                        }
-                      : m
-                  )
-                );
-                continue;
-              }
-
-              // Text & reasoning delta
               const delta = parsed.choices?.[0]?.delta;
               const textChunk = delta?.content ?? delta?.text ?? parsed.choices?.[0]?.text ?? "";
               const reasoningChunk = delta?.reasoning ?? "";
 
+              if (reasoningChunk) {
+                assistantReasoning += reasoningChunk;
+              }
+
               if (textChunk) {
                 assistantContent += textChunk;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantPlaceholderId
-                      ? { ...m, content: assistantContent }
-                      : m
-                  )
+              }
+
+              if (textChunk || reasoningChunk) {
+                setSessions((prev) =>
+                  prev.map((s) => {
+                    if (s.id !== activeSessionId) return s;
+                    return {
+                      ...s,
+                      messages: s.messages.map((m) =>
+                        m.id === assistantPlaceholderId
+                          ? {
+                              ...m,
+                              content: assistantContent,
+                              reasoning: assistantReasoning || undefined,
+                              modelUsed: "ExamForge AI",
+                            }
+                          : m
+                      ),
+                    };
+                  })
                 );
-              } else if (reasoningChunk && !assistantContent) {
-                // If model is streaming thought/reasoning before or instead of content
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantPlaceholderId
-                      ? { ...m, content: (m.content || "") + reasoningChunk }
-                      : m
-                  )
-                );
+
+                // Intelligent auto-scroll: ONLY scroll if user hasn't scrolled up
+                if (isAtBottomRef.current) {
+                  scrollToBottom(false);
+                }
               }
             } catch (parseErr) {
               if (parseErr instanceof Error && parseErr.message.includes("Model error")) {
@@ -322,90 +415,69 @@ export function ChatView() {
           }
         }
 
-        // If stream ended empty, immediately try non-streaming fallback
-        if (!assistantContent.trim()) {
-          try {
-            const fallbackRes = await fetch("/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
-                model: modelToUse,
-                apiKey: apiKey.trim(),
-                systemPrompt: systemPrompt.trim(),
-                stream: false,
-              }),
-            });
-            if (fallbackRes.ok) {
-              const data = await fallbackRes.json();
-              if (data.reply) {
-                assistantContent = data.reply;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantPlaceholderId
-                      ? {
-                          ...m,
-                          content: assistantContent,
-                          modelUsed: data.modelUsed || m.modelUsed,
-                          fallbackFrom: data.fallbackFrom || m.fallbackFrom,
-                        }
-                      : m
-                  )
-                );
-              }
+        // If stream ended empty, execute non-streaming fallback
+        if (!assistantContent.trim() && !assistantReasoning.trim()) {
+          const fallbackRes = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: [...messages, userMessage].map((m) => ({
+                role: m.role,
+                content: m.content,
+              })),
+              model: activeModel,
+              apiKey,
+              stream: false,
+            }),
+          });
+          if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
+            if (data.reply) {
+              assistantContent = data.reply;
+              setSessions((prev) =>
+                prev.map((s) => {
+                  if (s.id !== activeSessionId) return s;
+                  return {
+                    ...s,
+                    messages: s.messages.map((m) =>
+                      m.id === assistantPlaceholderId
+                        ? {
+                            ...m,
+                            content: assistantContent,
+                            modelUsed: "ExamForge AI",
+                          }
+                        : m
+                    ),
+                  };
+                })
+              );
             }
-          } catch {}
+          }
         }
-
-        if (!assistantContent) {
-          assistantContent = "*(The model didn't return text. Please try again or switch model from the dropdown above.)*";
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantPlaceholderId ? { ...m, content: assistantContent } : m
-            )
-          );
-        }
-      } else {
-        const data = await response.json();
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantPlaceholderId
-              ? {
-                  ...m,
-                  content: data.reply || "*(No response generated)*",
-                  modelUsed: data.modelUsed,
-                  fallbackFrom: data.fallbackFrom,
-                }
-              : m
-          )
-        );
       }
-    } catch (err: unknown) {
-      if ((err as Error)?.name === "AbortError") {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantPlaceholderId
-              ? {
-                  ...m,
-                  content: (m.content || "") + "\n\n*[Generation stopped by user]*",
-                }
-              : m
-          )
-        );
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === "AbortError") {
+        // User aborted intentionally
       } else {
-        const errorMsg = (err as Error)?.message || "Failed to generate answer";
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantPlaceholderId
-              ? {
-                  ...m,
-                  content: `⚠️ **Error:** ${errorMsg}\n\n*Tip:* You can change the model from the selector above, or verify your OpenRouter API key in settings.`,
-                  isError: true,
-                }
-              : m
-          )
+        const errorMsg = e instanceof Error ? e.message : "Failed to get AI response";
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id !== activeSessionId) return s;
+            return {
+              ...s,
+              messages: s.messages.map((m) =>
+                m.id === assistantPlaceholderId
+                  ? {
+                      ...m,
+                      content: `⚠️ ${errorMsg}`,
+                      isError: true,
+                    }
+                  : m
+              ),
+            };
+          })
         );
-        toast.error("Generation failed: " + errorMsg);
+        toast.error(errorMsg);
       }
     } finally {
       setIsGenerating(false);
@@ -413,367 +485,344 @@ export function ChatView() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const copyMessage = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Message copied to clipboard");
-  };
-
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] min-h-[500px] flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
-      {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/40 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
-            <Bot className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold tracking-tight text-foreground sm:text-base">
-                ExamForge AI Tutor
-              </h2>
-              <Badge
-                variant="outline"
-                className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold"
-              >
-                <Zap className="h-3 w-3 fill-emerald-500 text-emerald-500" /> Free AI Active
-              </Badge>
-            </div>
-            <p className="text-[11px] text-muted-foreground hidden sm:block">
-              Always routes to the highest-quality free models on OpenRouter
-            </p>
-          </div>
-        </div>
-
-        {/* Model Selector & Actions */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <select
-              aria-label="Select AI Model"
-              value={activeModel}
-              onChange={(e) => handleModelChange(e.target.value)}
-              className="h-8 max-w-[170px] truncate rounded-lg border bg-background px-2.5 pr-7 text-xs font-medium text-foreground shadow-xs transition hover:bg-accent focus:outline-none focus:ring-1 focus:ring-emerald-500 sm:max-w-[260px]"
-            >
-              <optgroup label="⭐ Recommended (Always Free)">
-                <option value="auto">Auto (Best Free Model + Fallback)</option>
-                {models.recommended.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} {m.badge ? `(${m.badge})` : ""}
-                  </option>
-                ))}
-              </optgroup>
-
-              {models.liveFree.length > 0 && (
-                <optgroup label="🌐 Live Free Models (OpenRouter)">
-                  {models.liveFree.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} (Free)
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-
-              <optgroup label="💎 Paid Models (Requires Credits)">
-                {models.paid.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </optgroup>
-
-              <option value="custom">Custom Model ID…</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          </div>
-
-          {activeModel === "custom" && (
-            <Input
-              value={customModelId}
-              onChange={(e) => setCustomModelId(e.target.value)}
-              placeholder="e.g. meta-llama/llama-3.3-70b-instruct"
-              className="h-8 w-36 text-xs sm:w-48 font-mono"
-            />
-          )}
-
+    <div className="flex h-[calc(100vh-8.5rem)] min-h-[550px] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {/* ─── ChatGPT-style Sidebar ─── */}
+      <aside
+        className={`${
+          sidebarOpen ? "w-64 sm:w-72" : "w-0 -translate-x-full"
+        } relative flex flex-col shrink-0 border-r border-border bg-muted/30 transition-all duration-200 ease-in-out overflow-hidden z-10`}
+      >
+        {/* New Chat Button */}
+        <div className="p-3 border-b border-border/60">
           <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            title="Settings & API Key"
-            onClick={() => setSettingsOpen(true)}
+            onClick={handleNewChat}
+            className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-9 shadow-xs"
           >
-            <Settings className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-            title="Clear Chat"
-            onClick={handleClearHistory}
-            disabled={messages.length === 0}
-          >
-            <Trash2 className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
+            <span>New Chat</span>
           </Button>
         </div>
-      </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-        {messages.length === 0 ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs">
-              <Sparkles className="h-7 w-7" />
-            </div>
-            <h3 className="mt-3 text-lg font-bold text-foreground">
-              What would you like to learn or solve today?
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-md">
-              Ask any question, generate practice tests, solve complex problems step-by-step, or get
-              concise exam revision notes.
-            </p>
-
-            {/* Starter Chips */}
-            <div className="mt-6 grid grid-cols-1 gap-2.5 text-left sm:grid-cols-2 w-full">
-              {STARTER_PROMPTS.map((starter, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleSendMessage(starter.prompt)}
-                  className="group flex flex-col justify-between rounded-xl border border-border/80 bg-background/60 p-3.5 transition hover:border-emerald-500/50 hover:bg-emerald-50/40 hover:shadow-xs dark:hover:bg-emerald-950/20"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
-                      {starter.title}
-                    </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-emerald-600" />
-                  </div>
-                  <span className="mt-1 text-[11px] text-muted-foreground">
-                    {starter.desc}
-                  </span>
-                </button>
-              ))}
-            </div>
+        {/* Sessions History List */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+          <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+            <span>Conversations</span>
+            <span className="text-[10px] text-muted-foreground/70 font-normal">
+              {sessions.length}
+            </span>
           </div>
-        ) : (
-          messages.map((m) => {
-            const isUser = m.role === "user";
+
+          {sessions.map((sess) => {
+            const isActive = sess.id === activeSessionId;
             return (
               <div
-                key={m.id || m.timestamp}
-                className={`flex ${isUser ? "justify-end" : "justify-start"} group`}
+                key={sess.id}
+                onClick={() => handleSelectSession(sess.id)}
+                className={`group relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs cursor-pointer transition-colors ${
+                  isActive
+                    ? "bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 font-semibold border border-emerald-500/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
               >
-                <div
-                  className={`max-w-[90%] sm:max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-xs ${
-                    isUser
-                      ? "rounded-tr-xs bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-medium"
-                      : m.isError
-                      ? "rounded-tl-xs border border-rose-500/40 bg-rose-50/60 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200"
-                      : "rounded-tl-xs border bg-background text-foreground"
-                  }`}
+                <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                <span className="flex-1 truncate text-left">{sess.title}</span>
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteSession(sess.id, e)}
+                  title="Delete chat"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-destructive rounded transition-opacity shrink-0"
                 >
-                  {/* Assistant Header */}
-                  {!isUser && (
-                    <div className="mb-2 flex items-center justify-between gap-2 border-b border-border/60 pb-1.5 text-[11px] text-muted-foreground">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <Sparkles className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span className="font-semibold text-foreground truncate">
-                          {m.modelUsed || "AI Assistant"}
-                        </span>
-                        {m.fallbackFrom && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[9px] px-1 py-0 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                          >
-                            Auto-Fallback
-                          </Badge>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => copyMessage(m.content)}
-                        className="flex items-center gap-1 rounded px-1.5 py-0.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                        title="Copy message"
-                      >
-                        <Copy className="h-3 w-3" />
-                        <span>Copy</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Message Content */}
-                  {isUser ? (
-                    <div className="whitespace-pre-wrap break-words leading-relaxed">
-                      {m.content}
-                    </div>
-                  ) : m.content ? (
-                    <ChatMarkdown content={m.content} />
-                  ) : (
-                    <div className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground">
-                      <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]" />
-                      <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]" />
-                      <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
-                      <span className="ml-1 text-[11px]">Thinking & generating...</span>
-                    </div>
-                  )}
-                </div>
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
             );
-          })
-        )}
-        <div ref={chatBottomRef} />
-      </div>
+          })}
+        </div>
 
-      {/* Composer Input Footer */}
-      <div className="border-t bg-muted/20 p-3 sm:p-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-          className="mx-auto max-w-4xl"
+        {/* User Account / Email Scoped Indicator */}
+        <div className="p-3 border-t border-border/60 bg-background/50">
+          <div className="flex items-center gap-2 text-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white shadow-xs">
+              {user?.name
+                ? user.name.slice(0, 2).toUpperCase()
+                : userEmail.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-foreground text-[11px]">
+                {user?.name || "ExamForge User"}
+              </p>
+              <p className="truncate text-[10px] text-muted-foreground">
+                {user?.email || "Local Guest Mode"}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              100% Free AI Active
+            </span>
+          </div>
+        </div>
+      </aside>
+
+      {/* ─── Main Chat Interface ─── */}
+      <div className="relative flex flex-1 flex-col overflow-hidden bg-background">
+        {/* Top Navbar */}
+        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 px-3 sm:px-4 bg-card/60 backdrop-blur-xs">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setSidebarOpen((v) => !v)}
+              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" />
+              )}
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+                <Sparkles className="h-3.5 w-3.5" />
+              </div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold text-foreground leading-tight">
+                  ExamForge AI
+                </h2>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:block">
+                  Free Academic & Exam Assistant
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Selector (Only Free Models) */}
+          <div className="flex items-center gap-2">
+            <Select value={activeModel} onValueChange={setActiveModel}>
+              <SelectTrigger className="h-8 text-xs font-medium max-w-[210px] sm:max-w-[270px] bg-muted/50 border-border">
+                <SelectValue placeholder="Select Free Model" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {FREE_MODEL_OPTIONS.map((m) => (
+                  <SelectItem key={m.id} value={m.id} className="text-xs">
+                    <div className="flex items-center justify-between gap-3 w-full">
+                      <span className="truncate">{m.name}</span>
+                      <Badge
+                        variant="secondary"
+                        className="text-[9px] px-1 py-0 bg-emerald-500/10 text-emerald-600"
+                      >
+                        {m.badge}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={handleClearCurrentChat}
+                title="Clear current chat"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* Messages Scroll Area */}
+        <div
+          ref={chatScrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar"
         >
-          <div className="relative flex items-end gap-2 rounded-2xl border bg-background p-2 shadow-xs transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
+          {messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center text-center py-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md shadow-emerald-500/20 mb-3">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-foreground">
+                How can ExamForge AI help you today?
+              </h3>
+              <p className="mt-1 max-w-md text-xs sm:text-sm text-muted-foreground">
+                Ask any question, solve math & science problems step-by-step, generate board-exam MCQs, or review difficult concepts.
+              </p>
+
+              {/* Starter Prompts */}
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl w-full text-left">
+                {STARTER_PROMPTS.map((sp, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendMessage(sp.prompt)}
+                    className="flex flex-col rounded-xl border border-border p-3 text-left transition-all hover:border-emerald-500/60 hover:bg-emerald-500/5 group"
+                  >
+                    <span className="text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
+                      {sp.title}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                      {sp.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {messages.map((m) => {
+                const isUser = m.role === "user";
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex items-start gap-3 ${
+                      isUser ? "flex-row-reverse" : "flex-row"
+                    }`}
+                  >
+                    {/* Avatar */}
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold shadow-xs ${
+                        isUser
+                          ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
+                          : "bg-emerald-600 text-white"
+                      }`}
+                    >
+                      {isUser ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                    </div>
+
+                    {/* Bubble */}
+                    <div
+                      className={`group relative max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm ${
+                        isUser
+                          ? "bg-emerald-600 text-white rounded-tr-none"
+                          : m.isError
+                          ? "border border-destructive/30 bg-destructive/10 text-destructive rounded-tl-none"
+                          : "border border-border/80 bg-muted/40 text-foreground rounded-tl-none"
+                      }`}
+                    >
+                      {/* Assistant Header */}
+                      {!isUser && (
+                        <div className="mb-1.5 flex items-center justify-between border-b border-border/40 pb-1 text-[11px] text-muted-foreground">
+                          <span className="font-semibold text-foreground flex items-center gap-1.5">
+                            ExamForge AI
+                            <Badge
+                              variant="secondary"
+                              className="text-[9px] px-1 py-0 bg-emerald-500/10 text-emerald-600"
+                            >
+                              Free
+                            </Badge>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(m.id || "", m.content)}
+                            title="Copy message"
+                            className="text-muted-foreground hover:text-foreground opacity-70 group-hover:opacity-100 transition-opacity p-0.5"
+                          >
+                            {copiedId === m.id ? (
+                              <Check className="h-3 w-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Content & Markdown */}
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                      ) : !m.content && isGenerating && m.id === messages[messages.length - 1]?.id ? (
+                        <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
+                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                          <span>ExamForge AI is formulating the answer...</span>
+                        </div>
+                      ) : (
+                        <ChatMarkdown
+                          content={m.content}
+                          reasoning={m.reasoning}
+                          isStreaming={isGenerating && m.id === messages[messages.length - 1]?.id}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={chatBottomRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Floating Scroll to Bottom Button */}
+        {showScrollBottomBtn && (
+          <button
+            type="button"
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-20 right-6 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card shadow-md text-foreground hover:bg-muted transition-all"
+            title="Scroll to bottom"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        )}
+
+        {/* Input Bar */}
+        <div className="p-3 sm:p-4 border-t border-border bg-card/60">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs focus-within:border-emerald-500/80 transition-colors"
+          >
             <Textarea
               ref={textareaRef}
-              rows={1}
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
                 e.target.style.height = "auto";
-                e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
+                e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
               }}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask ExamForge anything... (Press Enter to send, Shift+Enter for new line)"
-              className="min-h-[40px] max-h-40 flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm leading-relaxed shadow-none focus-visible:ring-0"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Ask ExamForge AI... (Enter to send, Shift+Enter for new line)"
+              rows={1}
+              className="min-h-[38px] max-h-[140px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs sm:text-sm focus-visible:ring-0 shadow-none"
             />
 
             {isGenerating ? (
               <Button
                 type="button"
-                size="sm"
-                variant="destructive"
                 onClick={handleStop}
-                className="h-9 gap-1 rounded-xl px-3 font-semibold shadow-xs"
+                variant="destructive"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-xl"
+                title="Stop generating"
               >
-                <Square className="h-3.5 w-3.5 fill-current" /> Stop
+                <Square className="h-4 w-4 fill-current" />
               </Button>
             ) : (
               <Button
                 type="submit"
-                size="sm"
                 disabled={!input.trim()}
-                className="h-9 w-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 p-0 text-white shadow-xs transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-40"
+                className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
+                title="Send message"
               >
                 <Send className="h-4 w-4" />
               </Button>
             )}
-          </div>
-          <div className="mt-1.5 flex items-center justify-between px-2 text-[11px] text-muted-foreground">
-            <span>
-              Model:{" "}
-              <strong className="text-foreground font-mono">
-                {activeModel === "auto" ? "Auto Free (Cascading)" : activeModel}
-              </strong>
-            </span>
-            <span>Shift + Enter for new line</span>
-          </div>
-        </form>
+          </form>
+          <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+            ExamForge AI • 100% Free AI Assistance • Powered by high-speed OpenRouter free models
+          </p>
+        </div>
       </div>
-
-      {/* Settings Dialog */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Settings className="h-5 w-5 text-emerald-600" /> AI & OpenRouter Configuration
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Manage your OpenRouter API key, model settings, and tutor instructions.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2 text-xs">
-            {/* API Key */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">OpenRouter API Key</Label>
-              <div className="relative flex items-center">
-                <Input
-                  type={showApiKey ? "text" : "password"}
-                  value={apiKey}
-                  onChange={(e) => handleSaveApiKey(e.target.value)}
-                  placeholder="sk-or-v1-..."
-                  className="pr-16 font-mono text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-2 text-xs font-medium text-emerald-600 hover:text-emerald-700"
-                >
-                  {showApiKey ? "Hide" : "Show"}
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Configured with your free-tier key. Requests route through OpenRouter.
-              </p>
-            </div>
-
-            {/* System Prompt Preset */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Tutor Persona / Preset</Label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {SYSTEM_PROMPT_PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => handlePresetSelect(p.id)}
-                    className={`rounded-lg border p-2 text-left transition ${
-                      selectedPresetId === p.id
-                        ? "border-emerald-600 bg-emerald-50/50 font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-                        : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <div className="truncate font-medium">{p.label}</div>
-                  </button>
-                ))}
-              </div>
-              <Textarea
-                rows={3}
-                value={systemPrompt}
-                onChange={(e) => {
-                  setSystemPrompt(e.target.value);
-                  setSelectedPresetId("custom");
-                }}
-                className="mt-1 text-xs"
-                placeholder="Custom system instructions..."
-              />
-            </div>
-
-            {/* Stream Toggle */}
-            <div className="flex items-center justify-between rounded-lg border p-2.5">
-              <div>
-                <div className="font-semibold text-foreground">Real-time Streaming</div>
-                <div className="text-[11px] text-muted-foreground">
-                  Stream words token-by-token as they generate
-                </div>
-              </div>
-              <Switch checked={useStream} onCheckedChange={setUseStream} />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button size="sm" onClick={() => setSettingsOpen(false)}>
-              Done
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

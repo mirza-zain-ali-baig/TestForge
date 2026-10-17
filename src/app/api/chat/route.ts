@@ -175,8 +175,10 @@ export async function POST(req: NextRequest) {
       json.choices?.[0]?.message?.content ||
       json.choices?.[0]?.message?.reasoning ||
       "";
+    const reasoning = json.choices?.[0]?.message?.reasoning || null;
     return NextResponse.json({
       reply,
+      reasoning,
       modelUsed: activeModel,
       fallbackFrom: fallbackFrom || null,
       usage: json.usage || null,
