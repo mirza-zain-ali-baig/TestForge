@@ -36,7 +36,6 @@ import { GeneratorWizard } from "./generator-wizard";
 import { TestPreview } from "./test-preview";
 import { QuestionBank } from "./question-bank";
 import { SavedTests } from "./saved-tests";
-import { TestAnalytics } from "./test-analytics";
 import { TestHistoryView } from "./test-history";
 import { PrintExportView } from "./print-export-view";
 import { ScrollToTop } from "./scroll-to-top";
@@ -57,14 +56,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogIn, LogOut, User as UserIcon, Bot } from "lucide-react";
 import type { GeneratedTest } from "@/lib/types";
 
-type View = "dashboard" | "generate" | "bank" | "chat" | "saved" | "analytics" | "history" | "print";
+type View = "dashboard" | "generate" | "bank" | "chat" | "saved" | "history" | "print";
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; desc: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, desc: "Overview & stats" },
   { id: "generate", label: "Generate", icon: Wand2, desc: "Build a new paper" },
   { id: "bank", label: "Question Bank", icon: Database, desc: "Browse questions" },
   { id: "chat", label: "AI Chat", icon: Bot, desc: "AI tutor & solver" },
-  { id: "analytics", label: "Analytics", icon: BarChart3, desc: "Test coverage insights" },
   { id: "history", label: "History", icon: History, desc: "Generation trends" },
   { id: "saved", label: "Saved Papers", icon: FolderOpen, desc: "Saved papers & bookmarks" },
 ];
@@ -73,7 +71,7 @@ const BOTTOM_NAV: { id: View; label: string; icon: typeof LayoutDashboard }[] = 
   { id: "dashboard", label: "Home", icon: LayoutDashboard },
   { id: "generate", label: "Generate", icon: Wand2 },
   { id: "bank", label: "Bank", icon: Database },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "chat", label: "Chat", icon: Bot },
   { id: "saved", label: "Saved", icon: FolderOpen },
 ];
 
@@ -299,7 +297,6 @@ export function TestGeneratorApp() {
             g: "generate",
             b: "bank",
             c: "chat",
-            a: "analytics",
             h: "history",
             s: "saved",
           };
@@ -315,15 +312,14 @@ export function TestGeneratorApp() {
         return;
       }
 
-      // Number keys 1-7 → quick nav
+      // Number keys 1-6 → quick nav
       const numMap: Record<string, View> = {
         "1": "dashboard",
         "2": "generate",
         "3": "bank",
         "4": "chat",
-        "5": "analytics",
-        "6": "history",
-        "7": "saved",
+        "5": "history",
+        "6": "saved",
       };
       if (numMap[e.key]) {
         e.preventDefault();
@@ -664,7 +660,6 @@ export function TestGeneratorApp() {
               fullWindow
             />
           )}
-          {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}
           {view === "history" && (
             <TestHistoryView
               user={user}
@@ -838,14 +833,12 @@ function KeyboardHelpDialog({
     { keys: ["2"], label: "Go to Generate Test", group: "Navigation" },
     { keys: ["3"], label: "Go to Question Bank", group: "Navigation" },
     { keys: ["4"], label: "Go to AI Chat", group: "Navigation" },
-    { keys: ["5"], label: "Go to Analytics", group: "Navigation" },
-    { keys: ["6"], label: "Go to History", group: "Navigation" },
-    { keys: ["7"], label: "Go to My Tests", group: "Navigation" },
+    { keys: ["5"], label: "Go to History", group: "Navigation" },
+    { keys: ["6"], label: "Go to My Tests", group: "Navigation" },
     { keys: ["g", "d"], label: "Go to Dashboard (vim)", group: "Navigation" },
     { keys: ["g", "g"], label: "Go to Generate (vim)", group: "Navigation" },
     { keys: ["g", "b"], label: "Go to Bank (vim)", group: "Navigation" },
     { keys: ["g", "c"], label: "Go to AI Chat (vim)", group: "Navigation" },
-    { keys: ["g", "a"], label: "Go to Analytics (vim)", group: "Navigation" },
     { keys: ["g", "h"], label: "Go to History (vim)", group: "Navigation" },
     { keys: ["g", "s"], label: "Go to Saved (vim)", group: "Navigation" },
     { keys: ["?"], label: "Show this help", group: "Help" },

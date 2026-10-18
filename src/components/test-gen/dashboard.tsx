@@ -13,7 +13,7 @@ import {
   Zap,
   Wand2,
   Database,
-  BarChart3,
+  History,
   CopyPlus,
 } from "lucide-react";
 import {
@@ -44,7 +44,7 @@ export function Dashboard({
 }: {
   onStart: () => void;
   onNavigate?: (
-    view: "generate" | "bank" | "chat" | "saved" | "analytics" | "history",
+    view: "generate" | "bank" | "chat" | "saved" | "history",
     opts?: { batch?: boolean }
   ) => void;
 }) {
@@ -277,10 +277,10 @@ export function Dashboard({
               onClick={() => (onNavigate ? onNavigate("bank") : onStart())}
             />
             <QuickAction
-              icon={BarChart3}
-              title="View analytics"
-              desc="See coverage & difficulty insights"
-              onClick={() => (onNavigate ? onNavigate("analytics") : onStart())}
+              icon={History}
+              title="Generation history"
+              desc="Track tests & past papers"
+              onClick={() => (onNavigate ? onNavigate("history") : onStart())}
             />
             <QuickAction
               icon={CopyPlus}
