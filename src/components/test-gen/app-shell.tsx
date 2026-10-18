@@ -709,7 +709,7 @@ export function TestGeneratorApp() {
       )}
 
       {/* Mobile Bottom Navigation Bar (Chapter 13 Rec 1: Native Thumb-Zone Navigation) */}
-      {!["chat", "print"].includes(view) && (
+      {!["chat", "print", "generate"].includes(view) && (
         <nav
           className="no-print md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 shadow-lg px-2 py-1 safe-area-bottom flex items-center justify-around"
           aria-label="Mobile Bottom Navigation"

@@ -45,6 +45,8 @@ import {
   Check,
   LayoutTemplate,
   Save,
+  Eye,
+  Sliders,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1327,6 +1329,8 @@ export function PrintExportView({
     }
   };
 
+  const [mobileTab, setMobileTab] = useState<"preview" | "settings">("preview");
+
   /* ----------------------------- UI helpers ----------------------------- */
 
   const inputCls = "h-8 text-xs";
@@ -1335,22 +1339,34 @@ export function PrintExportView({
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* ===== Top toolbar ===== */}
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-white shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
-            <Printer className="h-4 w-4" />
+      <header className="flex shrink-0 flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 border-b bg-gradient-to-r from-emerald-600 to-teal-600 px-3 sm:px-4 py-2 text-white shadow-md">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
+              <Printer className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold leading-tight truncate">Print &amp; Export</h1>
+              <p className="text-[10px] text-white/80 truncate">
+                {test.title || `${test.subjectName} Examination`} ·{" "}
+                {test.totalQuestions} Q · {test.totalMarks} marks
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-bold leading-tight">Print &amp; Export</h1>
-            <p className="text-[10px] text-white/80">
-              {test.title || `${test.subjectName} Examination`} ·{" "}
-              {test.totalQuestions} Q · {test.totalMarks} marks
-            </p>
-          </div>
+          {/* Close button on mobile right */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 text-white hover:bg-white/15 sm:hidden shrink-0"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Quick toggles */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full">
           <QuickToggle
             active={headerLayout === 2}
             onClick={() => setHeaderLayout((v) => (v === 1 ? 2 : 1))}
@@ -1393,7 +1409,7 @@ export function PrintExportView({
           />
           {/* Rich text formatting toolbar — only visible during live edit */}
           {liveEdit && (
-            <div className="flex items-center gap-1 border-l border-white/20 pl-2">
+            <div className="flex items-center gap-1 border-l border-white/20 pl-2 shrink-0">
               <select
                 className="h-7 rounded border border-white/20 bg-white/10 px-1 text-[10px] text-white"
                 onChange={(e) => execCmd("fontName", e.target.value)}
@@ -1461,11 +1477,11 @@ export function PrintExportView({
         </div>
 
         {/* Export buttons + close */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full">
           <Button
             size="sm"
             onClick={handleExportPDF}
-            className="h-8 bg-white text-xs text-emerald-700 hover:bg-white/90"
+            className="h-8 shrink-0 bg-white text-xs text-emerald-700 hover:bg-white/90"
           >
             <Download className="mr-1 h-3.5 w-3.5" /> PDF
           </Button>
@@ -1473,22 +1489,22 @@ export function PrintExportView({
             size="sm"
             variant="ghost"
             onClick={handleExportWord}
-            className="h-8 bg-white/15 text-xs text-white hover:bg-white/25"
+            className="h-8 shrink-0 bg-white/15 text-xs text-white hover:bg-white/25"
           >
-            <FileText className="mr-1 h-3.5 w-3.5" /> Word (.docx)
+            <FileText className="mr-1 h-3.5 w-3.5" /> Word
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={handleExportExcel}
-            className="h-8 bg-white/15 text-xs text-white hover:bg-white/25"
+            className="h-8 shrink-0 bg-white/15 text-xs text-white hover:bg-white/25"
           >
             <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
           </Button>
           <Button
             size="sm"
             onClick={handlePrint}
-            className="h-8 bg-emerald-700 text-xs text-white hover:bg-emerald-800"
+            className="h-8 shrink-0 bg-emerald-700 text-xs text-white hover:bg-emerald-800"
           >
             <Printer className="mr-1 h-3.5 w-3.5" /> Print
           </Button>
@@ -1496,7 +1512,7 @@ export function PrintExportView({
             size="sm"
             onClick={handleSave}
             disabled={saving || saved}
-            className="h-8 bg-amber-600 text-xs text-white hover:bg-amber-700"
+            className="h-8 shrink-0 bg-amber-600 text-xs text-white hover:bg-amber-700"
           >
             {saved ? (
               <>
@@ -1511,7 +1527,7 @@ export function PrintExportView({
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 text-white hover:bg-white/15"
+            className="hidden sm:flex h-8 w-8 shrink-0 text-white hover:bg-white/15"
             onClick={onClose}
             aria-label="Close"
           >
@@ -1520,10 +1536,42 @@ export function PrintExportView({
         </div>
       </header>
 
-      {/* ===== Two-column body ===== */}
-      <div className="flex min-h-0 flex-1">
-        {/* ===== Left column: collapsible controls (380px scrollable) ===== */}
-        <aside className="w-[380px] shrink-0 overflow-y-auto border-r bg-background">
+      {/* Mobile Tab Switcher (<lg screens) */}
+      <div className="flex border-b bg-card lg:hidden shrink-0 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 flex items-center justify-center gap-1.5 transition-colors ${
+            mobileTab === "preview"
+              ? "border-emerald-600 text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Eye className="h-4 w-4" />
+          <span>Paper Preview</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("settings")}
+          className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 flex items-center justify-center gap-1.5 transition-colors ${
+            mobileTab === "settings"
+              ? "border-emerald-600 text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Sliders className="h-4 w-4" />
+          <span>Customization &amp; Settings</span>
+        </button>
+      </div>
+
+      {/* ===== Two-column body on desktop, tabbed on mobile ===== */}
+      <div className="flex min-h-0 flex-1 relative">
+        {/* ===== Left column: collapsible controls (full width on mobile, 380px on desktop) ===== */}
+        <aside
+          className={`w-full lg:w-[380px] shrink-0 overflow-y-auto border-r bg-background ${
+            mobileTab === "preview" ? "hidden lg:block" : "block"
+          }`}
+        >
           <div className="space-y-2 p-2">
             {/* ---------- Academy Header ---------- */}
             <CollapsibleSection
@@ -2044,25 +2092,40 @@ export function PrintExportView({
                 edits” to save.
               </span>
             </p>
+
+            {/* Quick mobile button to switch to preview */}
+            <div className="pt-2 pb-6 px-2 lg:hidden">
+              <Button
+                type="button"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 shadow cursor-pointer"
+                onClick={() => setMobileTab("preview")}
+              >
+                <Eye className="mr-1.5 h-4 w-4" /> View Paper Preview
+              </Button>
+            </div>
           </div>
         </aside>
 
         {/* ===== Right column: live preview ===== */}
-        <main className="flex min-h-0 flex-1 flex-col bg-slate-200/60 p-3 dark:bg-slate-900/40">
+        <main
+          className={`min-h-0 flex-1 flex-col bg-slate-200/60 p-2 sm:p-3 dark:bg-slate-900/40 relative ${
+            mobileTab === "settings" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           <div className="mb-2 flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <span
-                className={`h-2 w-2 rounded-full ${
+                className={`h-2 w-2 shrink-0 rounded-full ${
                   liveEdit ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
                 }`}
               />
-              <span className="text-[11px] font-medium text-muted-foreground">
+              <span className="text-[11px] font-medium text-muted-foreground truncate">
                 {liveEdit
-                  ? "Live edit ON — click text in the preview to edit, then click “Apply edits”."
+                  ? "Live edit ON — click text in preview to edit, then click “Apply edits”."
                   : "Live preview · updates as you type"}
               </span>
             </div>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
               {paperSize} · {marginPreset} · {fontSize}pt · {topMargin}mm top
             </span>
           </div>
@@ -2076,6 +2139,16 @@ export function PrintExportView({
                 : "border-slate-300 dark:border-slate-700"
             }`}
           />
+          {/* Floating settings button on mobile in preview mode */}
+          <div className="absolute bottom-4 right-4 lg:hidden z-20">
+            <Button
+              type="button"
+              onClick={() => setMobileTab("settings")}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-4 shadow-xl border border-white/20 gap-1.5 cursor-pointer"
+            >
+              <Sliders className="h-4 w-4" /> Edit Settings
+            </Button>
+          </div>
         </main>
       </div>
     </div>

@@ -516,108 +516,241 @@ export function TestPreview({
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <Card className="no-print sticky top-2 z-30 bg-card/95 backdrop-blur-md shadow-xs">
-        <CardContent className="flex flex-col gap-3 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={onBack} className="gap-1.5 font-medium cursor-pointer">
-                <ArrowLeft className="h-4 w-4" /> Back to Setup
-              </Button>
-              {onExit && (
+      <Card className="no-print sticky top-0 sm:top-2 z-30 bg-card/95 backdrop-blur-md shadow-sm sm:shadow-xs rounded-none sm:rounded-xl border-x-0 sm:border">
+        <CardContent className="p-2 sm:p-4">
+          {/* Mobile view (< sm): Compact 2-row layout */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            {/* Mobile Row 1: Back, Stats, Primary CTA, Theme */}
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={onExit}
-                  className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  onClick={onBack}
+                  className="h-8 px-2 text-xs gap-1 font-medium cursor-pointer shrink-0"
                 >
-                  Exit to Dashboard
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </Button>
-              )}
-              <Badge variant="outline" className="gap-1">
-                {test.source === "bank" ? (
-                  <Database className="h-3 w-3" />
-                ) : test.source === "ai" ? (
-                  <Bot className="h-3 w-3" />
-                ) : (
-                  <Sparkles className="h-3 w-3" />
-                )}
-                {test.source === "bank"
-                  ? "Question Bank"
-                  : test.source === "ai"
-                  ? "AI Generated"
-                  : "Hybrid Mode"}
-              </Badge>
-              <Badge variant="secondary">{test.totalQuestions} Q</Badge>
-              <Badge variant="secondary">{test.totalMarks} marks</Badge>
-              <Badge variant="secondary">{formatDuration(test.durationMins)}</Badge>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5">
-                <KeyRound className="h-4 w-4 text-emerald-600" />
-                <Label htmlFor="ans" className="cursor-pointer text-sm">
-                  Answer key
-                </Label>
-                <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
+                <div className="flex items-center gap-1">
+                  <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5">
+                    {test.totalQuestions} Q
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5">
+                    {test.totalMarks} m
+                  </Badge>
+                </div>
               </div>
-              {onPrintExport && (
-                <Button
-                  size="sm"
-                  onClick={onPrintExport}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm"
-                >
-                  <FileDown className="mr-1.5 h-4 w-4" /> Print & Export
-                </Button>
-              )}
+
+              <div className="flex items-center gap-1 shrink-0">
+                {onPrintExport && (
+                  <Button
+                    size="sm"
+                    onClick={onPrintExport}
+                    className="h-8 px-2.5 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-xs cursor-pointer"
+                  >
+                    <FileDown className="mr-1 h-3.5 w-3.5" /> Print & Export
+                  </Button>
+                )}
+                <ThemeToggle />
+              </div>
+            </div>
+
+            {/* Mobile Row 2: Horizontally scrollable quick-action pill strip */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <div className="flex shrink-0 items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs">
+                <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="text-[11px] font-medium">Answers</span>
+                <Switch
+                  id="ans-mobile"
+                  checked={showAnswers}
+                  onCheckedChange={setShowAnswers}
+                  className="scale-75"
+                />
+              </div>
+
               <Button
+                size="sm"
                 variant="outline"
-                size="sm"
-                onClick={handlePrint}
-              >
-                <Printer className="mr-1 h-4 w-4" /> Print
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportPDF}
-              >
-                <Download className="mr-1 h-4 w-4" /> PDF
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportWord}
-                title="Download as Microsoft Word document (.docx)"
-              >
-                <FileText className="mr-1 h-4 w-4 text-blue-600" /> Word (.docx)
-              </Button>
-              <Button
-                size="sm"
                 onClick={() => setPracticing(true)}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold"
+                className="h-7 shrink-0 text-xs px-2.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium cursor-pointer"
               >
-                <Play className="mr-1 h-4 w-4 fill-current" /> Practice Online
+                <Play className="mr-1 h-3 w-3 fill-current" /> Practice
               </Button>
+
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSave}
                 disabled={saving || saved}
+                className="h-7 shrink-0 text-xs px-2.5 font-medium cursor-pointer"
               >
                 {saved ? (
                   <>
-                    <CheckCircle2 className="mr-1 h-4 w-4 text-emerald-600" /> Saved
+                    <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" /> Saved
                   </>
                 ) : (
                   <>
-                    <Save className="mr-1 h-4 w-4" /> {saving ? "Saving…" : "Save"}
+                    <Save className="mr-1 h-3 w-3" /> {saving ? "Saving…" : "Save"}
                   </>
                 )}
               </Button>
-              <Button variant="ghost" size="sm" onClick={onRegenerate}>
-                <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportPDF}
+                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
+              >
+                <Download className="mr-1 h-3 w-3" /> PDF
               </Button>
-              <div className="pl-1 border-l">
-                <ThemeToggle />
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportWord}
+                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
+              >
+                <FileText className="mr-1 h-3 w-3 text-blue-600" /> Word
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
+              >
+                <Printer className="mr-1 h-3 w-3" /> Print
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRegenerate}
+                className="h-7 shrink-0 text-xs px-2 text-muted-foreground cursor-pointer"
+              >
+                <RefreshCw className="mr-1 h-3 w-3" /> Regenerate
+              </Button>
+
+              {onExit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onExit}
+                  className="h-7 shrink-0 text-xs px-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Exit
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop view (sm:flex): Full toolbar */}
+          <div className="hidden sm:flex flex-col gap-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={onBack} className="gap-1.5 font-medium cursor-pointer">
+                  <ArrowLeft className="h-4 w-4" /> Back to Setup
+                </Button>
+                {onExit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onExit}
+                    className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    Exit to Dashboard
+                  </Button>
+                )}
+                <Badge variant="outline" className="gap-1">
+                  {test.source === "bank" ? (
+                    <Database className="h-3 w-3" />
+                  ) : test.source === "ai" ? (
+                    <Bot className="h-3 w-3" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
+                  {test.source === "bank"
+                    ? "Question Bank"
+                    : test.source === "ai"
+                    ? "AI Generated"
+                    : "Hybrid Mode"}
+                </Badge>
+                <Badge variant="secondary">{test.totalQuestions} Q</Badge>
+                <Badge variant="secondary">{test.totalMarks} marks</Badge>
+                <Badge variant="secondary">{formatDuration(test.durationMins)}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5">
+                  <KeyRound className="h-4 w-4 text-emerald-600" />
+                  <Label htmlFor="ans" className="cursor-pointer text-sm">
+                    Answer key
+                  </Label>
+                  <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
+                </div>
+                {onPrintExport && (
+                  <Button
+                    size="sm"
+                    onClick={onPrintExport}
+                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm cursor-pointer"
+                  >
+                    <FileDown className="mr-1.5 h-4 w-4" /> Print & Export
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  className="cursor-pointer"
+                >
+                  <Printer className="mr-1 h-4 w-4" /> Print
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  className="cursor-pointer"
+                >
+                  <Download className="mr-1 h-4 w-4" /> PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportWord}
+                  title="Download as Microsoft Word document (.docx)"
+                  className="cursor-pointer"
+                >
+                  <FileText className="mr-1 h-4 w-4 text-blue-600" /> Word (.docx)
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setPracticing(true)}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold cursor-pointer"
+                >
+                  <Play className="mr-1 h-4 w-4 fill-current" /> Practice Online
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSave}
+                  disabled={saving || saved}
+                  className="cursor-pointer"
+                >
+                  {saved ? (
+                    <>
+                      <CheckCircle2 className="mr-1 h-4 w-4 text-emerald-600" /> Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-1 h-4 w-4" /> {saving ? "Saving…" : "Save"}
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={onRegenerate} className="cursor-pointer">
+                  <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
+                </Button>
+                <div className="pl-1 border-l">
+                  <ThemeToggle />
+                </div>
               </div>
             </div>
           </div>

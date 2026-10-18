@@ -651,39 +651,41 @@ export function GeneratorWizard({
   return (
     <div className="space-y-4">
       {/* Top Focus Navigation Bar (Distraction-free workflow) */}
-      <div className="sticky top-2 z-30 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card/95 backdrop-blur-md p-3 shadow-xs">
-        <div className="flex items-center gap-2">
+      <div className="sticky top-0 sm:top-2 z-30 flex items-center justify-between gap-2 rounded-none sm:rounded-2xl border-x-0 sm:border -mx-3 px-3 sm:mx-0 py-2 sm:p-3 bg-card/95 backdrop-blur-md shadow-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {step === "class" ? (
             onExit && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onExit}
-                className="gap-1.5 h-9 font-medium cursor-pointer"
+                className="gap-1 sm:gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 font-medium cursor-pointer"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back to Dashboard</span>
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Back to Dashboard</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             )
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrevStep}
-                className="gap-1.5 h-9 font-medium cursor-pointer"
+                className="gap-1 sm:gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 font-medium cursor-pointer"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span>
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">
                   Back to {step === "setup" ? "Syllabus" : step === "syllabus" ? "Subject" : "Class"}
                 </span>
+                <span className="sm:hidden">Back</span>
               </Button>
               {onExit && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onExit}
-                  className="h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="hidden sm:inline-flex h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Exit to Dashboard
                 </Button>
@@ -692,17 +694,28 @@ export function GeneratorWizard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
             <GraduationCap className="h-4 w-4" />
           </div>
-          <span className="hidden sm:inline">ExamForge Paper Generator</span>
-          <Badge variant="secondary" className="text-[11px] font-medium">
+          <span className="hidden md:inline truncate">ExamForge Paper Generator</span>
+          <Badge variant="secondary" className="text-[10px] sm:text-[11px] font-medium py-0.5 truncate">
             Step {currentStepIdx + 1} of 4: {STEPS_CONFIG[currentStepIdx]?.label}
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {onExit && step !== "class" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onExit}
+              className="sm:hidden h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Exit to Dashboard"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
           <ThemeToggle />
         </div>
       </div>
@@ -836,6 +849,8 @@ export function GeneratorWizard({
                         }
                         setChapterIds([]);
                         setTopicIds([]);
+                        setStep("subject");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
@@ -909,7 +924,7 @@ export function GeneratorWizard({
                               setStep("subject");
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs shadow-xs"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs shadow-xs cursor-pointer"
                           >
                             <span>Continue to Subjects</span>
                             <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -927,10 +942,13 @@ export function GeneratorWizard({
                               }
                               setChapterIds([]);
                               setTopicIds([]);
+                              setStep("subject");
+                              window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
-                            className="w-full text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 h-9"
+                            className="w-full text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 h-9 cursor-pointer"
                           >
-                            <span>Select {cls.class_name}</span>
+                            <span>Select &amp; Continue</span>
+                            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
@@ -1105,12 +1123,24 @@ export function GeneratorWizard({
                       {chapterIds.length}/{chapters.length}
                     </Badge>
                   </button>
+                  <Button
+                    size="sm"
+                    disabled={chapterIds.length === 0}
+                    onClick={() => {
+                      setStep("setup");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 shadow-xs cursor-pointer"
+                  >
+                    <span>Continue</span>
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
 
               {/* Status bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/40 p-3 text-xs">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border bg-muted/40 p-3 text-xs">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="font-semibold">
                     {chapterIds.length} of {chapters.length} Chapters Selected
                   </Badge>
@@ -1132,7 +1162,7 @@ export function GeneratorWizard({
                     setStep("setup");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-4"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-4 w-full sm:w-auto shadow-xs cursor-pointer"
                 >
                   Continue to Test Setup <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
@@ -1282,11 +1312,14 @@ export function GeneratorWizard({
               </div>
 
               {/* Sticky / Prominent Bottom Continuation Bar */}
-              <div className="sticky bottom-4 z-20 rounded-xl border-2 border-emerald-500/80 bg-card p-4 shadow-xl backdrop-blur">
+              <div className="sticky bottom-3 sm:bottom-4 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-md pb-[max(0.85rem,env(safe-area-inset-bottom))]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-bold">
-                      {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected
+                    <div className="text-sm font-bold flex items-center gap-2">
+                      <span>{chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected</span>
+                      {chapterIds.length > 0 && (
+                        <Badge className="bg-emerald-600 text-white text-[10px] font-bold">Ready</Badge>
+                      )}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {topicIds.length > 0
@@ -1295,27 +1328,27 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       variant="outline"
-                      size="lg"
+                      size="sm"
                       onClick={() => {
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="font-medium cursor-pointer"
+                      className="font-medium cursor-pointer flex-1 sm:flex-none h-10"
                     >
                       <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
                     </Button>
                     <Button
-                      size="lg"
+                      size="sm"
                       disabled={chapterIds.length === 0}
                       onClick={() => {
                         setStep("setup");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow cursor-pointer"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md cursor-pointer flex-1 sm:flex-none h-10 px-5"
                     >
                       Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -2025,6 +2058,39 @@ export function GeneratorWizard({
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Mobile sticky action bar for Step 4 (<lg screens) */}
+              <div className="lg:hidden sticky bottom-3 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3 shadow-2xl backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
+                    <span>{totalQuestions} Qs</span>
+                    <span>·</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{totalMarks} Marks</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate">{formatDuration(durationMins)}</div>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={generating || (!!user && !canGenerate)}
+                  onClick={() => handleGenerate("preview")}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 px-4 text-xs shadow-sm shrink-0 cursor-pointer"
+                >
+                  {!user ? (
+                    <>
+                      <Lock className="mr-1 h-3.5 w-3.5" /> Sign In
+                    </>
+                  ) : generating ? (
+                    <>
+                      <span className="mr-1.5 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      Generating…
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="mr-1 h-3.5 w-3.5" /> Generate Paper
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}
