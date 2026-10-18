@@ -80,7 +80,7 @@ export function Dashboard({
               <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/25">
                 <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
               </Badge>
-              <h1 className="text-[28px] sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-snug">
                 Create custom exam papers & practice online
               </h1>
               <p className="max-w-xl text-xs sm:text-sm text-white/85 leading-relaxed">

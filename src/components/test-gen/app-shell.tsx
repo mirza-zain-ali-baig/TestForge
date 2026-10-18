@@ -439,7 +439,7 @@ export function TestGeneratorApp() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative flex h-11 min-h-[44px] min-w-[44px] items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="relative flex h-9 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
                   >
                     <Avatar className="h-7 w-7">
                       <AvatarFallback className="bg-emerald-600 text-xs font-semibold text-white">
@@ -506,19 +506,19 @@ export function TestGeneratorApp() {
                   setAuthDefaultTab("login");
                   setAuthOpen(true);
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium h-11 min-h-[44px] min-w-[44px] px-2.5 sm:px-3 active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-semibold h-9 px-3 active:scale-95 cursor-pointer"
                 aria-label="Sign In"
                 title="Sign In"
               >
-                <LogIn className="h-4 w-4 min-[380px]:mr-1.5 shrink-0" />
-                <span className="hidden min-[380px]:inline">Sign In</span>
+                <LogIn className="h-4 w-4 mr-1.5 shrink-0" />
+                <span>Sign In</span>
               </Button>
             )}
 
             <Button
               variant="ghost"
               size="icon"
-              className="hidden h-11 w-11 min-h-[44px] min-w-[44px] sm:flex sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hidden h-9 w-9 sm:flex focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none cursor-pointer"
               onClick={() => setShowHelp(true)}
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
@@ -529,7 +529,7 @@ export function TestGeneratorApp() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 min-h-[44px] min-w-[44px] lg:hidden"
+              className="h-9 w-9 lg:hidden cursor-pointer"
               onClick={() => setMobileNav((v) => !v)}
               aria-label="Toggle menu"
             >
