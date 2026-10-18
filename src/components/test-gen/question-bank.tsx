@@ -14,6 +14,8 @@ import {
   Star,
   StickyNote,
   Pencil,
+  Lock,
+  LogIn,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +78,13 @@ export function QuestionBank({
   const [noteEditingId, setNoteEditingId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) {
+      onSignIn?.();
+    }
+  }, [user, onSignIn]);
+
+  useEffect(() => {
+    if (!user) return;
     fetchCurriculum()
       .then((d) => {
         const sortedTree = [...(d.tree || [])].sort((a, b) =>
@@ -91,7 +100,7 @@ export function QuestionBank({
         }
       })
       .catch((e) => toast.error(e.message));
-  }, []);
+  }, [user]);
 
   const handleClassChange = (newClassId: string) => {
     setClassId(newClassId);
@@ -143,8 +152,9 @@ export function QuestionBank({
   }, [subjectId, chapterIds, typeName, diffName, debouncedSearch, page]);
 
   useEffect(() => {
+    if (!user) return;
     load();
-  }, [load]);
+  }, [load, user]);
 
   const toggleFavorite = (id: string) => {
     if (!user) {
@@ -216,6 +226,32 @@ export function QuestionBank({
     }
     return questions;
   }, [questions, showFavOnly, favorites]);
+
+  if (!user) {
+    return (
+      <Card className="border-dashed border-emerald-500/30">
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+            <Lock className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold">Sign in to access the Question Bank</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Browse thousands of curriculum questions, view solutions and answers, save favorite questions, and add custom notes.
+            </p>
+          </div>
+          {onSignIn && (
+            <Button
+              onClick={onSignIn}
+              className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+            >
+              <LogIn className="mr-2 h-4 w-4" /> Sign In / Sign Up
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -291,7 +327,9 @@ export function QuestionBank({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search question text, tags, blooms level…"
-                  className="pl-8"
+                  className="pl-8 text-base sm:text-sm"
+                  type="search"
+                  inputMode="search"
                 />
               </div>
             </div>
@@ -325,40 +363,53 @@ export function QuestionBank({
             </button>
           </div>
 
-          {/* Chapter chips */}
+          {/* Chapter chips - Horizontally scrollable on mobile (Chapter 13 Rec 2) */}
           {chapters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                <Filter className="h-3 w-3" /> Chapters:
-              </span>
-              <Button
-                size="sm"
-                variant={chapterIds.length === 0 ? "default" : "outline"}
-                className="h-7 px-2 text-xs"
-                onClick={() => setChapterIds([])}
-              >
-                All
-              </Button>
-              {chapters.map((c) => {
-                const count = searchCountsByChapter ? (searchCountsByChapter[c.id] || 0) : c.questionCount;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => toggleChapter(c.id)}
-                    className={[
-                      "h-7 rounded-full border px-2.5 text-xs transition-colors",
-                      chapterIds.includes(c.id)
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-border hover:border-emerald-400",
-                    ].join(" ")}
-                    title={`Ch ${c.chapter_number}: ${c.chapter_name}`}
-                  >
-                    Ch{c.chapter_number}
-                    <span className="ml-1 opacity-70">({count})</span>
-                  </button>
-                );
-              })}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Filter className="h-3 w-3" /> Filter by Chapter:
+                </span>
+                <span className="text-[11px] sm:hidden text-muted-foreground/80">
+                  Swipe horizontally →
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth sm:flex-wrap">
+                <Button
+                  size="sm"
+                  variant={chapterIds.length === 0 ? "default" : "outline"}
+                  className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium"
+                  onClick={() => setChapterIds([])}
+                >
+                  All Chapters
+                </Button>
+                {chapters.map((c) => {
+                  const count = searchCountsByChapter ? (searchCountsByChapter[c.id] || 0) : c.questionCount;
+                  const isSelected = chapterIds.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleChapter(c.id)}
+                      className={cn(
+                        "h-7 shrink-0 rounded-full border px-2.5 text-xs font-medium transition-colors whitespace-nowrap active:scale-95",
+                        isSelected
+                          ? "border-emerald-600 bg-emerald-600 text-white shadow-xs"
+                          : "border-border hover:border-emerald-400 hover:bg-accent text-foreground"
+                      )}
+                      title={`Ch ${c.chapter_number}: ${c.chapter_name}`}
+                    >
+                      Ch{c.chapter_number}
+                      <span className={cn(
+                        "ml-1 text-[10px]",
+                        isSelected ? "text-white/80" : "text-muted-foreground"
+                      )}>
+                        ({count})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </CardContent>

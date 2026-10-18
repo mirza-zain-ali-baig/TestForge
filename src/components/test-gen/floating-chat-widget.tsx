@@ -304,7 +304,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="no-print fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 active:scale-95"
+          className="no-print fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 active:scale-95"
           aria-label="Open AI Assistant"
         >
           <Sparkles className="h-4 w-4 animate-pulse" />
@@ -314,7 +314,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
 
       {/* Floating Chat Modal Panel */}
       {isOpen && (
-        <div className="no-print fixed bottom-3 right-3 left-3 sm:left-auto sm:right-5 sm:bottom-5 z-50 flex h-[540px] sm:h-[580px] w-auto sm:w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all">
+        <div className="no-print fixed bottom-20 right-3 left-3 sm:left-auto sm:right-5 sm:bottom-5 z-50 flex h-[520px] sm:h-[580px] w-auto sm:w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3.5 py-2.5">
             <div className="flex items-center gap-2 min-w-0">

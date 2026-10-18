@@ -69,6 +69,14 @@ const NAV: { id: View; label: string; icon: typeof LayoutDashboard; desc: string
   { id: "saved", label: "Saved Papers", icon: FolderOpen, desc: "Saved papers & bookmarks" },
 ];
 
+const BOTTOM_NAV: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: "dashboard", label: "Home", icon: LayoutDashboard },
+  { id: "generate", label: "Generate", icon: Wand2 },
+  { id: "bank", label: "Bank", icon: Database },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "saved", label: "Saved", icon: FolderOpen },
+];
+
 export function TestGeneratorApp() {
   const [view, setView] = useState<View>("dashboard");
   const [mobileNav, setMobileNav] = useState(false);
@@ -82,6 +90,7 @@ export function TestGeneratorApp() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const syncedTokenRef = useRef<string | null>(null);
+  const pendingNavRef = useRef<View | null>(null);
 
   // Sync view state with browser URL (?view=...) (Bug 16)
   const setViewWithUrl = useCallback((nextView: View, replace = false) => {
@@ -196,6 +205,7 @@ export function TestGeneratorApp() {
       toast.info("Please sign in or create an account to generate exam papers.");
       setAuthDefaultTab("login");
       setAuthOpen(true);
+      pendingNavRef.current = "generate";
       return;
     }
     if (opts?.batch) {
@@ -230,19 +240,26 @@ export function TestGeneratorApp() {
   const [previousView, setPreviousView] = useState<View>("dashboard");
 
   const navigate = useCallback((v: View) => {
+    if (v === "bank" && !user) {
+      toast.info("Please sign in or create an account to access the Question Bank.");
+      setAuthDefaultTab("login");
+      setAuthOpen(true);
+      pendingNavRef.current = "bank";
+      return;
+    }
+    if (v === "generate") {
+      goGenerate();
+      return;
+    }
     setView((curr) => {
       if (curr !== v && curr !== "chat") {
         setPreviousView(curr);
       }
       return curr;
     });
-    if (v === "generate") {
-      goGenerate();
-    } else {
-      setViewWithUrl(v);
-    }
+    setViewWithUrl(v);
     setMobileNav(false);
-  }, [setViewWithUrl]);
+  }, [user, goGenerate, setViewWithUrl]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -564,8 +581,8 @@ export function TestGeneratorApp() {
           view === "chat"
             ? "w-full h-screen p-0 m-0 overflow-hidden"
             : view === "generate"
-            ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-6"
-            : "mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8"
+            ? "mx-auto w-full max-w-7xl px-3 py-4 pb-20 sm:px-6 sm:py-6 sm:pb-6"
+            : "mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-8"
         )}
       >
         <ErrorBoundary>
@@ -671,7 +688,7 @@ export function TestGeneratorApp() {
 
       {/* Footer */}
       {!["chat", "generate", "print"].includes(view) && (
-        <footer className="no-print mt-auto border-t bg-muted/30">
+        <footer className="no-print mt-auto border-t bg-muted/30 pb-20 md:pb-0">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4 text-emerald-600" />
@@ -685,6 +702,65 @@ export function TestGeneratorApp() {
             </div>
           </div>
         </footer>
+      )}
+
+      {/* Mobile Bottom Navigation Bar (Chapter 13 Rec 1: Native Thumb-Zone Navigation) */}
+      {!["chat", "print"].includes(view) && (
+        <nav
+          className="no-print md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 shadow-lg px-2 py-1 safe-area-bottom flex items-center justify-around"
+          aria-label="Mobile Bottom Navigation"
+        >
+          {BOTTOM_NAV.map((item) => {
+            const isActive = view === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  if (item.id === "bank") {
+                    if (!user) {
+                      toast.info("Please sign in or create an account to access the Question Bank.");
+                      setAuthDefaultTab("login");
+                      setAuthOpen(true);
+                      pendingNavRef.current = "bank";
+                      return;
+                    }
+                    navigate("bank");
+                    return;
+                  }
+                  if (item.id === "generate") {
+                    if (variants.length > 0) {
+                      setViewWithUrl("generate");
+                    } else {
+                      goGenerate();
+                    }
+                    return;
+                  }
+                  navigate(item.id);
+                }}
+                className={cn(
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 px-1 min-h-[50px] rounded-xl transition-all active:scale-95",
+                  isActive
+                    ? "text-emerald-700 dark:text-emerald-400 font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
+                    isActive ? "bg-emerald-500/15" : "bg-transparent"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                </span>
+                <span className="text-[10px] tracking-tight truncate max-w-[62px]">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
       )}
 
       {/* Floating scroll-to-top */}
@@ -708,8 +784,32 @@ export function TestGeneratorApp() {
       {/* Authentication Dialog */}
       <AuthDialog
         open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onSuccess={(u) => setUser(u)}
+        onClose={() => {
+          setAuthOpen(false);
+          pendingNavRef.current = null;
+        }}
+        onSuccess={(u) => {
+          setUser(u);
+          if (pendingNavRef.current) {
+            const dest = pendingNavRef.current;
+            pendingNavRef.current = null;
+            setTimeout(() => {
+              if (dest === "generate") {
+                setVariants([]);
+                setActiveVariant(0);
+                setViewWithUrl("generate");
+              } else {
+                setView((curr) => {
+                  if (curr !== dest && curr !== "chat") {
+                    setPreviousView(curr);
+                  }
+                  return curr;
+                });
+                setViewWithUrl(dest);
+              }
+            }, 50);
+          }
+        }}
         defaultTab={authDefaultTab}
       />
     </div>

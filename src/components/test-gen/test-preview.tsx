@@ -1362,7 +1362,9 @@ function BankPicker({
               setOffset(0);
             }}
             placeholder="Search bank questions…"
-            className="pl-8"
+            className="pl-8 text-base sm:text-sm"
+            type="search"
+            inputMode="search"
           />
         </div>
         <Select

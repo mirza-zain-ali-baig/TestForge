@@ -74,23 +74,23 @@ export function Dashboard({
       {/* Hero */}
       <Card className="animate-fade-in relative overflow-hidden border-none bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-lg">
         <div className="absolute inset-0 bg-grid opacity-20" />
-        <CardContent className="relative z-10 p-6 sm:p-8">
+        <CardContent className="relative z-10 p-5 sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/25">
                 <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
               </Badge>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-snug">
                 Create custom exam papers & practice online
               </h1>
-              <p className="max-w-xl text-sm text-white/85">
+              <p className="max-w-xl text-xs sm:text-sm text-white/85 leading-relaxed">
                 Select your class, choose your subject and syllabus chapters, and generate custom test papers instantly from curated questions or fresh AI generation. Practice online or export print-ready exam papers with full styling.
               </p>
             </div>
             <Button
               size="lg"
               onClick={onStart}
-              className="bg-white text-emerald-700 hover:bg-white/90 shadow-md font-semibold"
+              className="w-full sm:w-auto h-12 bg-white text-emerald-700 hover:bg-white/90 shadow-md font-semibold text-sm sm:text-base shrink-0 active:scale-95 min-h-[48px]"
             >
               <Sparkles className="mr-2 h-4 w-4" /> Generate a Test
             </Button>
@@ -151,11 +151,11 @@ export function Dashboard({
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart
                     data={stats.byType}
-                    margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                    margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
+                    <YAxis tickLine={false} axisLine={false} fontSize={11} />
                     <Tooltip
                       cursor={{ fill: "var(--accent)", opacity: 0.4 }}
                       contentStyle={{
@@ -172,7 +172,7 @@ export function Dashboard({
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {stats.byDifficulty.map((d, i) => {
                     const total = stats.byDifficulty.reduce((s, x) => s + x.count, 0) || 1;
                     const pct = Math.round((d.count / total) * 100);
@@ -263,7 +263,7 @@ export function Dashboard({
           <CardDescription>Jump straight to common tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
             <QuickAction
               icon={Wand2}
               title="Generate a test"
@@ -291,6 +291,18 @@ export function Dashboard({
           </div>
         </CardContent>
       </Card>
+
+      {/* Sticky Mobile Generate Button (Chapter 13 Rec 3) */}
+      <div className="fixed bottom-16 right-4 z-30 sm:hidden">
+        <Button
+          size="sm"
+          onClick={onStart}
+          className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-1.5 h-10 border border-emerald-400/30"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Generate Test</span>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -310,14 +322,14 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="card-lift group flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:border-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+      className="card-lift group flex flex-col sm:flex-row items-start gap-2 sm:gap-3 rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:border-emerald-400 active:scale-[0.98] active:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 min-h-[82px] sm:min-h-[90px]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/40">
+      <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/40">
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <div className="text-sm font-semibold">{title}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">{desc}</div>
+        <div className="text-xs sm:text-sm font-semibold truncate sm:whitespace-normal">{title}</div>
+        <div className="mt-0.5 text-[10px] sm:text-[11px] text-muted-foreground line-clamp-2">{desc}</div>
       </div>
     </button>
   );

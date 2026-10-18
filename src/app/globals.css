@@ -371,4 +371,18 @@ strong .katex .mclose,
   ring: 0 !important;
 }
 
+/* ─── Mobile Safe Area & Scrollbar Utilities (Chapter 02 & 13) ────────────── */
+.safe-area-bottom {
+  padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
 

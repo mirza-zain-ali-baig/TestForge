@@ -2186,6 +2186,7 @@ function DifficultyEditor(props: {
                     </div>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       value={need === 0 ? "" : need}
                       placeholder="0"
@@ -2199,7 +2200,7 @@ function DifficultyEditor(props: {
                         if (!isNaN(n)) setCount(t, d, Math.max(0, n));
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="mt-1 h-8"
+                      className="mt-1 h-8 text-base sm:text-sm"
                     />
                   </div>
                 );
@@ -3445,6 +3446,7 @@ function AIBlueprintSuggester({
               <Label className="text-xs">Target total marks</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min={1}
                 max={200}
                 value={targetMarks === 0 ? "" : targetMarks}
