@@ -18,11 +18,13 @@ import {
   ShieldCheck,
   RotateCcw,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ChatMarkdown } from "./chat-markdown";
 import { type ChatMessage } from "@/lib/openrouter";
 import type { AuthUser } from "./lib";
@@ -65,9 +67,11 @@ const STARTER_PROMPTS = [
 
 interface ChatViewProps {
   user?: AuthUser | null;
+  onBack?: () => void;
+  fullWindow?: boolean;
 }
 
-export function ChatView({ user }: ChatViewProps) {
+export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
   const userEmail = user?.email ? user.email.toLowerCase().trim() : "guest";
   const SESSIONS_KEY = `examforge_chat_sessions_${userEmail}`;
   const ACTIVE_KEY = `examforge_active_session_${userEmail}`;
@@ -567,7 +571,13 @@ export function ChatView({ user }: ChatViewProps) {
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-8.5rem)] min-h-[550px] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div
+      className={`relative flex w-full overflow-hidden bg-card ${
+        fullWindow
+          ? "h-screen rounded-none border-0 shadow-none"
+          : "h-[calc(100vh-8.5rem)] min-h-[550px] rounded-2xl border border-border shadow-sm"
+      }`}
+    >
       {/* Mobile Backdrop Overlay */}
       {sidebarOpen && (
         <div
@@ -582,8 +592,20 @@ export function ChatView({ user }: ChatViewProps) {
           sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full w-0 md:w-0"
         } absolute md:relative inset-y-0 left-0 z-30 flex flex-col shrink-0 border-r border-border bg-card md:bg-muted/30 transition-all duration-200 ease-in-out overflow-hidden`}
       >
-        {/* New Chat Button */}
-        <div className="p-3 border-b border-border/60">
+        {/* New Chat & Move Backward Options */}
+        <div className="p-3 border-b border-border/60 flex flex-col gap-2">
+          {onBack && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBack}
+              className="w-full justify-start gap-2 border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted text-xs h-8 shadow-xs font-medium"
+              title="Move backward to previous view"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back to Dashboard</span>
+            </Button>
+          )}
           <Button
             onClick={handleNewChat}
             className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-9 shadow-xs"
@@ -660,6 +682,18 @@ export function ChatView({ user }: ChatViewProps) {
         {/* Top Navbar */}
         <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 px-2 sm:px-4 bg-card/60 backdrop-blur-xs gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            {onBack && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="h-8 gap-1.5 px-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted border border-border/70 rounded-lg mr-1 shrink-0 shadow-2xs"
+                title="Move backward"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="font-medium">Back</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -688,7 +722,7 @@ export function ChatView({ user }: ChatViewProps) {
             </div>
           </div>
 
-          {/* Actions & Clear Chat */}
+          {/* Actions & Clear Chat & Theme */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {messages.length > 0 && (
               <Button
@@ -701,6 +735,7 @@ export function ChatView({ user }: ChatViewProps) {
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
+            <ThemeToggle />
           </div>
         </header>
 

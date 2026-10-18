@@ -221,7 +221,15 @@ export function TestGeneratorApp() {
     setMobileNav(false);
   };
 
+  const [previousView, setPreviousView] = useState<View>("dashboard");
+
   const navigate = useCallback((v: View) => {
+    setView((curr) => {
+      if (curr !== v && curr !== "chat") {
+        setPreviousView(curr);
+      }
+      return curr;
+    });
     if (v === "generate") {
       goGenerate();
     } else {
@@ -336,9 +344,10 @@ export function TestGeneratorApp() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Unified Persistent Header — All 7 Navigation Items Available Everywhere (Bug 19, Bug 20) */}
-      <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65">
+    <div className={cn("flex min-h-screen flex-col bg-background", view === "chat" && "h-screen overflow-hidden")}>
+      {/* Unified Persistent Header — Hidden in full AI Chat window */}
+      {view !== "chat" && (
+        <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           {/* Logo & Brand */}
           <div className="flex items-center gap-2.5">
@@ -576,9 +585,17 @@ export function TestGeneratorApp() {
           </div>
         )}
       </header>
+      )}
 
       {/* Main Content with ErrorBoundary */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        className={cn(
+          "flex-1",
+          view === "chat"
+            ? "w-full h-screen p-0 m-0 overflow-hidden"
+            : "mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8"
+        )}
+      >
         <ErrorBoundary>
           {view === "dashboard" && (
             <Dashboard
@@ -628,7 +645,13 @@ export function TestGeneratorApp() {
             </>
           )}
           {view === "bank" && <QuestionBank />}
-          {view === "chat" && <ChatView user={user} />}
+          {view === "chat" && (
+            <ChatView
+              user={user}
+              onBack={() => navigate(previousView === "chat" ? "dashboard" : previousView)}
+              fullWindow
+            />
+          )}
           {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}
           {view === "history" && (
             <TestHistoryView
@@ -656,27 +679,29 @@ export function TestGeneratorApp() {
       </main>
 
       {/* Footer */}
-      <footer className="no-print mt-auto border-t bg-muted/30">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4 text-emerald-600" />
-            <span>
-              <strong className="text-foreground">ExamForge</strong> — AI-powered test generator
-              for classes.
-            </span>
+      {view !== "chat" && (
+        <footer className="no-print mt-auto border-t bg-muted/30">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-emerald-600" />
+              <span>
+                <strong className="text-foreground">ExamForge</strong> — AI-powered test generator
+                for classes.
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span>Powered by Supabase · Next.js · ExamForge AI</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span>Powered by Supabase · Next.js · ExamForge AI</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {/* Floating scroll-to-top */}
-      <ScrollToTop />
+      {view !== "chat" && <ScrollToTop />}
 
       {/* Floating AI Chatbox Widget (shown on all pages except full Chat page) */}
       {view !== "chat" && (
-        <FloatingChatWidget user={user} onExpandToFullPage={() => setView("chat")} />
+        <FloatingChatWidget user={user} onExpandToFullPage={() => navigate("chat")} />
       )}
 
       {/* Keyboard shortcuts help */}
