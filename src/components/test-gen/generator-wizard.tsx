@@ -215,10 +215,12 @@ export function GeneratorWizard({
   onGenerated,
   user,
   onRequireAuth,
+  initialVariantCount = 1,
 }: {
   onGenerated: (variants: GeneratedTest[], mode?: "preview" | "practice" | "print") => void;
   user?: AuthUser | null;
   onRequireAuth?: (tab?: "login" | "register") => void;
+  initialVariantCount?: number;
 }) {
   const [tree, setTree] = useState<CurriculumNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,8 +243,14 @@ export function GeneratorWizard({
   const [blueprint, setBlueprint] = useState<Blueprint>(emptyBlueprint());
   const [source, setSource] = useState<GenerateSource>("bank");
   const [shuffle, setShuffle] = useState(true);
-  const [variantCount, setVariantCount] = useState(1);
+  const [variantCount, setVariantCount] = useState(initialVariantCount);
   const [questionSources, setQuestionSources] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialVariantCount > 1) {
+      setVariantCount(initialVariantCount);
+    }
+  }, [initialVariantCount]);
 
   // UI state
   const [selectedPreset, setSelectedPreset] = useState<string>("");
@@ -630,44 +638,6 @@ export function GeneratorWizard({
 
   return (
     <div className="space-y-6">
-      {/* Auth required banner */}
-      {!user && (
-        <Card className="border-amber-300 bg-amber-50/70 dark:border-amber-800/70 dark:bg-amber-950/30">
-          <CardContent className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                <Lock className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-amber-950 dark:text-amber-100">
-                  Sign In Required to Generate Tests
-                </div>
-                <div className="text-xs text-amber-800/90 dark:text-amber-200/80">
-                  Only registered and signed-in users can generate or practice tests.
-                </div>
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onRequireAuth?.("register")}
-                className="border-amber-400 bg-background text-xs hover:bg-amber-100 dark:border-amber-700 dark:hover:bg-amber-900/40"
-              >
-                <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Register
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => onRequireAuth?.("login")}
-                className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-              >
-                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Stepper Navigation Bar with Filled Progress Connectors */}
       <div className="overflow-x-auto pb-1">
         <div className="flex items-center justify-between rounded-2xl border bg-card p-3 shadow-xs min-w-[620px]">
@@ -676,15 +646,17 @@ export function GeneratorWizard({
             const thisIndex = stepOrder.indexOf(s.id);
             const isCompleted = thisIndex < currentStepIdx;
             const isClickable =
-              thisIndex < currentStepIdx ||
+              thisIndex <= currentStepIdx ||
               (s.id === "subject" && !!classId) ||
-              (s.id === "syllabus" && !!classId && !!subjectId);
+              (s.id === "syllabus" && !!classId && !!subjectId) ||
+              (s.id === "setup" && !!classId && !!subjectId && chapterIds.length > 0);
 
             return (
               <div key={s.id} className="flex flex-1 items-center">
                 <button
                   type="button"
                   disabled={!isClickable}
+                  aria-current={isCurrent ? "step" : undefined}
                   onClick={() => {
                     if (isClickable) {
                       setStep(s.id);
@@ -1464,7 +1436,8 @@ export function GeneratorWizard({
                                     }}
                                     onFocus={(e) => e.target.select()}
                                     className="h-6 w-12 rounded border bg-background px-1 text-center font-bold text-xs"
-                                    title="Marks per question"
+                                    title={`${meta.label} marks per question`}
+                                    aria-label={`${meta.label} marks per question`}
                                   />
                                   <span>· Subtotal: <strong className="text-foreground">{subtotalMarks} marks</strong></span>
                                 </div>
@@ -1481,6 +1454,8 @@ export function GeneratorWizard({
                                   onClick={() => incrementTypeCount(t, -1)}
                                   disabled={count <= 0}
                                   className="h-8 w-8 rounded-lg hover:bg-background"
+                                  aria-label={`Decrease ${meta.label} count`}
+                                  title={`Decrease ${meta.label} count`}
                                 >
                                   <Minus className="h-3.5 w-3.5" />
                                 </Button>
@@ -1501,6 +1476,8 @@ export function GeneratorWizard({
                                   }}
                                   onFocus={(e) => e.target.select()}
                                   className="h-8 w-14 bg-transparent text-center font-bold text-sm focus:outline-none"
+                                  title={`${meta.label} question count`}
+                                  aria-label={`${meta.label} question count`}
                                 />
                                 <Button
                                   type="button"
@@ -1508,6 +1485,8 @@ export function GeneratorWizard({
                                   variant="ghost"
                                   onClick={() => incrementTypeCount(t, 1)}
                                   className="h-8 w-8 rounded-lg hover:bg-background"
+                                  aria-label={`Increase ${meta.label} count`}
+                                  title={`Increase ${meta.label} count`}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                 </Button>
@@ -1516,6 +1495,44 @@ export function GeneratorWizard({
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  {/* Paper Variants (Batch Mode) — Disjoint Exam Sets (Bug 18) */}
+                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                          <CopyPlus className="h-4 w-4 text-emerald-600" />
+                          Paper Variants (Batch Mode)
+                          {variantCount > 1 && (
+                            <Badge className="bg-emerald-600 text-white text-[10px] py-0 px-1.5 font-bold">
+                              {variantCount} Disjoint Variants
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Create multiple distinct versions of this paper (Set A, Set B, Set C) with disjoint questions for exam halls.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Select
+                          value={String(variantCount)}
+                          onValueChange={(v) => setVariantCount(parseInt(v, 10))}
+                        >
+                          <SelectTrigger className="w-40 h-8 text-xs font-semibold bg-background" aria-label="Paper variants count">
+                            <SelectValue placeholder="1 Paper (Standard)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 Paper (Standard)</SelectItem>
+                            <SelectItem value="2">2 Variants (Set A/B)</SelectItem>
+                            <SelectItem value="3">3 Variants (Set A/B/C)</SelectItem>
+                            <SelectItem value="4">4 Variants</SelectItem>
+                            <SelectItem value="5">5 Variants</SelectItem>
+                            <SelectItem value="6">6 Variants</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
 
@@ -1891,7 +1908,10 @@ export function GeneratorWizard({
                           </>
                         ) : (
                           <>
-                            <Printer className="mr-1.5 h-4 w-4" /> Generate Printable Paper
+                            <Printer className="mr-1.5 h-4 w-4" />{" "}
+                            {variantCount > 1
+                              ? `Generate ${variantCount} Paper Variants (Batch)`
+                              : "Generate Printable Paper"}
                           </>
                         )}
                       </Button>

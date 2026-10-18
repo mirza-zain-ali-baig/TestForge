@@ -1,0 +1,133 @@
+<USER_REQUEST>
+Fix all these errors:
+ExamForge QA Report — All Errors & UI/UX Issues
+🔴 CRITICAL BUGS (App-breaking)
+1. AI Chat crashes the entire application
+Steps: Navigate to AI Chat → type a message (or click any suggestion button like "Generate Exam MCQs") → click Send
+Result: The whole Next.js app crashes with Application error: a client-side exception has occurred while loading generate-test.vercel.app (see the browser console for more information). The page must be reloaded; state is lost.
+Reproducibility: 100% — crashed on both typed message and suggestion-button click.
+Impact: A core advertised feature (AI Chat / AI Assistant) is completely unusable.
+2. Long Answer section never renders in generated paper
+Steps: In Test Setup add any Long Answer questions (e.g. 1 or 2) → click "Generate Printable Paper".
+Result: The generated paper contains only SECTION A — MCQ and SECTION B — SHORT. SECTION C (Long Answer) is missing entirely, even though the question count and mark total in the focus-mode summary (e.g. 5 Q · 7 marks) excludes the Long Answer questions that were configured.
+Impact: Users who configure long-answer questions silently lose them.
+3. "Back" button on paper view resets the entire workflow
+Steps: Generate a paper → click the "Back" button in the paper toolbar.
+Result: Instead of returning one step back to "Test Setup", the workflow resets all the way to Step 1 — Select Class. All question breakdown config (marks per question, counts, source filter, etc.) is lost.
+Impact: Users lose their entire test configuration by clicking Back.
+4. "Save" button fails silently with role authorization error
+Steps: Register a new account (default role = student) → generate a paper → click Save.
+Result: Toast: Access denied: role "student" is not authorized to save test papers. Required role: educator or admin.
+Issues: (a) The registration form never asks for a role, so all new users are silently student. (b) The Save button is still rendered/active for student users instead of being hidden or disabled with a tooltip. (c) No way exists in-app for the user to upgrade their role.
+🟠 HIGH-SEVERITY BUGS
+5. Data inconsistency: question counts don't match
+The site shows three different totals for the question bank:
+
+Dashboard stat card: Questions 2,123 (this matches 891 Class 9 + 1,232 Class 10)
+Dashboard "Browse questions" CTA: "2,773-question bank" ← wrong by +650
+The chapter filters in Question Bank correctly total 891/1,232 — so the 2,773 number is fabricated.
+6. "Regenerate question with AI" and "Explain answer with AI" buttons do nothing
+Clicking either button on a question in the paper produces no visible UI change — no loading spinner, no toast, no modal, no error, no inline explanation. The buttons appear dead.
+7. Practice Online silently drops non-MCQ questions
+The paper has 5 questions (3 MCQ + 2 Short). Practice Online mode shows only the 3 MCQs (TOTAL MCQS: 3) and offers no warning that Short Answer questions were excluded.
+Footer text "MCQs are auto-graded. Written answers show the model answer for self-assessment" implies Short Answers should be included — they aren't.
+8. Question Bank "Favorites" filter does not visually activate
+The Favorites / All toggle buttons have no aria-pressed or pressed visual state, so users can't tell which filter is active.
+Clicking "Favorites" with no favorites in the current search result set shows no empty state — it just continues showing the same search results.
+9. Edit Question modal has unlabeled form fields
+All textboxes in the Edit Question modal have no label text (just textbox [ref=...] in the a11y tree). The "Bloom's level" and "Tags" fields are also unlabeled.
+The A/B/C/D buttons for marking the correct answer are labeled only with the letter — no "Mark as correct" tooltip or aria-label.
+Major screen-reader accessibility failure.
+10. "Marks per question" spinbuttons have duplicate accessible names
+Three spinbuttons (for MCQ/Short/Long marks) all share the accessible name "Marks per question". A screen reader can't distinguish them.
+The count spinbuttons have accessible name "0" (their current value) — also non-descriptive; should be e.g. "MCQ count".
+🟡 MEDIUM-SEVERITY BUGS / UX ISSUES
+11. Duplicate subtopic numbering in syllabus
+In Class 9 Chapter 2 ("System Design and Troubleshooting") there are FOUR subtopics all numbered "2.5":
+
+2.5 Basic Hardware-Related Issues
+2.5 Hardware Diagnosis and Maintenance
+2.5 Importance of Troubleshooting in Computing Systems
+2.5 System Troubleshooting
+Chapter 1 also has duplicate subtopic numbers (two "1.1", two "1.3", two "1.7"). Chapter 4 has two "4.3". This is a serious data quality issue.
+
+12. Subtopics sorted alphabetically, not numerically
+Chapter 3 subtopics display in this order: 3.1, 3.11, 3.12, 3.2, 3.3, …, 3.9. They're string-sorted instead of numerically sorted, so 3.11 and 3.12 appear between 3.1 and 3.2.
+
+13. Off-topic questions in CS paper
+The Class 9 / Computer Science paper included Short Answer questions about "fair labour practices" and "ethical business operations" tagged to chapter "Ethical and Sustainable Entrepreneurship" — clearly not a Computer Science topic. Either the curriculum tagging is wrong or non-CS chapters are being included under a CS subject.
+
+14. Many Short Answer questions have no model answer
+Section B questions display "No model answer provided." under the answer key.
+The print/PDF export's answer key for Section B is therefore blank.
+15. Stepper step 4 always shows as disabled
+The vertical/horizontal stepper in the Generate workflow shows step 4 ("Test Setup · N Qs · Mm") as disabled even when the user is currently on the Test Setup page with valid questions configured. The disabled state contradicts the actual page state.
+
+16. URL never changes during SPA navigation
+The URL stays at https://generate-test.vercel.app/ for every screen — Dashboard, Generate wizard steps, Question Bank, AI Chat, Analytics, History, Saved Papers, paper preview, practice mode. This breaks:
+Browser back/forward buttons (no history)
+Deep linking / sharing a specific view
+Bookmarking
+Page refresh loses the current view (always returns to Dashboard)
+17. Default class differs across pages
+Generate workflow defaults to Class 9.
+Question Bank defaults to Class 10.
+Inconsistent defaults create confusion when navigating between features.
+18. "Batch variants" CTA is misleading
+The Dashboard CTA "Batch variants — Create up to 6 disjoint versions" just opens the same Generate workflow as the regular "Generate a Test" button. No batch/variant interface is discoverable.
+
+19. Main nav hidden inside Generate workflow
+Inside the Generate wizard, the top nav (Dashboard / Generate / Question Bank / AI Chat / Analytics / History / Saved Papers) disappears — only "Exit to Dashboard" remains. Users must exit and re-navigate to switch features.
+
+20. Sign In button duplicated
+When not signed in, the page shows two "Sign In" buttons plus a "Register" button stacked in the header. The duplicate (e3 and e22 in refs) is redundant and confusing.
+
+21. "SECTION B — SHORT" label is truncated
+The section heading reads SECTION B — SHORT (should be SECTION B — SHORT ANSWER). The label is cut mid-word.
+
+22. Practice mode "bank" label in focus mode header
+The focus-mode summary at the top of the paper shows the bare word "bank" instead of a meaningful label like "Question bank" or "Paper".
+
+23. Print/PDF metadata shows "Exam Syllabus: L1"
+The print view header shows the exam syllabus as just L1 — opaque code with no chapter names listed.
+
+24. Empty inputs lack name / autocomplete attributes
+The Sign In form's email/password fields have empty name attributes, so browser autofill and password manager support are broken.
+
+25. Password field accepts any length
+The Sign In password field has no minlength validation. Only the Register tab hints "min. 6 characters" in the label, but no actual constraint is enforced.
+
+🟢 LOW-SEVERITY ISSUES
+26. No <h1> on the Dashboard
+The Dashboard only has an <h2> ("Create custom exam papers & practice online"). Pages should have a single <h1> for proper document outline.
+
+27. Stat-card labels aren't headings
+"CLASSES", "SUBJECTS", "CHAPTERS", "TOPICS", "QUESTIONS" are plain text — screen readers can't navigate to them as section landmarks.
+
+28. Focus loss during Tab navigation
+Pressing Tab on the Dashboard appears to move focus, but document.activeElement.textContent returns "no focus" — focus management on the page is unreliable.
+
+29. "Sign Out" is the only user-menu item
+The avatar menu offers only "Sign Out". No profile, settings, or account-management options — minor, but a missed opportunity.
+
+30. No visible "Save" success indicator for favorited questions
+Clicking the heart icon on questions in Question Bank toggles favorite state, but there's no toast confirmation. (Could not visually verify favorite persistence because Favorites filter did not appear to apply — see bug #8.)
+
+31. Chapter filter counts don't update during search
+When searching "binary" returns 44 results, the chapter chips still show full counts (Ch1(150), Ch2(106), …). Users can't see which chapters contain the matching results.
+
+32. AI Chat suggestion prompts include non-CS topics
+Suggestion buttons include "Newton's 3 Laws" (physics) and "Quadratic Equation" (math) — neither is part of the Computer Science curriculum the app actually serves.
+
+33. Saved chats show no AI response
+After the AI Chat crash, the saved conversation "What is the OSI model in compute…" displays only the user's message with an "ExamForge AI" placeholder — no response, no error indicator, no retry button.
+
+34. No keyboard focus indicator visibility on theme/keyboard buttons
+The "Switch to dark theme" and "Keyboard shortcuts" icon-only buttons rely on default focus rings, which are easy to miss.
+
+35. "Continue with Google" button exists but isn't wired to a visible flow
+Could not verify whether Google OAuth actually works because no real Google account is available, but the button is prominent — should be tested by the team.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-18T10:47:44+05:00.
+</ADDITIONAL_METADATA>

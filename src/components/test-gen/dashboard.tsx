@@ -38,7 +38,16 @@ const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(-
 
 type Stats = Awaited<ReturnType<typeof fetchStats>>;
 
-export function Dashboard({ onStart }: { onStart: () => void }) {
+export function Dashboard({
+  onStart,
+  onNavigate,
+}: {
+  onStart: () => void;
+  onNavigate?: (
+    view: "generate" | "bank" | "chat" | "saved" | "analytics" | "history",
+    opts?: { batch?: boolean }
+  ) => void;
+}) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,9 +80,9 @@ export function Dashboard({ onStart }: { onStart: () => void }) {
               <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/25">
                 <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
               </Badge>
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Create custom exam papers & practice online
-              </h2>
+              </h1>
               <p className="max-w-xl text-sm text-white/85">
                 Select your class, choose your subject and syllabus chapters, and generate custom test papers instantly from curated questions or fresh AI generation. Practice online or export print-ready exam papers with full styling.
               </p>
@@ -81,7 +90,7 @@ export function Dashboard({ onStart }: { onStart: () => void }) {
             <Button
               size="lg"
               onClick={onStart}
-              className="bg-white text-emerald-700 hover:bg-white/90 shadow-md"
+              className="bg-white text-emerald-700 hover:bg-white/90 shadow-md font-semibold"
             >
               <Sparkles className="mr-2 h-4 w-4" /> Generate a Test
             </Button>
@@ -102,9 +111,9 @@ export function Dashboard({ onStart }: { onStart: () => void }) {
           >
             <CardContent className="flex flex-col gap-1 p-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {c.label}
-                </span>
+                </h3>
                 <c.icon className="h-4 w-4 text-emerald-600" />
               </div>
               {c.value === undefined ? (
@@ -264,20 +273,20 @@ export function Dashboard({ onStart }: { onStart: () => void }) {
             <QuickAction
               icon={Database}
               title="Browse questions"
-              desc="Search the 2,773-question bank"
-              onClick={onStart}
+              desc={`Search the ${stats?.counts.questions.toLocaleString() ?? "2,123"}-question bank`}
+              onClick={() => (onNavigate ? onNavigate("bank") : onStart())}
             />
             <QuickAction
               icon={BarChart3}
               title="View analytics"
               desc="See coverage & difficulty insights"
-              onClick={onStart}
+              onClick={() => (onNavigate ? onNavigate("analytics") : onStart())}
             />
             <QuickAction
               icon={CopyPlus}
               title="Batch variants"
               desc="Create up to 6 disjoint versions"
-              onClick={onStart}
+              onClick={() => (onNavigate ? onNavigate("generate", { batch: true }) : onStart())}
             />
           </div>
         </CardContent>
@@ -299,8 +308,9 @@ function QuickAction({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="card-lift group flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:border-emerald-400"
+      className="card-lift group flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-all hover:border-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/40">
         <Icon className="h-4 w-4" />

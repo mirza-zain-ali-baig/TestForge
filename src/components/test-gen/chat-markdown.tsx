@@ -14,6 +14,19 @@ export interface ChatMarkdownProps {
 export function ChatMarkdown({ content, reasoning, isStreaming = false }: ChatMarkdownProps) {
   if (!content && !reasoning) return null;
 
+  try {
+    return <ChatMarkdownInner content={content} reasoning={reasoning} isStreaming={isStreaming} />;
+  } catch (err) {
+    console.warn("ChatMarkdown error, falling back to preformatted text:", err);
+    return (
+      <div className="whitespace-pre-wrap leading-relaxed text-sm break-words">
+        {content}
+      </div>
+    );
+  }
+}
+
+function ChatMarkdownInner({ content, reasoning, isStreaming = false }: ChatMarkdownProps) {
   // Extract <think>...</think> if present in the raw text stream
   const { mainContent, thought } = useMemo(() => {
     let raw = content || "";
@@ -299,16 +312,20 @@ function MarkdownTableBlock({
 function TextFormatted({ text }: { text: string }) {
   const rawLines = text.split("\n");
 
-  // Preprocess lines: if a line is just "1." or "2.", merge it with the subsequent text line
+  // Preprocess lines: if a line is just "1." or "2.", merge it with the subsequent text line even if separated by blank lines
   const lines: string[] = [];
   for (let i = 0; i < rawLines.length; i++) {
     const curr = rawLines[i].trim();
-    if (/^\d+\.$/.test(curr) && i + 1 < rawLines.length && rawLines[i + 1].trim()) {
-      lines.push(`${curr} ${rawLines[i + 1].trim()}`);
-      i++; // skip next line
-    } else {
-      lines.push(rawLines[i]);
+    if (/^\d+\.$/.test(curr)) {
+      let j = i + 1;
+      while (j < rawLines.length && !rawLines[j].trim()) j++;
+      if (j < rawLines.length && rawLines[j].trim() && !/^\d+\.$/.test(rawLines[j].trim())) {
+        lines.push(`${curr} ${rawLines[j].trim()}`);
+        i = j;
+        continue;
+      }
     }
+    lines.push(rawLines[i]);
   }
 
   return (

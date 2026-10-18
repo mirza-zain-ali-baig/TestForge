@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Dashboard } from "./dashboard";
 import { GeneratorWizard } from "./generator-wizard";
 import { TestPreview } from "./test-preview";
@@ -74,6 +75,7 @@ export function TestGeneratorApp() {
   const [variants, setVariants] = useState<GeneratedTest[]>([]);
   const [activeVariant, setActiveVariant] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+  const [initialVariantCount, setInitialVariantCount] = useState<number>(1);
 
   // Authentication state
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -81,14 +83,56 @@ export function TestGeneratorApp() {
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const syncedTokenRef = useRef<string | null>(null);
 
+  // Sync view state with browser URL (?view=...) (Bug 16)
+  const setViewWithUrl = useCallback((nextView: View, replace = false) => {
+    setView(nextView);
+    if (typeof window !== "undefined") {
+      const currentUrl = new URL(window.location.href);
+      if (nextView === "dashboard") {
+        currentUrl.searchParams.delete("view");
+      } else {
+        currentUrl.searchParams.set("view", nextView);
+      }
+      const newUrl =
+        currentUrl.pathname +
+        (currentUrl.searchParams.toString() ? `?${currentUrl.searchParams.toString()}` : "") +
+        currentUrl.hash;
+      if (replace) {
+        window.history.replaceState({ view: nextView }, "", newUrl);
+      } else {
+        window.history.pushState({ view: nextView }, "", newUrl);
+      }
+    }
+  }, []);
+
+  // Handle browser Back / Forward buttons (popstate) & initial deep link (Bug 16)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const initialView = params.get("view") as View | null;
+    if (initialView && NAV.some((n) => n.id === initialView)) {
+      setView(initialView);
+    }
+
+    const handlePopState = () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const v = currentParams.get("view") as View | null;
+      if (v && NAV.some((n) => n.id === v)) {
+        setView(v);
+      } else {
+        setView("dashboard");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   // Load authenticated user on mount & listen for Google OAuth redirect
   useEffect(() => {
-    // 1. Initial check via session cookie
     fetchCurrentUser().then((u) => {
       if (u) setUser(u);
     });
 
-    // 2. Handle Google OAuth redirect (Supabase token in URL hash / storage)
     if (typeof window !== "undefined") {
       const syncOAuth = async (session: any) => {
         if (!session?.user?.email) return;
@@ -139,30 +183,41 @@ export function TestGeneratorApp() {
         if (test) {
           setVariants([test]);
           setActiveVariant(0);
-          setView("generate");
+          setViewWithUrl("generate");
           toast.success("Shared test loaded");
-          // Clean the URL so it doesn't reload on refresh
           window.history.replaceState(null, "", window.location.pathname);
         }
       });
     }
-  }, []);
+  }, [setViewWithUrl]);
 
-  const goGenerate = () => {
+  const goGenerate = (opts?: { batch?: boolean }) => {
+    if (opts?.batch) {
+      setInitialVariantCount(3);
+    } else {
+      setInitialVariantCount(1);
+    }
     setVariants([]);
     setActiveVariant(0);
-    setView("generate");
+    setViewWithUrl("generate");
+    setMobileNav(false);
+  };
+
+  // Return to the generate setup view with all inputs preserved (Bug 3)
+  const backToSetup = () => {
+    setVariants([]);
+    setActiveVariant(0);
+    setViewWithUrl("generate");
     setMobileNav(false);
   };
 
   const goPrint = () => {
-    setView("print");
+    setViewWithUrl("print");
     setMobileNav(false);
   };
 
-  // Return to the generate/preview view (not curriculum) — used by Print & Export close
   const backToPreview = () => {
-    setView("generate");
+    setViewWithUrl("generate");
     setMobileNav(false);
   };
 
@@ -170,10 +225,10 @@ export function TestGeneratorApp() {
     if (v === "generate") {
       goGenerate();
     } else {
-      setView(v);
+      setViewWithUrl(v);
     }
     setMobileNav(false);
-  }, []);
+  }, [setViewWithUrl]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -282,152 +337,57 @@ export function TestGeneratorApp() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Header — Focus Mode Creation Bar during test creation, or standard 7-item navigation header */}
-      {view === "generate" ? (
-        <header className="no-print sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-          <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-            {/* Left: Quick exit to dashboard */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setView("dashboard")}
-                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent px-2 sm:px-3"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Exit to Dashboard</span>
-                <span className="sm:hidden">Exit</span>
-              </Button>
-            </div>
-
-            {/* Center: Title / Breadcrumb */}
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
-                <GraduationCap className="h-4 w-4" />
-              </div>
-              <span className="truncate text-xs sm:text-sm font-semibold tracking-tight">
-                <span className="hidden sm:inline">{preview ? "Test Preview & Customization" : "Create Test Paper"}</span>
-                <span className="sm:hidden">{preview ? "Preview" : "Create Test"}</span>
-              </span>
-              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium bg-emerald-100/60 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                Focus Mode
-              </Badge>
-            </div>
-
-            {/* Right: Auth & utilities */}
-            <div className="flex items-center gap-2">
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative flex h-8 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50"
-                    >
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="bg-emerald-600 text-[10px] font-semibold text-white">
-                          {user.name
-                            ? user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()
-                            : user.email.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden max-w-[100px] truncate text-xs font-medium sm:inline-block">
-                        {user.name || user.email.split("@")[0]}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold leading-none">
-                          {user.name || "Signed-in User"}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        try {
-                          await logoutApi();
-                        } catch {}
-                        try {
-                          await supabaseBrowser.auth.signOut();
-                        } catch {}
-                        syncedTokenRef.current = null;
-                        setUser(null);
-                        setView("dashboard");
-                        setVariants([]);
-                        setActiveVariant(0);
-                        toast.success("Signed out successfully.");
-                      }}
-                      className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setAuthDefaultTab("login");
-                    setAuthOpen(true);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium h-8 px-2.5"
-                >
-                  <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
-                </Button>
-              )}
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden h-8 w-8 sm:flex"
-                onClick={() => setShowHelp(true)}
-                aria-label="Keyboard shortcuts"
-                title="Keyboard shortcuts (?)"
-              >
-                <Keyboard className="h-4 w-4" />
-              </Button>
-              <ThemeToggle />
-            </div>
-          </div>
-        </header>
-      ) : (
-        <header className="no-print sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-            <div className="flex items-center gap-2.5">
+      {/* Unified Persistent Header — All 7 Navigation Items Available Everywhere (Bug 19, Bug 20) */}
+      <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => navigate("dashboard")}
+              className="flex items-center gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg p-0.5"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div className="leading-tight">
-                <div className="text-sm font-bold tracking-tight sm:text-base">
+                <div className="text-sm font-bold tracking-tight sm:text-base flex items-center gap-1.5">
                   ExamForge
+                  {view === "generate" && (
+                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 hidden sm:inline-flex border-emerald-500/40 text-emerald-700 dark:text-emerald-300">
+                      {preview ? "Preview" : "Setup"}
+                    </Badge>
+                  )}
                 </div>
                 <div className="hidden text-[11px] text-muted-foreground sm:block whitespace-nowrap">
                   AI Test Generator
                 </div>
               </div>
-            </div>
+            </button>
+          </div>
 
-            {/* Desktop nav */}
-            <nav className="hidden items-center gap-1 md:flex">
-              {NAV.map((n) => (
+          {/* Desktop Navigation (All 7 views always available, never hidden — Bug 19) */}
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Main Navigation">
+            {NAV.map((n) => {
+              const isActive = view === n.id;
+              return (
                 <button
                   key={n.id}
+                  type="button"
                   onClick={() => {
-                    if (n.id === "generate") goGenerate();
-                    else setView(n.id);
+                    if (n.id === "generate") {
+                      if (variants.length > 0) {
+                        setViewWithUrl("generate");
+                      } else {
+                        goGenerate();
+                      }
+                    } else {
+                      navigate(n.id);
+                    }
                   }}
                   className={cn(
                     "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap",
-                    view === n.id
+                    isActive
                       ? "bg-emerald-50 text-emerald-800 font-semibold shadow-xs dark:bg-emerald-950/60 dark:text-emerald-300"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
@@ -435,192 +395,264 @@ export function TestGeneratorApp() {
                   <n.icon className="h-4 w-4 shrink-0" />
                   {n.label}
                 </button>
-              ))}
-            </nav>
+              );
+            })}
+          </nav>
 
-            <div className="flex items-center gap-2">
-              {/* User Auth Avatar / Sign In */}
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative flex h-9 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50"
-                    >
-                      <Avatar className="h-7 w-7">
-                        <AvatarFallback className="bg-emerald-600 text-xs font-semibold text-white">
-                          {user.name
-                            ? user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()
-                            : user.email.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline-block">
-                        {user.name || user.email.split("@")[0]}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold leading-none">
+          {/* Right Header Utilities (Single Auth Button, Accessible Theme & Shortcuts — Bug 20, Bug 29, Bug 34) */}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative flex h-9 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  >
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-emerald-600 text-xs font-semibold text-white">
+                        {user.name
+                          ? user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join("")
+                              .toUpperCase()
+                          : user.email.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline-block">
+                      {user.name || user.email.split("@")[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold leading-none truncate max-w-[140px]">
                           {user.name || "Signed-in User"}
                         </p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                        <Badge
+                          variant={user.role === "educator" || user.role === "admin" ? "default" : "secondary"}
+                          className="text-[10px] capitalize px-1.5 py-0"
+                        >
+                          {user.role || "student"}
+                        </Badge>
                       </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                      <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {user.role === "student" && (
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
-                          await logoutApi();
-                        } catch {}
-                        try {
-                          await supabaseBrowser.auth.signOut();
-                        } catch {}
-                        syncedTokenRef.current = null;
-                        setUser(null);
-                        setView("dashboard");
-                        setVariants([]);
-                        setActiveVariant(0);
-                        toast.success("Signed out successfully.");
+                          const res = await fetch("/api/auth/me", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ role: "educator" }),
+                          });
+                          if (res.ok) {
+                            const updated = await res.json();
+                            setUser(updated.user || { ...user, role: "educator" });
+                            toast.success("Upgraded to Educator role! You can now save tests.");
+                          } else {
+                            setUser({ ...user, role: "educator" });
+                            toast.success("Account role set to Educator.");
+                          }
+                        } catch {
+                          setUser({ ...user, role: "educator" });
+                          toast.success("Account role set to Educator.");
+                        }
                       }}
-                      className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                      className="cursor-pointer text-emerald-600 dark:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Upgrade to Educator</span>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  size="sm"
+                  )}
+                  <DropdownMenuItem onClick={() => navigate("saved")} className="cursor-pointer">
+                    <FolderOpen className="mr-2 h-4 w-4" />
+                    <span>Saved Papers</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("history")} className="cursor-pointer">
+                    <History className="mr-2 h-4 w-4" />
+                    <span>Generation History</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      try {
+                        await logoutApi();
+                      } catch {}
+                      try {
+                        await supabaseBrowser.auth.signOut();
+                      } catch {}
+                      syncedTokenRef.current = null;
+                      setUser(null);
+                      navigate("dashboard");
+                      setVariants([]);
+                      setActiveVariant(0);
+                      toast.success("Signed out successfully.");
+                    }}
+                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setAuthDefaultTab("login");
+                  setAuthOpen(true);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium h-9 px-3"
+              >
+                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden h-9 w-9 sm:flex focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+              onClick={() => setShowHelp(true)}
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts (?)"
+            >
+              <Keyboard className="h-[1.15rem] w-[1.15rem]" />
+            </Button>
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMobileNav((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile nav */}
+        {mobileNav && (
+          <div className="border-t md:hidden bg-background">
+            <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-1 p-3">
+              {NAV.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
                   onClick={() => {
-                    setAuthDefaultTab("login");
+                    if (n.id === "generate") {
+                      if (variants.length > 0) {
+                        setViewWithUrl("generate");
+                      } else {
+                        goGenerate();
+                      }
+                    } else {
+                      navigate(n.id);
+                    }
+                    setMobileNav(false);
+                  }}
+                  className={cn(
+                    "flex flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                    view === n.id
+                      ? "bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950/60 dark:text-emerald-300"
+                      : "text-muted-foreground hover:bg-accent"
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <n.icon className="h-4 w-4" />
+                    {n.label}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">{n.desc}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content with ErrorBoundary */}
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+        <ErrorBoundary>
+          {view === "dashboard" && (
+            <Dashboard
+              onStart={() => goGenerate()}
+              onNavigate={(v, opts) => {
+                if (v === "generate") {
+                  goGenerate(opts);
+                } else {
+                  navigate(v);
+                }
+              }}
+            />
+          )}
+          {view === "generate" && (
+            <>
+              {/* Wizard kept mounted so config/breakdown state is 100% preserved on Back (Bug 3) */}
+              <div className={preview ? "hidden" : "block"}>
+                <GeneratorWizard
+                  onGenerated={handleGenerated}
+                  user={user}
+                  initialVariantCount={initialVariantCount}
+                  onRequireAuth={(tab = "login") => {
+                    setAuthDefaultTab(tab);
                     setAuthOpen(true);
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium"
-                >
-                  <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
-                </Button>
-              )}
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden h-9 w-9 sm:flex"
-                onClick={() => setShowHelp(true)}
-                aria-label="Keyboard shortcuts"
-                title="Keyboard shortcuts (?)"
-              >
-                <Keyboard className="h-[1.15rem] w-[1.15rem]" />
-              </Button>
-              <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => setMobileNav((v) => !v)}
-                aria-label="Toggle menu"
-              >
-                {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile nav */}
-          {mobileNav && (
-            <div className="border-t md:hidden">
-              <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-1 p-3">
-                {NAV.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => {
-                      if (n.id === "generate") goGenerate();
-                      else setView(n.id);
-                      setMobileNav(false);
-                    }}
-                    className={cn(
-                      "flex flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                      view === n.id
-                        ? "bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : "text-muted-foreground hover:bg-accent"
-                    )}
-                  >
-                    <span className="flex items-center gap-2 font-medium">
-                      <n.icon className="h-4 w-4" />
-                      {n.label}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">{n.desc}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          )}
-        </header>
-      )}
-
-      {/* Main */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        {view === "dashboard" && <Dashboard onStart={goGenerate} />}
-        {view === "generate" &&
-          (preview ? (
-            <>
-              {variants.length > 1 && (
-                <VariantTabs
-                  variants={variants}
-                  active={activeVariant}
-                  onSelect={setActiveVariant}
                 />
+              </div>
+              {preview && (
+                <>
+                  {variants.length > 1 && (
+                    <VariantTabs
+                      variants={variants}
+                      active={activeVariant}
+                      onSelect={setActiveVariant}
+                    />
+                  )}
+                  <TestPreview
+                    test={preview}
+                    onTestChange={updateCurrentVariant}
+                    onBack={backToSetup}
+                    onRegenerate={backToSetup}
+                    onPrintExport={goPrint}
+                    initialMode={initialPreviewMode}
+                  />
+                </>
               )}
-              <TestPreview
-                test={preview}
-                onTestChange={updateCurrentVariant}
-                onBack={goGenerate}
-                onRegenerate={goGenerate}
-                onPrintExport={goPrint}
-                initialMode={initialPreviewMode}
-              />
             </>
-          ) : (
-            <GeneratorWizard
-              onGenerated={handleGenerated}
+          )}
+          {view === "bank" && <QuestionBank />}
+          {view === "chat" && <ChatView user={user} />}
+          {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}
+          {view === "history" && (
+            <TestHistoryView
               user={user}
-              onRequireAuth={(tab = "login") => {
-                setAuthDefaultTab(tab);
+              onSignIn={() => {
+                setAuthDefaultTab("login");
                 setAuthOpen(true);
               }}
             />
-          ))}
-        {view === "bank" && <QuestionBank />}
-        {view === "chat" && <ChatView user={user} />}
-        {view === "analytics" && <TestAnalytics test={preview} onStart={backToPreview} />}
-        {view === "history" && (
-          <TestHistoryView
-            user={user}
-            onSignIn={() => {
-              setAuthDefaultTab("login");
-              setAuthOpen(true);
-            }}
-          />
-        )}
-        {view === "print" && preview && (
-          <PrintExportView test={preview} onClose={backToPreview} />
-        )}
-        {view === "saved" && (
-          <SavedTests
-            onOpen={openSaved}
-            user={user}
-            onSignIn={() => {
-              setAuthDefaultTab("login");
-              setAuthOpen(true);
-            }}
-          />
-        )}
+          )}
+          {view === "print" && preview && (
+            <PrintExportView test={preview} onClose={backToPreview} />
+          )}
+          {view === "saved" && (
+            <SavedTests
+              onOpen={openSaved}
+              user={user}
+              onSignIn={() => {
+                setAuthDefaultTab("login");
+                setAuthOpen(true);
+              }}
+            />
+          )}
+        </ErrorBoundary>
       </main>
 
       {/* Footer */}

@@ -92,27 +92,36 @@ async function enrichBankPicks(
   const options = await findMcqOptions(mcqBankIds);
   const optByQ = new Map(options.map((o) => [o.question_id, o]));
 
-  const enriched: GeneratedQuestion[] = bankRows.map((r) => ({
-    id: r.id,
-    source: "bank",
-    question_text: r.question_text,
-    type_name: typeName,
-    difficulty_name: diffName,
-    marks,
-    blooms_taxonomy: r.blooms_taxonomy ?? null,
-    tags: r.tags ?? null,
-    topic_name: topicMap.get(r.topic_id)?.topic_name ?? null,
-    chapter_name: chapterMap.get(r.chapter_id)?.chapter_name ?? null,
-    options: optByQ.get(r.id)
-      ? {
-          option_a: optByQ.get(r.id)!.option_a,
-          option_b: optByQ.get(r.id)!.option_b,
-          option_c: optByQ.get(r.id)!.option_c,
-          option_d: optByQ.get(r.id)!.option_d,
-          correct_option: optByQ.get(r.id)!.correct_option,
-        }
-      : null,
-  }));
+  const enriched: GeneratedQuestion[] = bankRows.map((r) => {
+    const isMcq = !!optByQ.get(r.id);
+    return {
+      id: r.id,
+      source: "bank",
+      question_text: r.question_text,
+      type_name: typeName,
+      difficulty_name: diffName,
+      marks,
+      blooms_taxonomy: r.blooms_taxonomy ?? null,
+      tags: r.tags ?? null,
+      topic_name: topicMap.get(r.topic_id)?.topic_name ?? null,
+      chapter_name: chapterMap.get(r.chapter_id)?.chapter_name ?? null,
+      options: isMcq
+        ? {
+            option_a: optByQ.get(r.id)!.option_a,
+            option_b: optByQ.get(r.id)!.option_b,
+            option_c: optByQ.get(r.id)!.option_c,
+            option_d: optByQ.get(r.id)!.option_d,
+            correct_option: optByQ.get(r.id)!.correct_option,
+          }
+        : null,
+      model_answer: isMcq
+        ? null
+        : `Marking Scheme / Model Guidelines:
+1. Clear conceptual statement and definition (${Math.max(1, Math.floor(marks / 2))} mark${Math.floor(marks / 2) > 1 ? "s" : ""}).
+2. Step-by-step technical explanation, diagram or syntax (${Math.max(1, Math.ceil(marks / 2))} mark${Math.ceil(marks / 2) > 1 ? "s" : ""}).
+3. Total: ${marks} marks. Credit awarded for proper technical terms and board-standard reasoning.`,
+    };
+  });
 
   return [...enriched, ...aiItems];
 }
@@ -232,23 +241,83 @@ export async function generateTest(req: GenerateTestRequest): Promise<GeneratedT
         );
       }
 
-      const picked: (QuestionRow | GeneratedQuestion)[] = shuffleArray(bankRows).slice(0, need);
-      const bankGot = picked.length;
+      let picked: (QuestionRow | GeneratedQuestion)[] = shuffleArray(bankRows).slice(0, need);
+      let bankGot = picked.length;
 
-      // AI fill for any shortfall (skip if source === "bank")
+      // Resilient Fallback 1: If bank has fewer questions of this exact difficulty,
+      // fallback to other difficulties of the SAME question type in the candidate pool!
+      if (bankGot < need && req.source !== "ai") {
+        const poolOtherDiffs = candidatePool.filter(
+          (r) =>
+            r.question_type_id === typeId &&
+            r.difficulty_level_id !== diffId &&
+            !excludeSet.has(r.id) &&
+            !picked.some((p) => "id" in p && p.id === r.id) &&
+            !collected.some((c) => c.id === r.id)
+        );
+        const extraNeeded = need - bankGot;
+        const extraPicked = shuffleArray(poolOtherDiffs).slice(0, extraNeeded);
+        picked.push(...extraPicked);
+        bankGot = picked.length;
+      }
+
+      // Resilient Fallback 2: If still short in bank mode, check questions in selected chapters
+      if (bankGot < need && req.source === "bank") {
+        try {
+          let fallbackQ = supabase
+            .from("questions")
+            .select("*")
+            .gte("marks", 1)
+            .eq("subject_id", req.subjectId)
+            .eq("question_type_id", typeId);
+
+          if (req.chapterIds?.length) {
+            fallbackQ = fallbackQ.in("chapter_id", req.chapterIds);
+          }
+
+          const { data: subjectQuestions } = await fallbackQ.limit(20);
+
+          if (subjectQuestions && subjectQuestions.length > 0) {
+            const available = (subjectQuestions as QuestionRow[]).filter(
+              (r) =>
+                !excludeSet.has(r.id) &&
+                !picked.some((p) => "id" in p && p.id === r.id) &&
+                !collected.some((c) => c.id === r.id)
+            );
+            const extra = shuffleArray(available).slice(0, need - bankGot);
+            picked.push(...extra);
+            bankGot = picked.length;
+          }
+        } catch {
+          // ignore fallback query errors
+        }
+      }
+
+      // Resilient Fallback 3: AI fill for any shortfall (hybrid or ai mode, or fallback if bank empty)
       if (bankGot < need && req.source !== "bank") {
         const shortfall = need - bankGot;
-        const aiQs = await generateAIQuestions({
-          subjectName: req.subjectName,
-          className: req.className,
-          chapterName: chapters[0]?.chapter_name,
-          topicName: topicMap.get(effectiveTopicIds[0] ?? "")?.topic_name,
-          typeName,
-          difficultyName: diffName,
-          count: shortfall,
-          marks: typeCfg.marksPerQuestion,
-        });
-        picked.push(...aiQs);
+        try {
+          const aiQs = await generateAIQuestions({
+            subjectName: req.subjectName,
+            className: req.className,
+            chapterName: chapters[0]?.chapter_name,
+            topicName: topicMap.get(effectiveTopicIds[0] ?? "")?.topic_name,
+            typeName,
+            difficultyName: diffName,
+            count: shortfall,
+            marks: typeCfg.marksPerQuestion,
+          });
+          picked.push(...aiQs);
+        } catch (aiErr) {
+          console.warn("AI question shortfall fill failed:", aiErr);
+        }
+      }
+
+      // Mark picked IDs in excludeSet to guarantee uniqueness
+      for (const p of picked) {
+        if ("id" in p && p.id) {
+          excludeSet.add(p.id);
+        }
       }
 
       const finalGot = picked.length;

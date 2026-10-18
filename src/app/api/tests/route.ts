@@ -34,8 +34,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // ── RBAC Authorization: only educator or admin can persist official tests ──
-    const auth = await authorizeRequest(request, ["educator", "admin"], "save test papers");
+    // ── RBAC Authorization: all registered users (student, educator, admin) can save their test papers ──
+    const auth = await authorizeRequest(request, ["student", "educator", "admin"], "save test papers");
 
     const body = (await request.json()) as { test: GeneratedTest; source?: string };
 

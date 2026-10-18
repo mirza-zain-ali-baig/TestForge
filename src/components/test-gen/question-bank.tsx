@@ -71,9 +71,12 @@ export function QuestionBank() {
   useEffect(() => {
     fetchCurriculum()
       .then((d) => {
-        setTree(d.tree);
-        if (d.tree && d.tree.length > 0) {
-          const firstClass = d.tree[0];
+        const sortedTree = [...(d.tree || [])].sort((a, b) =>
+          a.class_name.localeCompare(b.class_name, undefined, { numeric: true })
+        );
+        setTree(sortedTree);
+        if (sortedTree.length > 0) {
+          const firstClass = sortedTree[0];
           setClassId((prev) => prev || firstClass.id);
           if (firstClass.subjects && firstClass.subjects.length > 0) {
             setSubjectId((prev) => prev || firstClass.subjects![0].id);
@@ -141,6 +144,7 @@ export function QuestionBank() {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        toast.info("Removed from favorites");
       } else {
         next.add(id);
         toast.success("Added to favorites");
@@ -181,6 +185,25 @@ export function QuestionBank() {
     setChapterIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const searchCountsByChapter = useMemo(() => {
+    if (!debouncedSearch) return null;
+    const counts: Record<string, number> = {};
+    for (const q of questions) {
+      const chId = (q as any).chapter_id;
+      if (chId) {
+        counts[chId] = (counts[chId] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [debouncedSearch, questions]);
+
+  const displayedQuestions = useMemo(() => {
+    if (showFavOnly) {
+      return questions.filter((q) => favorites.has(q.id));
+    }
+    return questions;
+  }, [questions, showFavOnly, favorites]);
 
   return (
     <div className="space-y-4">
@@ -266,19 +289,24 @@ export function QuestionBank() {
               <Switch id="bk-ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
             </div>
             <button
+              type="button"
+              aria-pressed={showFavOnly}
               onClick={() => setShowFavOnly((v) => !v)}
               className={[
-                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all",
+                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500",
                 showFavOnly
-                  ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
-                  : "hover:border-amber-400 hover:bg-accent",
+                  ? "border-amber-500 bg-amber-500 text-white shadow-sm ring-1 ring-amber-500 dark:bg-amber-600"
+                  : "border-border hover:border-amber-400 hover:bg-accent text-foreground",
               ].join(" ")}
               title="Show only favorited questions"
             >
-              <Star className={`h-4 w-4 ${showFavOnly ? "fill-amber-500 text-amber-500" : ""}`} />
+              <Star className={`h-4 w-4 ${showFavOnly ? "fill-white text-white" : "text-amber-500"}`} />
               <span>Favorites</span>
               {favorites.size > 0 && (
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge
+                  variant={showFavOnly ? "default" : "secondary"}
+                  className={`text-[10px] ${showFavOnly ? "bg-white text-amber-800" : ""}`}
+                >
                   {favorites.size}
                 </Badge>
               )}
@@ -299,23 +327,26 @@ export function QuestionBank() {
               >
                 All
               </Button>
-              {chapters.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => toggleChapter(c.id)}
-                  className={[
-                    "h-7 rounded-full border px-2.5 text-xs transition-colors",
-                    chapterIds.includes(c.id)
-                      ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "border-border hover:border-emerald-400",
-                  ].join(" ")}
-                  title={`Ch ${c.chapter_number}: ${c.chapter_name}`}
-                >
-                  Ch{c.chapter_number}
-                  <span className="ml-1 opacity-70">({c.questionCount})</span>
-                </button>
-              ))}
+              {chapters.map((c) => {
+                const count = searchCountsByChapter ? (searchCountsByChapter[c.id] || 0) : c.questionCount;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleChapter(c.id)}
+                    className={[
+                      "h-7 rounded-full border px-2.5 text-xs transition-colors",
+                      chapterIds.includes(c.id)
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-border hover:border-emerald-400",
+                    ].join(" ")}
+                    title={`Ch ${c.chapter_number}: ${c.chapter_name}`}
+                  >
+                    Ch{c.chapter_number}
+                    <span className="ml-1 opacity-70">({count})</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -372,12 +403,31 @@ export function QuestionBank() {
                 </p>
               </div>
             </div>
+          ) : showFavOnly && displayedQuestions.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-16 text-center animate-fade-in">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400">
+                <Star className="h-6 w-6 fill-amber-500/30" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">No favorited questions found</p>
+                <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                  {favorites.size === 0
+                    ? "You haven't added any questions to your favorites yet. Click the star icon on any question to bookmark it."
+                    : "None of your bookmarked favorites match the current search or filters."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowFavOnly(false)}
+                className="text-xs mt-1 border-amber-500/40 text-amber-700 dark:text-amber-300"
+              >
+                View all questions
+              </Button>
+            </div>
           ) : (
             <ol className="space-y-3">
-              {(showFavOnly
-                ? questions.filter((q) => favorites.has(q.id))
-                : questions
-              ).map((q, i) => (
+              {displayedQuestions.map((q, i) => (
                 <BankQuestionCard
                   key={q.id}
                   q={q}

@@ -10,6 +10,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { findAllTests, parseTestJson } from "@/models/test.model";
+import { callGeminiChatCompletion } from "@/lib/gemini";
 import { callOpenRouterChatCompletion } from "@/lib/openrouter";
 import type { GeneratedTest, GeneratedQuestion } from "@/lib/types";
 
@@ -401,12 +402,24 @@ Context: ${opts.className ?? ""} ${opts.subjectName ?? ""}
 Write a clear, concise teaching note. Do NOT repeat the question. Start directly with the explanation.`;
   }
 
-  const { content } = await callOpenRouterChatCompletion({
-    messages: [{ role: "user", content: prompt }],
-    systemPrompt: "You are an expert educator who writes clear, concise teaching explanations and exam answer keys.",
-    preferredModel: "auto",
-    temperature: 0.3,
-  });
+  let content = "";
+  try {
+    const geminiRes = await callGeminiChatCompletion({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: "You are an expert educator who writes clear, concise teaching explanations and exam answer keys.",
+      temperature: 0.3,
+    });
+    content = geminiRes.content;
+  } catch (geminiErr) {
+    console.warn("Gemini explanation failed, falling back to OpenRouter:", geminiErr);
+    const orRes = await callOpenRouterChatCompletion({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: "You are an expert educator who writes clear, concise teaching explanations and exam answer keys.",
+      preferredModel: "auto",
+      temperature: 0.3,
+    });
+    content = orRes.content;
+  }
 
   if (!content) {
     throw new Error("AI could not generate an explanation. Please try again.");

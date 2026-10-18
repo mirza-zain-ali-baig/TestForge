@@ -69,7 +69,9 @@ export async function getCurriculumTree(
   let classQ = supabase.from("classes").select("*").order("class_name");
   const { data: classData, error: ce } = await classQ;
   if (ce) throw new Error(ce.message);
-  const classes = (classData as ClassRow[]) ?? [];
+  const classes = ((classData as ClassRow[]) ?? []).sort((a, b) =>
+    a.class_name.localeCompare(b.class_name, undefined, { numeric: true })
+  );
 
   // Subjects
   let subjQ = supabase.from("subjects").select("*").order("subject_name");
@@ -146,10 +148,14 @@ export async function getCurriculumTree(
       const subChapters = (chaptersBySubject.get(sub.id) ?? []).map((ch) => ({
         ...ch,
         questionCount: countsByChapter[ch.id] ?? 0,
-        topics: (topicsByChapter.get(ch.id) ?? []).map((t) => ({
-          ...t,
-          questionCount: countsByTopic[t.id] ?? 0,
-        })),
+        topics: (topicsByChapter.get(ch.id) ?? [])
+          .sort((a, b) =>
+            (a.topic_article_no || "").localeCompare(b.topic_article_no || "", undefined, { numeric: true })
+          )
+          .map((t) => ({
+            ...t,
+            questionCount: countsByTopic[t.id] ?? 0,
+          })),
       }));
       return {
         ...sub,

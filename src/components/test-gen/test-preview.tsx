@@ -149,9 +149,27 @@ export function TestPreview({
   const [examDate, setExamDate] = useState(
     new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
   );
-  const [examSyllabus, setExamSyllabus] = useState("L1");
+  const defaultSyllabus = useMemo(() => {
+    if (test.chapters && test.chapters.length > 0) {
+      return test.chapters.join(", ");
+    }
+    const chs = Array.from(
+      new Set(
+        test.sections
+          .flatMap((s) => s.questions.map((q) => q.chapter_title))
+          .filter(Boolean)
+      )
+    );
+    return chs.length > 0 ? chs.join(", ") : `${test.subjectName} Syllabus`;
+  }, [test]);
+
+  const [examSyllabus, setExamSyllabus] = useState(defaultSyllabus);
   const [examLabel, setExamLabel] = useState("");
   const [showExamLabel, setShowExamLabel] = useState(false);
+
+  useEffect(() => {
+    if (defaultSyllabus) setExamSyllabus(defaultSyllabus);
+  }, [defaultSyllabus]);
 
   // Font size + header size controls
   const [fontSize, setFontSize] = useState(12);
@@ -490,7 +508,11 @@ export function TestPreview({
                 ) : (
                   <Sparkles className="h-3 w-3" />
                 )}
-                {test.source}
+                {test.source === "bank"
+                  ? "Question Bank"
+                  : test.source === "ai"
+                  ? "AI Generated"
+                  : "Hybrid Mode"}
               </Badge>
               <Badge variant="secondary">{test.totalQuestions} Q</Badge>
               <Badge variant="secondary">{test.totalMarks} marks</Badge>
@@ -763,7 +785,14 @@ function SortableSection({
     <section>
       <div className="mb-3 flex items-center justify-between border-b border-dashed pb-1">
         <h2 className="text-sm font-bold uppercase tracking-wide">
-          Section {String.fromCharCode(65 + sectionIndex)} — {section.type_name}
+          Section {String.fromCharCode(65 + sectionIndex)} —{" "}
+          {section.type_name === "Short"
+            ? "SHORT ANSWER QUESTIONS"
+            : section.type_name === "Long"
+            ? "LONG ANSWER QUESTIONS"
+            : section.type_name === "MCQ"
+            ? "MULTIPLE CHOICE QUESTIONS (MCQs)"
+            : section.type_name.toUpperCase()}
         </h2>
         <span className="text-xs text-muted-foreground">
           {section.questions.length} questions · {section.sectionMarks} marks ·{" "}
@@ -1023,8 +1052,10 @@ function EditQuestionDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>Question text</Label>
+            <Label htmlFor="edit-question-text">Question text</Label>
             <Textarea
+              id="edit-question-text"
+              aria-label="Question text"
               value={draft.question_text}
               onChange={(e) => setDraft({ ...draft, question_text: e.target.value })}
               rows={3}
@@ -1032,43 +1063,52 @@ function EditQuestionDialog({
           </div>
           {draft.options ? (
             <div className="space-y-2">
-              <Label>Options</Label>
-              {LETTERS.map((l) => (
-                <div key={l} className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        options: { ...draft.options!, correct_option: l },
-                      })
-                    }
-                    className={[
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors",
-                      draft.options.correct_option === l
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-border hover:border-emerald-400",
-                    ].join(" ")}
-                    title="Mark as correct"
-                  >
-                    {l}
-                  </button>
-                  <Input
-                    value={draft.options[`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"]}
-                    onChange={(e) =>
-                      setOpt(`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d", e.target.value)
-                    }
-                  />
-                </div>
-              ))}
+              <Label id="edit-options-group-label">Multiple Choice Options</Label>
+              <div role="group" aria-labelledby="edit-options-group-label" className="space-y-2">
+                {LETTERS.map((l) => (
+                  <div key={l} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label={`Mark Option ${l} as correct`}
+                      aria-pressed={draft.options?.correct_option === l}
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          options: { ...draft.options!, correct_option: l },
+                        })
+                      }
+                      className={[
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors",
+                        draft.options?.correct_option === l
+                          ? "border-emerald-600 bg-emerald-600 text-white"
+                          : "border-border hover:border-emerald-400",
+                      ].join(" ")}
+                      title={`Mark Option ${l} as correct`}
+                    >
+                      {l}
+                    </button>
+                    <Input
+                      id={`edit-option-${l.toLowerCase()}`}
+                      aria-label={`Option ${l} text`}
+                      placeholder={`Option ${l}`}
+                      value={draft.options?.[`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"] ?? ""}
+                      onChange={(e) =>
+                        setOpt(`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d", e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Click the letter to mark the correct option.
+                Click the letter button to mark the correct option.
               </p>
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label>Model answer</Label>
+              <Label htmlFor="edit-model-answer">Model answer</Label>
               <Textarea
+                id="edit-model-answer"
+                aria-label="Model answer"
                 value={draft.model_answer ?? ""}
                 onChange={(e) =>
                   setDraft({ ...draft, model_answer: e.target.value })
@@ -1079,8 +1119,11 @@ function EditQuestionDialog({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Bloom&apos;s level</Label>
+              <Label htmlFor="edit-blooms-level">Bloom&apos;s level</Label>
               <Input
+                id="edit-blooms-level"
+                aria-label="Bloom's taxonomy level"
+                placeholder="e.g. Understanding, Application"
                 value={draft.blooms_taxonomy ?? ""}
                 onChange={(e) =>
                   setDraft({ ...draft, blooms_taxonomy: e.target.value || null })
@@ -1088,8 +1131,11 @@ function EditQuestionDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Tags</Label>
+              <Label htmlFor="edit-question-tags">Tags</Label>
               <Input
+                id="edit-question-tags"
+                aria-label="Question tags"
+                placeholder="e.g. cpu, hardware"
                 value={draft.tags ?? ""}
                 onChange={(e) => setDraft({ ...draft, tags: e.target.value || null })}
               />
@@ -1589,14 +1635,12 @@ function PracticeMode({
   test: GeneratedTest;
   onClose: () => void;
 }) {
-  // Flatten ONLY MCQ questions into a single list with section + marks context
+  // Flatten questions from ALL sections into a single practice list
   const flat = useMemo(() => {
     const out: { q: GeneratedQuestion; section: string; marks: number; globalIndex: number }[] = [];
     let gi = 0;
     for (const sec of test.sections) {
-      if (sec.type_name !== "MCQ") continue;
       for (const q of sec.questions) {
-        if (!q.options) continue;
         out.push({ q, section: sec.type_name, marks: q.marks, globalIndex: gi++ });
       }
     }
@@ -1646,8 +1690,13 @@ function PracticeMode({
   const toggleFlag = (qi: number) =>
     setAnswers((a) => ({ ...a, [qi]: { ...a[qi], flagged: !a[qi]?.flagged } }));
 
-  // Grading (MCQs only in practice mode)
+  // Grading (MCQs auto-graded, written self-assessed)
+  const mcqsInTest = useMemo(() => flat.filter((item) => !!item.q.options), [flat]);
   const totalMcqMarks = useMemo(
+    () => mcqsInTest.reduce((sum, item) => sum + item.marks, 0),
+    [mcqsInTest]
+  );
+  const totalMarks = useMemo(
     () => flat.reduce((sum, item) => sum + item.marks, 0),
     [flat]
   );
@@ -1659,23 +1708,46 @@ function PracticeMode({
     let marksEarned = 0;
     const perQuestion: { q: typeof flat[number]; correct: boolean | null; chosen: string | null }[] = [];
     for (const item of flat) {
+      const isMCQ = !!item.q.options;
       const ans = answers[item.globalIndex];
-      const chosen = ans?.mcq ?? null;
-      if (!chosen) {
-        unanswered++;
-        perQuestion.push({ q: item, correct: null, chosen: null });
-      } else if (chosen === item.q.options?.correct_option) {
-        correct++;
-        marksEarned += item.marks;
-        perQuestion.push({ q: item, correct: true, chosen });
+      if (isMCQ) {
+        const chosen = ans?.mcq ?? null;
+        if (!chosen) {
+          unanswered++;
+          perQuestion.push({ q: item, correct: null, chosen: null });
+        } else if (chosen === item.q.options?.correct_option) {
+          correct++;
+          marksEarned += item.marks;
+          perQuestion.push({ q: item, correct: true, chosen });
+        } else {
+          incorrect++;
+          perQuestion.push({ q: item, correct: false, chosen });
+        }
       } else {
-        incorrect++;
-        perQuestion.push({ q: item, correct: false, chosen });
+        // Written answer (Short / Long answer)
+        const text = ans?.text?.trim() ?? "";
+        if (!text) {
+          unanswered++;
+          perQuestion.push({ q: item, correct: null, chosen: null });
+        } else {
+          perQuestion.push({ q: item, correct: null, chosen: text });
+        }
       }
     }
     const scorePct = totalMcqMarks > 0 ? Math.round((marksEarned / totalMcqMarks) * 100) : 0;
-    return { correct, incorrect, unanswered, marksEarned, perQuestion, mcqTotal: flat.length, scorePct };
-  }, [flat, answers, totalMcqMarks]);
+    return {
+      correct,
+      incorrect,
+      unanswered,
+      marksEarned,
+      perQuestion,
+      mcqTotal: mcqsInTest.length,
+      writtenTotal: flat.length - mcqsInTest.length,
+      totalMarks,
+      totalMcqMarks,
+      scorePct,
+    };
+  }, [flat, answers, totalMcqMarks, mcqsInTest, totalMarks]);
 
   const answeredCount = Object.values(answers).filter(
     (a) => a.mcq || (a.text && a.text.trim())
@@ -1908,9 +1980,7 @@ function PracticeIntro({
     .filter((s) => s.type_name === "MCQ")
     .reduce((sum, s) => sum + s.questions.length, 0);
 
-  const mcqMarks = test.sections
-    .filter((s) => s.type_name === "MCQ")
-    .reduce((sum, s) => sum + s.sectionMarks, 0);
+  const writtenCount = Math.max(0, totalQuestions - mcqCount);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-8 sm:py-14 text-center">
@@ -1923,15 +1993,20 @@ function PracticeIntro({
           Choose How You Want to Practice
         </h2>
         <p className="text-sm text-muted-foreground max-w-lg">
-          Practice online with multiple-choice questions (MCQs). Take a timed test with automatic scoring or study at your own pace with instant explanations.
+          {writtenCount > 0
+            ? "Take a complete timed practice exam with both MCQs and written questions, or study MCQs at your own pace."
+            : "Practice online with multiple-choice questions (MCQs). Take a timed test with automatic scoring or study at your own pace with instant explanations."}
         </p>
       </div>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-        <IntroStat label="Total MCQs" value={`${mcqCount}`} />
-        <IntroStat label="Total Marks" value={`${mcqMarks}`} />
+        <IntroStat label="Total Questions" value={`${totalQuestions}`} />
+        <IntroStat label="Total Marks" value={`${test.totalMarks}`} />
         <IntroStat label="Duration" value={formatDuration(test.durationMins)} />
-        <IntroStat label="Format" value="Online MCQs" />
+        <IntroStat
+          label="Format"
+          value={writtenCount > 0 ? `${mcqCount} MCQ + ${writtenCount} Written` : "Online MCQs"}
+        />
       </div>
 
       {test.instructions && (
@@ -1953,21 +2028,25 @@ function PracticeIntro({
                 <Timer className="h-5 w-5" />
               </span>
               <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                Timed MCQs
+                {writtenCount > 0 ? "Complete Exam" : "Timed MCQs"}
               </Badge>
             </div>
-            <h3 className="text-base font-bold text-foreground">Give Timed MCQ Test</h3>
+            <h3 className="text-base font-bold text-foreground">
+              {writtenCount > 0 ? "Take Complete Practice Exam" : "Give Timed MCQ Test"}
+            </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Full timed practice simulation with live countdown timer ({formatDuration(test.durationMins)}), question flagging, and instant automated scorecard.
+              {writtenCount > 0
+                ? `Simulate complete exam conditions (${formatDuration(test.durationMins)}) with auto-graded MCQs and self-assessed written questions.`
+                : `Full timed practice simulation with live countdown timer (${formatDuration(test.durationMins)}), question flagging, and instant automated scorecard.`}
             </p>
           </div>
           <Button
             size="lg"
-            disabled={mcqCount === 0}
+            disabled={totalQuestions === 0}
             onClick={onStartExam}
             className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm disabled:opacity-50"
           >
-            <Play className="mr-1.5 h-4 w-4 fill-current" /> Start Timed Test
+            <Play className="mr-1.5 h-4 w-4 fill-current" /> {writtenCount > 0 ? "Start Full Practice Exam" : "Start Timed Test"}
           </Button>
         </div>
 
@@ -2557,6 +2636,9 @@ function PracticeResults({
     marksEarned: number;
     perQuestion: { q: typeof flat[number]; correct: boolean | null; chosen: string | null }[];
     mcqTotal: number;
+    writtenTotal?: number;
+    totalMarks?: number;
+    totalMcqMarks?: number;
     scorePct: number;
   };
   flat: { q: GeneratedQuestion; section: string; marks: number; globalIndex: number }[];
@@ -2565,7 +2647,8 @@ function PracticeResults({
   onRetake: () => void;
   onExit: () => void;
 }) {
-  const totalMcqMarks = flat.reduce((s, f) => s + f.marks, 0);
+  const mcqMarksMax = grade.totalMcqMarks ?? flat.filter((f) => !!f.q.options).reduce((s, f) => s + f.marks, 0);
+  const totalPaperMarks = grade.totalMarks ?? flat.reduce((s, f) => s + f.marks, 0);
   const fmtTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -2600,15 +2683,24 @@ function PracticeResults({
             <div className="mt-1 text-5xl font-bold tabular-nums">{grade.scorePct}%</div>
             <div className="mt-1 text-sm text-white/85">{gradeLabel}</div>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-white/90">
-              <span>
-                Score: <strong>{grade.marksEarned}/{totalMcqMarks}</strong> marks
-              </span>
+              {mcqMarksMax > 0 && (
+                <span>
+                  MCQ Score: <strong>{grade.marksEarned}/{mcqMarksMax}</strong> marks
+                </span>
+              )}
               <span>
                 Time: <strong>{fmtTime(elapsedSec)}</strong>
               </span>
-              <span>
-                Correct: <strong>{grade.correct}/{grade.mcqTotal}</strong> MCQ
-              </span>
+              {grade.mcqTotal > 0 && (
+                <span>
+                  MCQ Correct: <strong>{grade.correct}/{grade.mcqTotal}</strong>
+                </span>
+              )}
+              {grade.writtenTotal && grade.writtenTotal > 0 ? (
+                <span>
+                  Written: <strong>{grade.writtenTotal}</strong> questions (self-assessed)
+                </span>
+              ) : null}
             </div>
           </div>
         </CardContent>
@@ -3890,7 +3982,8 @@ function renderPrintHTML(test: GeneratedTest, opts: PrintOpts): string {
       }
       return `<li class="qi">${escape(q.question_text)} ${marksTag}</li>`;
     }).join("");
-    const hdr = `<h2>Section ${String.fromCharCode(65+si)} — ${sec.type_name}</h2><p class="meta">${sec.questions.length} questions · ${sec.sectionMarks} marks · ${sec.marksPerQuestion} each</p>`;
+    const typeLabel = sec.type_name === "Short" ? "Short Answer Questions" : sec.type_name === "Long" ? "Long Answer Questions" : sec.type_name === "MCQ" ? "Multiple Choice Questions" : sec.type_name;
+    const hdr = `<h2>Section ${String.fromCharCode(65+si)} — ${typeLabel}</h2><p class="meta">${sec.questions.length} questions · ${sec.sectionMarks} marks · ${sec.marksPerQuestion} each</p>`;
     const content = useBorder ? `<table class="qt">${body}</table>` : `<ol>${body}</ol>`;
     return `<section>${hdr}${content}</section>`;
   }).join("");
@@ -4044,7 +4137,8 @@ function renderWordHTML(test: GeneratedTest, opts: PrintOpts): string {
       }
       return `<p style="margin-top:6pt;"><b>Q${qn}.</b> ${escape(q.question_text)} ${mk}</p>`;
     }).join("");
-    const hdr = `<h3 style="margin-top:12pt;border-bottom:1pt solid #999;font-size:${Math.max(fs+2,12)}pt;">Section ${String.fromCharCode(65+si)} — ${sec.type_name} (${sec.questions.length} × ${sec.marksPerQuestion} = ${sec.sectionMarks} marks)</h3>`;
+    const typeLabel = sec.type_name === "Short" ? "Short Answer Questions" : sec.type_name === "Long" ? "Long Answer Questions" : sec.type_name === "MCQ" ? "Multiple Choice Questions" : sec.type_name;
+    const hdr = `<h3 style="margin-top:12pt;border-bottom:1pt solid #999;font-size:${Math.max(fs+2,12)}pt;">Section ${String.fromCharCode(65+si)} — ${typeLabel} (${sec.questions.length} × ${sec.marksPerQuestion} = ${sec.sectionMarks} marks)</h3>`;
     return `${hdr}${body}`;
   }).join("");
 

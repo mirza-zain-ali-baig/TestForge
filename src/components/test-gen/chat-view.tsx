@@ -17,6 +17,7 @@ import {
   User,
   ShieldCheck,
   RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,25 +39,27 @@ export interface ChatSession {
 const STARTER_PROMPTS = [
   {
     title: "Explain Concept Simply",
-    desc: "Newton's 3 Laws with daily life examples",
-    prompt: "Explain Newton's three laws of motion in simple terms with everyday examples for a 9th class student.",
+    desc: "RAM vs ROM & Memory Hierarchy",
+    prompt:
+      "Explain the differences between RAM and ROM, volatile vs non-volatile memory, and why cache memory is needed, using simple everyday analogies for a 9th class Computer Science student.",
   },
   {
     title: "Generate Exam MCQs",
-    desc: "5 Computer Science MCQs with answer key",
+    desc: "Functions & Loops in Python",
     prompt:
-      "Generate 5 high-yield multiple-choice questions (MCQs) for 10th class Computer Science on 'Functions and Loops'. Include 4 options and provide the correct option with a concise explanation.",
+      "Generate 5 high-yield multiple-choice questions (MCQs) for 10th class Computer Science on 'Functions and Loops in Python'. Include 4 options and provide the correct option with a concise explanation.",
   },
   {
     title: "Step-by-Step Problem Solving",
-    desc: "Quadratic Equation math solution",
-    prompt: "Solve the quadratic equation step-by-step: 2x² - 7x + 3 = 0 using both factorization and the quadratic formula.",
+    desc: "Binary, Hex & Number Conversions",
+    prompt:
+      "Convert the decimal number 218 into 8-bit Binary and Hexadecimal step-by-step. Also show its 2's complement representation with clear working.",
   },
   {
     title: "Short Question & Model Answer",
-    desc: "3-mark board exam standard answer",
+    desc: "Von Neumann Architecture (3 marks)",
     prompt:
-      "Write a 3-mark short question and a model answer on 'Difference between RAM and ROM' suitable for board exam preparation.",
+      "Write a 3-mark board exam standard short question and a complete model answer on 'Von Neumann Architecture and the role of ALU, CU, and Registers'.",
   },
 ];
 
@@ -361,19 +364,27 @@ export function ChatView({ user }: ChatViewProps) {
         ? prompt.slice(0, 32) + (prompt.length > 32 ? "…" : "")
         : activeSession?.title || "Conversation";
 
-    // Update session state
-    setSessions((prev) =>
-      prev.map((s) =>
-        s.id === activeSessionId
-          ? {
-              ...s,
-              title: currentTitle,
-              messages: updatedMessages,
-              updatedAt: Date.now(),
-            }
-          : s
-      )
-    );
+    let targetSessionId = activeSessionId;
+    if (!targetSessionId || !sessions.some((s) => s.id === targetSessionId)) {
+      const fresh = createNewSession(currentTitle);
+      targetSessionId = fresh.id;
+      setActiveSessionId(fresh.id);
+      setSessions((prev) => [{ ...fresh, title: currentTitle, messages: updatedMessages, updatedAt: Date.now() }, ...prev]);
+    } else {
+      // Update existing session state
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === targetSessionId
+            ? {
+                ...s,
+                title: currentTitle,
+                messages: updatedMessages,
+                updatedAt: Date.now(),
+              }
+            : s
+        )
+      );
+    }
 
     setIsGenerating(true);
     isAtBottomRef.current = true;
@@ -796,6 +807,28 @@ export function ChatView({ user }: ChatViewProps) {
                         <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
                           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                           <span>ExamForge AI is formulating the answer...</span>
+                        </div>
+                      ) : !m.content && !m.reasoning ? (
+                        <div className="py-1 text-xs text-muted-foreground flex flex-col gap-2">
+                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium">
+                            <AlertCircle className="h-4 w-4" />
+                            <span>No response was generated.</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-fit text-xs border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                            onClick={() => {
+                              const idx = messages.findIndex((msg) => msg.id === m.id);
+                              const prevUser = idx > 0 ? messages[idx - 1] : null;
+                              if (prevUser?.content) {
+                                handleSendMessage(prevUser.content);
+                              }
+                            }}
+                          >
+                            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                            Retry Request
+                          </Button>
                         </div>
                       ) : (
                         <div>

@@ -48,6 +48,7 @@ export function AuthDialog({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"educator" | "student">("educator");
   const [showPassword, setShowPassword] = useState(false);
 
   // Sync active tab whenever dialog opens with a specific defaultTab
@@ -62,6 +63,7 @@ export function AuthDialog({
     setEmail("");
     setPassword("");
     setName("");
+    setRole("educator");
     setError(null);
     setShowPassword(false);
   };
@@ -92,6 +94,7 @@ export function AuthDialog({
         email: email.trim().toLowerCase(),
         password,
         name: name.trim(),
+        role,
       });
       toast.success(`Account created! Welcome, ${user.name || user.email}!`, { id: "auth-action" });
       onSuccess(user);
@@ -111,34 +114,13 @@ export function AuthDialog({
       const { data, error: gErr } = await supabaseBrowser.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-          skipBrowserRedirect: true,
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
         },
       });
       if (gErr) throw gErr;
-      if (!data?.url) {
-        throw new Error("Unable to initialize Google Sign-In.");
+      if (data?.url) {
+        window.location.href = data.url;
       }
-
-      // Check if provider is enabled before full page navigation to prevent raw JSON error screen
-      try {
-        const testRes = await fetch(data.url, { method: "GET" });
-        if (!testRes.ok) {
-          const body = await testRes.json().catch(() => null);
-          if (body?.msg?.includes("not enabled") || testRes.status === 400) {
-            throw new Error(
-              "Google Sign-In is not enabled yet in your Supabase project (hpzuvqoviudcgwqcsdog). Please enable Google in Supabase Dashboard → Authentication → Providers → Google (with Google Client ID & Secret)."
-            );
-          }
-        }
-      } catch (checkErr) {
-        if (checkErr instanceof Error && checkErr.message.includes("not enabled")) {
-          throw checkErr;
-        }
-        // If it's just a redirect or network restriction, proceed safely to URL
-      }
-
-      window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initiate Google Sign-In.");
       setGoogleLoading(false);
@@ -249,7 +231,9 @@ export function AuthDialog({
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="login-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     placeholder="user@school.edu"
                     value={email}
@@ -267,8 +251,11 @@ export function AuthDialog({
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="login-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     required
+                    minLength={6}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -314,7 +301,9 @@ export function AuthDialog({
                   <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="reg-name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     placeholder="Ali Khan"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -331,7 +320,9 @@ export function AuthDialog({
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="reg-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     placeholder="user@school.edu"
                     value={email}
@@ -349,7 +340,9 @@ export function AuthDialog({
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="reg-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     required
                     minLength={6}
                     placeholder="••••••••"
@@ -364,6 +357,43 @@ export function AuthDialog({
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Role Selection */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Account Role</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRole("educator")}
+                    className={[
+                      "flex flex-col items-start p-2.5 rounded-lg border text-left transition-all",
+                      role === "educator"
+                        ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
+                        : "border-border hover:border-emerald-400 bg-card",
+                    ].join(" ")}
+                  >
+                    <span className="text-xs font-bold text-foreground">Educator</span>
+                    <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                      Generate, save & customize papers
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("student")}
+                    className={[
+                      "flex flex-col items-start p-2.5 rounded-lg border text-left transition-all",
+                      role === "student"
+                        ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
+                        : "border-border hover:border-emerald-400 bg-card",
+                    ].join(" ")}
+                  >
+                    <span className="text-xs font-bold text-foreground">Student</span>
+                    <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                      Practice tests & prepare MCQs
+                    </span>
                   </button>
                 </div>
               </div>

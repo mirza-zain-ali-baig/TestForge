@@ -1,3 +1,4 @@
+import { callGeminiChatCompletion } from "./gemini";
 import { callOpenRouterChatCompletion } from "./openrouter";
 import type {
   QuestionTypeName,
@@ -73,12 +74,25 @@ Return STRICT JSON ONLY (no markdown fences, no commentary) in this exact shape:
     : '{"question_text":"...","blooms_taxonomy":"...","tags":"...","model_answer":"..."}'}
 ]}`;
 
-  const { content } = await callOpenRouterChatCompletion({
-    messages: [{ role: "user", content: prompt }],
-    systemPrompt: "You are a precise JSON generator for exam questions. Output only valid JSON.",
-    preferredModel: "auto",
-    temperature: 0.3,
-  });
+  let content = "";
+  try {
+    const geminiRes = await callGeminiChatCompletion({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: "You are a precise JSON generator for exam questions. Output only valid JSON.",
+      temperature: 0.3,
+      responseMimeType: "application/json",
+    });
+    content = geminiRes.content;
+  } catch (geminiErr) {
+    console.warn("Gemini question generation failed, falling back to OpenRouter:", geminiErr);
+    const orRes = await callOpenRouterChatCompletion({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: "You are a precise JSON generator for exam questions. Output only valid JSON.",
+      preferredModel: "auto",
+      temperature: 0.3,
+    });
+    content = orRes.content;
+  }
 
   const parsed = safeParseQuestions(content);
 
