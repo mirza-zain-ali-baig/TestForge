@@ -135,9 +135,30 @@ export type HistoryStats = {
   avgQuestions: number;
 };
 
-/** Aggregates saved-test history for the analytics dashboard. */
-export async function getHistoryStats(): Promise<HistoryStats> {
-  const tests = await findAllTests();
+/** Aggregates saved-test history for the analytics dashboard strictly for the authenticated user. */
+export async function getHistoryStats(userEmail?: string): Promise<HistoryStats> {
+  if (!userEmail) {
+    return {
+      totalTests: 0,
+      totalQuestions: 0,
+      totalMarks: 0,
+      trend: [],
+      bySource: [],
+      byClass: [],
+      bySubject: [],
+      marksBuckets: [
+        { range: "1-10", count: 0 },
+        { range: "11-25", count: 0 },
+        { range: "26-50", count: 0 },
+        { range: "51-100", count: 0 },
+        { range: "100+", count: 0 },
+      ],
+      avgMarks: 0,
+      avgQuestions: 0,
+    };
+  }
+
+  const tests = await findAllTests(userEmail);
 
   let totalQuestions = 0;
   let totalMarks = 0;
@@ -222,13 +243,17 @@ export type OverlapPair = {
   sharedIds: string[];
 };
 
-/** Computes question-ID overlap between every pair of saved tests. */
-export async function getTestOverlap(): Promise<{
+/** Computes question-ID overlap between every pair of saved tests for the authenticated user. */
+export async function getTestOverlap(userEmail?: string): Promise<{
   pairs: OverlapPair[];
   maxShared: number;
   totalTests: number;
 }> {
-  const tests = await findAllTests();
+  if (!userEmail) {
+    return { pairs: [], maxShared: 0, totalTests: 0 };
+  }
+
+  const tests = await findAllTests(userEmail);
 
   const parsed = tests
     .map((t) => {

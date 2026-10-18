@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
           return NextResponse.json({
             reply: result.content,
-            modelUsed: "ExamForge AI (1,500/day)",
+            modelUsed: "ExamForge AI",
             fallbackFrom: null,
           });
         }
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
           });
           return NextResponse.json({
             reply: rescueRes.content,
-            modelUsed: "ExamForge AI (1,500/day)",
+            modelUsed: "ExamForge AI",
             fallbackFrom: "openrouter",
           });
         }

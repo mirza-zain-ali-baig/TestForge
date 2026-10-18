@@ -118,44 +118,56 @@ export function ChatView({ user }: ChatViewProps) {
     }).catch(() => {});
   }, [userEmail]);
 
-  // Load sessions on mount or when user changes
+  // Load sessions on mount or when user changes — always open with a fresh new conversation!
   useEffect(() => {
     let isCancelled = false;
+    let currentNewId = "";
 
-    // 1. Initial display from localStorage
     try {
       const raw = localStorage.getItem(SESSIONS_KEY);
+      let toSet: ChatSession[] = [];
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Keep at most 1 empty session
-          const filtered = parsed.filter((s: ChatSession, idx: number) => {
-            if (s.messages && s.messages.length > 0) return true;
-            return idx === parsed.findIndex((other: ChatSession) => !other.messages || other.messages.length === 0);
-          });
-          const toSet = filtered.length > 0 ? filtered : [createNewSession()];
-          setSessions(toSet);
-          const savedActive = localStorage.getItem(ACTIVE_KEY);
-          if (savedActive && toSet.some((s: ChatSession) => s.id === savedActive)) {
-            setActiveSessionId(savedActive);
-          } else {
-            setActiveSessionId(toSet[0].id);
-          }
+          toSet = parsed;
         }
       }
-    } catch {}
 
-    // 2. Fetch fresh history from Supabase Cloud
+      // Check if an empty session already exists
+      const existingEmpty = toSet.find((s) => !s.messages || s.messages.length === 0);
+      if (existingEmpty) {
+        currentNewId = existingEmpty.id;
+        const others = toSet.filter((s) => s.id !== existingEmpty.id);
+        setSessions([existingEmpty, ...others]);
+        setActiveSessionId(existingEmpty.id);
+      } else {
+        const fresh = createNewSession();
+        currentNewId = fresh.id;
+        setSessions([fresh, ...toSet]);
+        setActiveSessionId(fresh.id);
+      }
+    } catch {
+      const fresh = createNewSession();
+      currentNewId = fresh.id;
+      setSessions([fresh]);
+      setActiveSessionId(fresh.id);
+    }
+
+    // Fetch cloud sessions in background for history sidebar without overwriting new chat
     if (userEmail) {
       fetch(`/api/chat/sessions?email=${encodeURIComponent(userEmail)}`)
         .then((r) => r.json())
         .then((data) => {
           if (isCancelled) return;
           if (Array.isArray(data.sessions) && data.sessions.length > 0) {
-            setSessions(data.sessions);
-            setActiveSessionId((prev) =>
-              data.sessions.some((s: ChatSession) => s.id === prev) ? prev : data.sessions[0].id
-            );
+            setSessions((prev) => {
+              const active = prev.find((s) => s.id === currentNewId);
+              if (active) {
+                const cloudOthers = data.sessions.filter((s: ChatSession) => s.id !== currentNewId);
+                return [active, ...cloudOthers];
+              }
+              return data.sessions;
+            });
           }
         })
         .catch(() => {});
@@ -164,7 +176,7 @@ export function ChatView({ user }: ChatViewProps) {
     return () => {
       isCancelled = true;
     };
-  }, [SESSIONS_KEY, ACTIVE_KEY, createNewSession, userEmail]);
+  }, [SESSIONS_KEY, createNewSession, userEmail]);
 
   // Persist sessions
   useEffect(() => {
@@ -665,16 +677,8 @@ export function ChatView({ user }: ChatViewProps) {
             </div>
           </div>
 
-          {/* Status Indicator & Clear Chat */}
+          {/* Actions & Clear Chat */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Badge
-              variant="secondary"
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium"
-            >
-              <Sparkles className="h-3 w-3" />
-              1,500 req/day Free
-            </Badge>
-
             {messages.length > 0 && (
               <Button
                 variant="ghost"
@@ -892,7 +896,7 @@ export function ChatView({ user }: ChatViewProps) {
             )}
           </form>
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-            ExamForge AI • 1,500 Free Requests/Day • Powered by Google Gemini & OpenRouter
+            ExamForge AI • Academic & Exam Preparation Assistant
           </p>
         </div>
       </div>

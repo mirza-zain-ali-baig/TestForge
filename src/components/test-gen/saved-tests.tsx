@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   GitCompare,
+  FolderOpen,
+  LogIn,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,13 +33,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { fetchSavedTests, deleteTest, fmtDate, type SavedTest } from "./lib";
+import { fetchSavedTests, deleteTest, fmtDate, type SavedTest, type AuthUser } from "./lib";
 import type { GeneratedTest } from "@/lib/types";
 
 export function SavedTests({
   onOpen,
+  user,
+  onSignIn,
 }: {
   onOpen: (test: GeneratedTest) => void;
+  user?: AuthUser | null;
+  onSignIn?: () => void;
 }) {
   const [tests, setTests] = useState<SavedTest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +59,22 @@ export function SavedTests({
     totalTests: number;
   } | null>(null);
 
+  const userEmail = user?.email;
+
   const loadAll = () => {
+    if (!userEmail) {
+      setTests([]);
+      setOverlap(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     Promise.all([
-      fetchSavedTests(),
-      fetch("/api/test-overlap", { cache: "no-store" }).then((r) => r.json()),
+      fetchSavedTests(userEmail),
+      fetch(`/api/test-overlap?userEmail=${encodeURIComponent(userEmail)}`, { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([r, ov]) => {
-        setTests(r.tests);
+        setTests(r.tests || []);
         setOverlap(ov);
       })
       .catch((e) => toast.error(e.message))
@@ -69,13 +83,20 @@ export function SavedTests({
 
   useEffect(() => {
     let alive = true;
+    if (!userEmail) {
+      setTests([]);
+      setOverlap(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     Promise.all([
-      fetchSavedTests(),
-      fetch("/api/test-overlap", { cache: "no-store" }).then((r) => r.json()),
+      fetchSavedTests(userEmail),
+      fetch(`/api/test-overlap?userEmail=${encodeURIComponent(userEmail)}`, { cache: "no-store" }).then((r) => r.json()),
     ])
       .then(([r, ov]) => {
         if (!alive) return;
-        setTests(r.tests);
+        setTests(r.tests || []);
         setOverlap(ov);
       })
       .catch((e) => alive && toast.error(e.message))
@@ -83,7 +104,7 @@ export function SavedTests({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [userEmail]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -103,6 +124,29 @@ export function SavedTests({
       toast.error("Saved test is corrupted");
     }
   };
+
+  if (!userEmail) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
+            <FolderOpen className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold">Sign in to view your saved tests</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Saved test papers are securely linked to your account. Sign in to access, edit, practice, and export your previous tests.
+            </p>
+          </div>
+          {onSignIn && (
+            <Button onClick={onSignIn} className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+              <LogIn className="mr-2 h-4 w-4" /> Sign In
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

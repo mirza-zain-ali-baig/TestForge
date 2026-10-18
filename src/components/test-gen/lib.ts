@@ -175,8 +175,9 @@ export type SavedTest = {
   updatedAt: string;
 };
 
-export async function fetchSavedTests() {
-  const res = await fetch("/api/tests", { cache: "no-store" });
+export async function fetchSavedTests(userEmail?: string) {
+  if (!userEmail) return { tests: [] };
+  const res = await fetch(`/api/tests?userEmail=${encodeURIComponent(userEmail)}`, { cache: "no-store" });
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
   return res.json() as Promise<{ tests: SavedTest[] }>;
 }
@@ -210,8 +211,22 @@ export type TestHistory = {
   avgQuestions: number;
 };
 
-export async function fetchHistory(): Promise<TestHistory> {
-  const res = await fetch("/api/history", { cache: "no-store" });
+export async function fetchHistory(userEmail?: string): Promise<TestHistory> {
+  if (!userEmail) {
+    return {
+      totalTests: 0,
+      totalQuestions: 0,
+      totalMarks: 0,
+      trend: [],
+      bySource: [],
+      byClass: [],
+      bySubject: [],
+      marksBuckets: [],
+      avgMarks: 0,
+      avgQuestions: 0,
+    };
+  }
+  const res = await fetch(`/api/history?userEmail=${encodeURIComponent(userEmail)}`, { cache: "no-store" });
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
   return res.json() as Promise<TestHistory>;
 }

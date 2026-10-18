@@ -297,7 +297,19 @@ function MarkdownTableBlock({
 // ─── Text / Paragraph Formatted ────────────────────────────────────────────────
 
 function TextFormatted({ text }: { text: string }) {
-  const lines = text.split("\n");
+  const rawLines = text.split("\n");
+
+  // Preprocess lines: if a line is just "1." or "2.", merge it with the subsequent text line
+  const lines: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    const curr = rawLines[i].trim();
+    if (/^\d+\.$/.test(curr) && i + 1 < rawLines.length && rawLines[i + 1].trim()) {
+      lines.push(`${curr} ${rawLines[i + 1].trim()}`);
+      i++; // skip next line
+    } else {
+      lines.push(rawLines[i]);
+    }
+  }
 
   return (
     <div className="space-y-1.5">
@@ -307,24 +319,50 @@ function TextFormatted({ text }: { text: string }) {
           return <div key={idx} className="h-1" />;
         }
 
-        // Headers
+        // Horizontal Rule (---, ***, ___)
+        if (/^[-*_]{3,}$/.test(trimmed)) {
+          return <hr key={idx} className="my-3 border-t border-border" />;
+        }
+
+        // Headers: Check from deepest level (######) up to (#)
+        if (trimmed.startsWith("###### ")) {
+          return (
+            <h6 key={idx} className="pt-2 font-bold text-foreground text-xs uppercase tracking-wide">
+              {renderInlineStyles(trimmed.slice(7))}
+            </h6>
+          );
+        }
+        if (trimmed.startsWith("##### ")) {
+          return (
+            <h5 key={idx} className="pt-2 font-bold text-foreground text-xs">
+              {renderInlineStyles(trimmed.slice(6))}
+            </h5>
+          );
+        }
+        if (trimmed.startsWith("#### ")) {
+          return (
+            <h5 key={idx} className="pt-2 font-bold text-foreground text-sm">
+              {renderInlineStyles(trimmed.slice(5))}
+            </h5>
+          );
+        }
         if (trimmed.startsWith("### ")) {
           return (
-            <h4 key={idx} className="pt-2 font-bold text-foreground text-sm">
+            <h4 key={idx} className="pt-2 font-bold text-foreground text-sm sm:text-base">
               {renderInlineStyles(trimmed.slice(4))}
             </h4>
           );
         }
         if (trimmed.startsWith("## ")) {
           return (
-            <h3 key={idx} className="pt-2 text-base font-bold text-foreground">
+            <h3 key={idx} className="pt-2 text-base sm:text-lg font-bold text-foreground">
               {renderInlineStyles(trimmed.slice(3))}
             </h3>
           );
         }
         if (trimmed.startsWith("# ")) {
           return (
-            <h2 key={idx} className="pt-2.5 text-lg font-bold text-foreground">
+            <h2 key={idx} className="pt-2.5 text-lg sm:text-xl font-bold text-foreground">
               {renderInlineStyles(trimmed.slice(2))}
             </h2>
           );
@@ -353,20 +391,20 @@ function TextFormatted({ text }: { text: string }) {
         }
 
         // Numbered list
-        const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+        const numMatch = trimmed.match(/^(\d+)\.\s*(.*)$/);
         if (numMatch) {
           return (
-            <div key={idx} className="flex items-start gap-2 pl-2">
-              <span className="font-semibold text-emerald-500 min-w-[1.2rem] text-xs">
+            <div key={idx} className="flex items-start gap-2 pl-2 my-0.5">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400 min-w-[1.4rem] text-xs shrink-0">
                 {numMatch[1]}.
               </span>
-              <span className="flex-1">{renderInlineStyles(numMatch[2])}</span>
+              <span className="flex-1 leading-relaxed">{renderInlineStyles(numMatch[2])}</span>
             </div>
           );
         }
 
         // Regular paragraph line
-        return <p key={idx}>{renderInlineStyles(line)}</p>;
+        return <p key={idx} className="leading-relaxed">{renderInlineStyles(line)}</p>;
       })}
     </div>
   );

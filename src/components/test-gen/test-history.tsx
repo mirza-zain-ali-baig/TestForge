@@ -13,6 +13,7 @@ import {
   Inbox,
   Calendar,
   Layers,
+  LogIn,
 } from "lucide-react";
 import {
   Card,
@@ -21,6 +22,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -37,7 +39,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { fetchHistory, type TestHistory } from "./lib";
+import { fetchHistory, type TestHistory, type AuthUser } from "./lib";
 
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
@@ -48,21 +50,58 @@ const tooltipStyle = {
   color: "var(--popover-foreground)",
 } as const;
 
-export function TestHistoryView() {
+export function TestHistoryView({
+  user,
+  onSignIn,
+}: {
+  user?: AuthUser | null;
+  onSignIn?: () => void;
+}) {
   const [history, setHistory] = useState<TestHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const userEmail = user?.email;
+
   useEffect(() => {
     let alive = true;
-    fetchHistory()
+    if (!userEmail) {
+      setHistory(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchHistory(userEmail)
       .then((h) => alive && setHistory(h))
       .catch((e) => alive && setError(e.message))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, []);
+  }, [userEmail]);
+
+  if (!userEmail) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40">
+            <History className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold">Sign in to view generation history</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Test generation trends, marks distribution, and analytics are tracked per account. Sign in to view your statistics.
+            </p>
+          </div>
+          {onSignIn && (
+            <Button onClick={onSignIn} className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+              <LogIn className="mr-2 h-4 w-4" /> Sign In
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

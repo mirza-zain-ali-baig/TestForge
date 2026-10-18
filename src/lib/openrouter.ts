@@ -59,7 +59,7 @@ export const CURATED_FREE_MODELS: ModelInfo[] = [
   {
     id: "gemini-flash-lite-latest",
     name: "ExamForge AI (Google Gemini)",
-    badge: "1,500 req/day (Fast)",
+    badge: "Fast & Accurate",
     quality: 105,
     isFree: true,
     category: "recommended",

@@ -12,9 +12,11 @@ export const dynamic = "force-dynamic";
 
 bootstrap();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await getTestOverlap();
+    const { searchParams } = new URL(request.url);
+    const userEmail = searchParams.get("userEmail") || undefined;
+    const result = await getTestOverlap(userEmail);
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json(

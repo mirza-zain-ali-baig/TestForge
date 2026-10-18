@@ -12,9 +12,11 @@ export const dynamic = "force-dynamic";
 
 bootstrap();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const history = await getHistoryStats();
+    const { searchParams } = new URL(request.url);
+    const userEmail = searchParams.get("userEmail") || undefined;
+    const history = await getHistoryStats(userEmail);
     return NextResponse.json(history);
   } catch (e) {
     return NextResponse.json(

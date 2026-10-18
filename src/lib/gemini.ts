@@ -215,7 +215,7 @@ export async function streamGeminiChatCompletion(
         metaSent = true;
         const metaEvent = `data: ${JSON.stringify({
           meta: {
-            model: "ExamForge AI (1,500/day)",
+            model: "ExamForge AI",
             provider: "gemini",
           },
         })}\n\n`;

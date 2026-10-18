@@ -109,6 +109,7 @@ import {
 import { TYPE_NAMES, DIFF_NAMES, TYPE_META } from "./lib";
 import { formatDuration } from "./generator-wizard";
 import { renderInlineStyles } from "./chat-markdown";
+import { exportTestToDocxBlob } from "@/lib/docx-export";
 
 const LETTERS = ["A", "B", "C", "D"] as const;
 
@@ -391,44 +392,35 @@ export function TestPreview({
     }, 400);
   };
 
-  // Word export: generate an HTML file with Word-compatible MIME type (.doc)
-  const handleExportWord = () => {
-    const html = renderWordHTML(test, {
-      showAnswers: false,
-      printAnswerKey,
-      printStudentInfo,
-      watermarkText,
-      academyName,
-      academyLocation,
-      logoDataUrl,
-      studentName,
-      rollNumber,
-      classNameInput,
-      paperCode,
-      subjectNameInput,
-      timeAllowed,
-      totalMarksInput,
-      examDate,
-      examSyllabus,
-      examLabel,
-      showExamLabel,
-      fontSize,
-      headerSize,
-      mcqBorder,
-      shortBorder,
-      longBorder,
-      showBubbleSheet,
-    });
-    const blob = new Blob(["\ufeff", html], {
-      type: "application/msword",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${test.title.replace(/\s+/g, "_")}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Word document exported");
+  // Word export: generate a genuine OpenXML Microsoft Word (.docx) file
+  const handleExportWord = async () => {
+    try {
+      toast.info("Generating Word document (.docx)...");
+      const blob = await exportTestToDocxBlob(test, {
+        academyName,
+        academyLocation,
+        examLabel: showExamLabel ? examLabel : test.title,
+        studentName,
+        rollNumber,
+        className: classNameInput,
+        subjectName: subjectNameInput,
+        timeAllowed,
+        totalMarks: totalMarksInput,
+        examDate,
+        printStudentInfo,
+        printAnswerKey,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${test.title.replace(/\s+/g, "_")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Word document (.docx) exported successfully");
+    } catch (e) {
+      console.error("DOCX export error:", e);
+      toast.error("Failed to export Word document");
+    }
   };
 
   // Excel export: generate an HTML table with Excel-compatible MIME (.xls)
@@ -534,6 +526,14 @@ export function TestPreview({
                 onClick={handleExportPDF}
               >
                 <Download className="mr-1 h-4 w-4" /> PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportWord}
+                title="Download as Microsoft Word document (.docx)"
+              >
+                <FileText className="mr-1 h-4 w-4 text-blue-600" /> Word (.docx)
               </Button>
               <Button
                 size="sm"

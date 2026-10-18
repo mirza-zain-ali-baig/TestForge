@@ -25,23 +25,24 @@ export type SavedTestRecord = {
   updatedAt: Date;
 };
 
-/** Returns all saved tests ordered by creation date (newest first). */
+/** Returns all saved tests ordered by creation date (newest first). Filtered strictly by userEmail. */
 export async function findAllTests(userEmail?: string): Promise<SavedTestRecord[]> {
+  if (!userEmail) {
+    return [];
+  }
+
+  const normalizedEmail = userEmail.toLowerCase().trim();
   const merged = new Map<string, SavedTestRecord>();
 
-  // 1. Query Supabase app_generated_tests
+  // 1. Query Supabase app_generated_tests strictly for this user
   try {
-    let q = supabase
+    const { data, error } = await supabase
       .from("app_generated_tests")
       .select("*")
+      .eq("user_email", normalizedEmail)
       .order("created_at", { ascending: false })
       .limit(200);
 
-    if (userEmail) {
-      q = q.eq("user_email", userEmail.toLowerCase().trim());
-    }
-
-    const { data, error } = await q;
     if (!error && data) {
       for (const row of data) {
         merged.set(row.id, {
@@ -63,17 +64,6 @@ export async function findAllTests(userEmail?: string): Promise<SavedTestRecord[
   } catch (err) {
     console.warn("[TestModel] Supabase findAllTests error:", err);
   }
-
-  // 2. Query local SQLite
-  await ensureDbInitialized();
-  try {
-    const localRows = await db.generatedTest.findMany({ orderBy: { createdAt: "desc" } });
-    for (const r of localRows) {
-      if (!merged.has(r.id)) {
-        merged.set(r.id, r);
-      }
-    }
-  } catch {}
 
   return Array.from(merged.values()).sort(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime()

@@ -67,6 +67,7 @@ import {
 import { toast } from "sonner";
 import type { GeneratedTest, GeneratedQuestion } from "@/lib/types";
 import { saveTest } from "./lib";
+import { exportTestToDocxBlob } from "@/lib/docx-export";
 
 /* ------------------------------- Constants ------------------------------- */
 
@@ -1236,16 +1237,34 @@ export function PrintExportView({
     toast.success("Opening print window for PDF…");
   };
 
-  const handleExportWord = () => {
-    const html = exportHtml;
-    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(test.title || "exam_paper").replace(/\s+/g, "_")}.doc`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Word document exported");
+  const handleExportWord = async () => {
+    try {
+      toast.info("Generating Word document (.docx)...");
+      const blob = await exportTestToDocxBlob(test, {
+        academyName,
+        academyLocation,
+        examLabel: showExamLabel ? examLabel : (test.title || "Examination Paper"),
+        studentName,
+        rollNumber,
+        className: classNameInput || test.className,
+        subjectName: subjectNameInput || test.subjectName,
+        timeAllowed,
+        totalMarks: totalMarksInput || test.totalMarks,
+        examDate,
+        printStudentInfo: true,
+        printAnswerKey,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(test.title || "exam_paper").replace(/\s+/g, "_")}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Word document (.docx) exported successfully");
+    } catch (e) {
+      console.error("DOCX export error:", e);
+      toast.error("Failed to export Word document");
+    }
   };
 
   const handleExportExcel = () => {
@@ -1456,7 +1475,7 @@ export function PrintExportView({
             onClick={handleExportWord}
             className="h-8 bg-white/15 text-xs text-white hover:bg-white/25"
           >
-            <FileText className="mr-1 h-3.5 w-3.5" /> Word
+            <FileText className="mr-1 h-3.5 w-3.5" /> Word (.docx)
           </Button>
           <Button
             size="sm"
