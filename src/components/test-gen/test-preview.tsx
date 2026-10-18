@@ -78,6 +78,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DndContext,
   closestCenter,
@@ -120,6 +121,7 @@ export function TestPreview({
   onRegenerate,
   onPrintExport,
   initialMode,
+  onExit,
 }: {
   test: GeneratedTest;
   onTestChange: (t: GeneratedTest) => void;
@@ -127,6 +129,7 @@ export function TestPreview({
   onRegenerate: () => void;
   onPrintExport?: () => void;
   initialMode?: "preview" | "practice" | "print";
+  onExit?: () => void;
 }) {
   const [showAnswers, setShowAnswers] = useState(false);
   const [hidePaper, setHidePaper] = useState(false); // default: show paper
@@ -493,13 +496,23 @@ export function TestPreview({
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <Card className="no-print">
+      <Card className="no-print sticky top-2 z-30 bg-card/95 backdrop-blur-md shadow-xs">
         <CardContent className="flex flex-col gap-3 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={onBack}>
-                <ArrowLeft className="mr-1 h-4 w-4" /> Back
+              <Button variant="outline" size="sm" onClick={onBack} className="gap-1.5 font-medium cursor-pointer">
+                <ArrowLeft className="h-4 w-4" /> Back to Setup
               </Button>
+              {onExit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onExit}
+                  className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Exit to Dashboard
+                </Button>
+              )}
               <Badge variant="outline" className="gap-1">
                 {test.source === "bank" ? (
                   <Database className="h-3 w-3" />
@@ -583,6 +596,9 @@ export function TestPreview({
               <Button variant="ghost" size="sm" onClick={onRegenerate}>
                 <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
               </Button>
+              <div className="pl-1 border-l">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </CardContent>

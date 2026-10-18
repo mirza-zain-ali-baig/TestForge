@@ -345,8 +345,8 @@ export function TestGeneratorApp() {
 
   return (
     <div className={cn("flex min-h-screen flex-col bg-background", view === "chat" && "h-screen overflow-hidden")}>
-      {/* Unified Persistent Header — Hidden in full AI Chat window */}
-      {view !== "chat" && (
+      {/* Unified Persistent Header — Hidden in full AI Chat window, Generate Test, and Print views */}
+      {!["chat", "generate", "print"].includes(view) && (
         <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           {/* Logo & Brand */}
@@ -593,6 +593,8 @@ export function TestGeneratorApp() {
           "flex-1",
           view === "chat"
             ? "w-full h-screen p-0 m-0 overflow-hidden"
+            : view === "generate"
+            ? "mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-6"
             : "mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8"
         )}
       >
@@ -621,6 +623,7 @@ export function TestGeneratorApp() {
                     setAuthDefaultTab(tab);
                     setAuthOpen(true);
                   }}
+                  onExit={() => navigate(previousView === "generate" ? "dashboard" : previousView)}
                 />
               </div>
               {preview && (
@@ -639,6 +642,7 @@ export function TestGeneratorApp() {
                     onRegenerate={backToSetup}
                     onPrintExport={goPrint}
                     initialMode={initialPreviewMode}
+                    onExit={() => navigate(previousView === "generate" ? "dashboard" : previousView)}
                   />
                 </>
               )}
@@ -679,7 +683,7 @@ export function TestGeneratorApp() {
       </main>
 
       {/* Footer */}
-      {view !== "chat" && (
+      {!["chat", "generate", "print"].includes(view) && (
         <footer className="no-print mt-auto border-t bg-muted/30">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
             <div className="flex items-center gap-2">
@@ -697,10 +701,10 @@ export function TestGeneratorApp() {
       )}
 
       {/* Floating scroll-to-top */}
-      {view !== "chat" && <ScrollToTop />}
+      {!["chat", "generate", "print"].includes(view) && <ScrollToTop />}
 
-      {/* Floating AI Chatbox Widget (shown on all pages except full Chat page) */}
-      {view !== "chat" && (
+      {/* Floating AI Chatbox Widget (shown on all pages except full Chat page and Generate/Print) */}
+      {!["chat", "generate", "print"].includes(view) && (
         <FloatingChatWidget user={user} onExpandToFullPage={() => navigate("chat")} />
       )}
 

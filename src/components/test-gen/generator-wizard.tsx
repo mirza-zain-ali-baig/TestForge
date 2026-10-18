@@ -65,6 +65,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   fetchCurriculum,
   generateTest,
@@ -216,16 +217,26 @@ export function GeneratorWizard({
   user,
   onRequireAuth,
   initialVariantCount = 1,
+  onExit,
 }: {
   onGenerated: (variants: GeneratedTest[], mode?: "preview" | "practice" | "print") => void;
   user?: AuthUser | null;
   onRequireAuth?: (tab?: "login" | "register") => void;
   initialVariantCount?: number;
+  onExit?: () => void;
 }) {
   const [tree, setTree] = useState<CurriculumNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [step, setStep] = useState<WizardStep>("class");
+
+  const handlePrevStep = () => {
+    if (step === "setup") setStep("syllabus");
+    else if (step === "syllabus") setStep("subject");
+    else if (step === "subject") setStep("class");
+    else if (step === "class" && onExit) onExit();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // selection
   const [classId, setClassId] = useState<string>("");
@@ -637,7 +648,64 @@ export function GeneratorWizard({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Top Focus Navigation Bar (Distraction-free workflow) */}
+      <div className="sticky top-2 z-30 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card/95 backdrop-blur-md p-3 shadow-xs">
+        <div className="flex items-center gap-2">
+          {step === "class" ? (
+            onExit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onExit}
+                className="gap-1.5 h-9 font-medium cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Dashboard</span>
+              </Button>
+            )
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevStep}
+                className="gap-1.5 h-9 font-medium cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>
+                  Back to {step === "setup" ? "Syllabus" : step === "syllabus" ? "Subject" : "Class"}
+                </span>
+              </Button>
+              {onExit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onExit}
+                  className="h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Exit to Dashboard
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+            <GraduationCap className="h-4 w-4" />
+          </div>
+          <span className="hidden sm:inline">ExamForge Paper Generator</span>
+          <Badge variant="secondary" className="text-[11px] font-medium">
+            Step {currentStepIdx + 1} of 4: {STEPS_CONFIG[currentStepIdx]?.label}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
+      </div>
+
       {/* Stepper Navigation Bar with Filled Progress Connectors */}
       <div className="overflow-x-auto pb-1">
         <div className="flex items-center justify-between rounded-2xl border bg-card p-3 shadow-xs min-w-[620px]">
@@ -1226,17 +1294,31 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  <Button
-                    size="lg"
-                    disabled={chapterIds.length === 0}
-                    onClick={() => {
-                      setStep("setup");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow"
-                  >
-                    Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        setStep("subject");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="font-medium cursor-pointer"
+                    >
+                      <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
+                    </Button>
+                    <Button
+                      size="lg"
+                      disabled={chapterIds.length === 0}
+                      onClick={() => {
+                        setStep("setup");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow cursor-pointer"
+                    >
+                      Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1771,6 +1853,22 @@ export function GeneratorWizard({
                             subjectName={currentSubject?.subject_name ?? ""}
                             currentTotalMarks={totalMarks}
                           />
+                        </div>
+
+                        {/* Back to Syllabus navigation */}
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setStep("syllabus");
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="gap-1.5 cursor-pointer font-medium"
+                          >
+                            <ArrowLeft className="h-4 w-4" /> Back to Syllabus
+                          </Button>
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
