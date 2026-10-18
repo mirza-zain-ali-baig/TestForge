@@ -85,37 +85,29 @@ export async function listQuestions(params: QuestionListParams): Promise<{
   return { questions: enriched, total, limit, offset };
 }
 
+import defaultCurriculum from "@/data/curriculum-cache.json";
+
+// In-memory lookup maps for topic and chapter names
+const topicNameMap = new Map<string, string>();
+const chapterNameMap = new Map<string, string>();
+
+for (const cls of defaultCurriculum as any[]) {
+  for (const sub of cls.subjects ?? []) {
+    for (const ch of sub.chapters ?? []) {
+      chapterNameMap.set(ch.id, ch.chapter_name);
+      for (const top of ch.topics ?? []) {
+        topicNameMap.set(top.id, top.topic_name);
+      }
+    }
+  }
+}
+
 /** Resolves topic/chapter names and MCQ options for a page of raw QuestionRows. */
 async function enrichPage(
   rows: QuestionRow[],
   lookups: Awaited<ReturnType<typeof getLookups>>
 ): Promise<EnrichedQuestion[]> {
   if (rows.length === 0) return [];
-
-  const topicIds = [...new Set(rows.map((r) => r.topic_id))];
-  const chapterIds = [...new Set(rows.map((r) => r.chapter_id))];
-
-  const [topicsRes, chaptersRes] = await Promise.all([
-    topicIds.length
-      ? supabase.from("topics").select("id,topic_name").in("id", topicIds)
-      : Promise.resolve({ data: [], error: null }),
-    chapterIds.length
-      ? supabase.from("chapters").select("id,chapter_name").in("id", chapterIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-  const topicMap = new Map(
-    ((topicsRes.data as { id: string; topic_name: string }[]) ?? []).map((t) => [
-      t.id,
-      t.topic_name,
-    ])
-  );
-  const chapterMap = new Map(
-    ((chaptersRes.data as { id: string; chapter_name: string }[]) ?? []).map((c) => [
-      c.id,
-      c.chapter_name,
-    ])
-  );
 
   const mcqIds = rows
     .filter((r) => lookups.byType[r.question_type_id] === "MCQ")
@@ -131,8 +123,8 @@ async function enrichPage(
     marks: r.marks,
     blooms_taxonomy: r.blooms_taxonomy ?? null,
     tags: r.tags ?? null,
-    topic_name: topicMap.get(r.topic_id) ?? null,
-    chapter_name: chapterMap.get(r.chapter_id) ?? null,
+    topic_name: topicNameMap.get(r.topic_id) ?? null,
+    chapter_name: chapterNameMap.get(r.chapter_id) ?? null,
     options: optByQ.get(r.id)
       ? {
           option_a: optByQ.get(r.id)!.option_a,

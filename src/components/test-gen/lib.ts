@@ -11,7 +11,7 @@ let statsClientCache: unknown = null;
 let statsClientCacheTime = 0;
 
 export async function fetchStats() {
-  if (statsClientCache && Date.now() - statsClientCacheTime < 10 * 60 * 1000) {
+  if (statsClientCache && Date.now() - statsClientCacheTime < 30 * 60 * 1000) {
     return statsClientCache as Promise<{
       counts: { classes: number; subjects: number; chapters: number; topics: number; questions: number };
       byType: { name: string; count: number }[];
@@ -19,11 +19,29 @@ export async function fetchStats() {
       byBloom: { name: string; count: number }[];
     }>;
   }
+  if (typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem("ef_stats_cache");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed.t < 30 * 60 * 1000) {
+          statsClientCache = parsed.d;
+          statsClientCacheTime = parsed.t;
+          return parsed.d;
+        }
+      }
+    } catch {}
+  }
   const res = await fetch("/api/stats");
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
   const data = await res.json();
   statsClientCache = data;
   statsClientCacheTime = Date.now();
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem("ef_stats_cache", JSON.stringify({ d: data, t: Date.now() }));
+    } catch {}
+  }
   return data as {
     counts: { classes: number; subjects: number; chapters: number; topics: number; questions: number };
     byType: { name: string; count: number }[];
@@ -54,8 +72,21 @@ let curriculumClientCache: { tree: CurriculumNode[] } | null = null;
 let curriculumClientCacheTime = 0;
 
 export async function fetchCurriculum(classId?: string) {
-  if (!classId && curriculumClientCache && Date.now() - curriculumClientCacheTime < 15 * 60 * 1000) {
+  if (!classId && curriculumClientCache && Date.now() - curriculumClientCacheTime < 60 * 60 * 1000) {
     return curriculumClientCache;
+  }
+  if (!classId && typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem("ef_curriculum_cache");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed.t < 60 * 60 * 1000) {
+          curriculumClientCache = parsed.d;
+          curriculumClientCacheTime = parsed.t;
+          return parsed.d;
+        }
+      }
+    } catch {}
   }
   const qs = classId ? `?classId=${classId}` : "";
   const res = await fetch(`/api/curriculum${qs}`);
@@ -64,6 +95,11 @@ export async function fetchCurriculum(classId?: string) {
   if (!classId) {
     curriculumClientCache = data;
     curriculumClientCacheTime = Date.now();
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("ef_curriculum_cache", JSON.stringify({ d: data, t: Date.now() }));
+      } catch {}
+    }
   }
   return data;
 }

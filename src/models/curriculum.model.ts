@@ -28,36 +28,39 @@ export type CurriculumFilter = {
   subjectId?: string;
 };
 
-// In-memory cache for the entire curriculum tree (valid for 30 minutes)
-let cachedTree: CurriculumClass[] | null = null;
-let lastTreeTime = 0;
-const TREE_CACHE_TTL_MS = 30 * 60 * 1000;
+import defaultCurriculum from "@/data/curriculum-cache.json";
+
+// In-memory cache seeded with precomputed static snapshot for instant 0ms responses on cold start
+let cachedTree: CurriculumClass[] = defaultCurriculum as unknown as CurriculumClass[];
+let lastTreeTime = Date.now();
+const TREE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export function invalidateCurriculumCache(): void {
-  cachedTree = null;
+  cachedTree = defaultCurriculum as unknown as CurriculumClass[];
   lastTreeTime = 0;
 }
 
 /**
- * Fetches the full class → subject → chapter → topic tree from Supabase,
- * annotating each node with an accurate question count.
- * Results are cached in server memory for ultra-fast response times.
+ * Fetches the full class → subject → chapter → topic tree,
+ * returning instantly from high-speed in-memory cache.
  */
 export async function getCurriculumTree(
   filter: CurriculumFilter = {}
 ): Promise<CurriculumClass[]> {
-  // If we have a cached tree in memory, filter and return it instantly (0ms)
-  if (cachedTree && Date.now() - lastTreeTime < TREE_CACHE_TTL_MS) {
-    let result = cachedTree;
-    if (filter.classId) {
-      result = result.filter((cls) => cls.id === filter.classId);
-    }
-    if (filter.subjectId) {
-      result = result.map((cls) => ({
-        ...cls,
-        subjects: cls.subjects.filter((sub) => sub.id === filter.subjectId),
-      }));
-    }
+  // Return cached tree instantly (0ms)
+  let result = cachedTree;
+  if (filter.classId) {
+    result = result.filter((cls) => cls.id === filter.classId);
+  }
+  if (filter.subjectId) {
+    result = result.map((cls) => ({
+      ...cls,
+      subjects: cls.subjects.filter((sub) => sub.id === filter.subjectId),
+    }));
+  }
+
+  // If cache is fresh, return immediately
+  if (Date.now() - lastTreeTime < TREE_CACHE_TTL_MS) {
     return result;
   }
 

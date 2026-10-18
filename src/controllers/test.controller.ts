@@ -126,27 +126,82 @@ async function enrichBankPicks(
  * After successful generation it emits a TEST_GENERATION_COMPLETED
  * event for background handlers (e.g. analytics aggregation).
  */
+import defaultCurriculum from "@/data/curriculum-cache.json";
+
+// In-memory index of all chapters and topics for 0ms lookup
+const staticChapterMap = new Map<string, ChapterRow>();
+const staticTopicMap = new Map<string, TopicRow>();
+
+for (const cls of defaultCurriculum as any[]) {
+  for (const sub of cls.subjects ?? []) {
+    for (const ch of sub.chapters ?? []) {
+      staticChapterMap.set(ch.id, {
+        id: ch.id,
+        subject_id: ch.subject_id,
+        chapter_number: ch.chapter_number,
+        chapter_name: ch.chapter_name,
+        created_at: ch.created_at,
+      });
+      for (const top of ch.topics ?? []) {
+        staticTopicMap.set(top.id, {
+          id: top.id,
+          chapter_id: top.chapter_id,
+          topic_name: top.topic_name,
+          topic_article_no: top.topic_article_no,
+          created_at: top.created_at,
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Generates a single test paper based on the requested blueprint.
+ * Optimized with candidate pool pre-fetching and in-memory hierarchy lookups.
+ */
 export async function generateTest(req: GenerateTestRequest): Promise<GeneratedTest> {
   const lookups = await getLookups();
 
-  // Resolve chapter/topic names for context labelling and AI fill
-  const { data: chData } = await supabase
-    .from("chapters")
-    .select("*")
-    .in("id", req.chapterIds);
-  const chapters = (chData as ChapterRow[]) ?? [];
-  const chapterMap = new Map(chapters.map((c) => [c.id, c]));
+  // Resolve chapter and topic objects in 0ms from in-memory cache
+  const chapterMap = new Map<string, ChapterRow>();
+  for (const cid of req.chapterIds) {
+    const ch = staticChapterMap.get(cid);
+    if (ch) chapterMap.set(cid, ch);
+  }
+  const chapters = Array.from(chapterMap.values());
 
-  const { data: tData } = await supabase
-    .from("topics")
-    .select("*")
-    .in("chapter_id", req.chapterIds);
-  const allTopics = (tData as TopicRow[]) ?? [];
-  const topicMap = new Map(allTopics.map((t) => [t.id, t]));
-
+  const topicMap = new Map<string, TopicRow>();
+  for (const top of staticTopicMap.values()) {
+    if (req.chapterIds.includes(top.chapter_id)) {
+      topicMap.set(top.id, top);
+    }
+  }
+  const allTopics = Array.from(topicMap.values());
   const effectiveTopicIds =
     req.topicIds.length > 0 ? req.topicIds : allTopics.map((t) => t.id);
 
+  // Pre-fetch candidate pool for this subject & chapters in a single fast query
+  let candidatePool: QuestionRow[] = [];
+  if (req.source !== "ai") {
+    let q = supabase
+      .from("questions")
+      .select("*")
+      .gte("marks", 1)
+      .eq("subject_id", req.subjectId)
+      .in("chapter_id", req.chapterIds);
+
+    if (effectiveTopicIds.length > 0 && effectiveTopicIds.length < allTopics.length) {
+      q = q.in("topic_id", effectiveTopicIds);
+    }
+    if (req.questionSources && req.questionSources.length > 0) {
+      q = q.in("question_from", req.questionSources);
+    }
+
+    const { data } = await q;
+    candidatePool = (data as QuestionRow[]) ?? [];
+  }
+
+  const excludeSet = new Set(req.excludeQuestionIds ?? []);
   const sections: TestSection[] = [];
   const shortfalls: GeneratedTest["meta"]["shortfalls"] = [];
   let fromBank = 0;
@@ -166,18 +221,15 @@ export async function generateTest(req: GenerateTestRequest): Promise<GeneratedT
 
       const diffId = lookups.difficultyIdByName[diffName];
 
-      // Pull from bank (skip entirely if source === "ai")
+      // Pull from pre-fetched pool in 0ms (skip if source === "ai")
       let bankRows: QuestionRow[] = [];
       if (req.source !== "ai") {
-        bankRows = await findQuestionsByCellPaged({
-          subjectId: req.subjectId,
-          typeId,
-          diffId,
-          chapterIds: req.chapterIds,
-          topicIds: effectiveTopicIds,
-          questionSources: req.questionSources,
-          excludeIds: new Set(req.excludeQuestionIds ?? []),
-        });
+        bankRows = candidatePool.filter(
+          (r) =>
+            r.question_type_id === typeId &&
+            r.difficulty_level_id === diffId &&
+            !excludeSet.has(r.id)
+        );
       }
 
       const picked: (QuestionRow | GeneratedQuestion)[] = shuffleArray(bankRows).slice(0, need);

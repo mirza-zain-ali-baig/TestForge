@@ -208,16 +208,31 @@ export async function findMcqOptions(questionIds: string[]): Promise<McqOptionRo
 
 // ─── Question Sources ─────────────────────────────────────────────────────────
 
+const sourcesCache = new Map<
+  string,
+  {
+    data: { sources: { name: string; count: number }[]; total: number; nullCount: number };
+    timestamp: number;
+  }
+>();
+const SOURCES_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 /**
  * Returns the distinct `question_from` values and their counts,
  * scoped to a given subject/chapter/topic filter.
- * Paginates past Supabase's 1 000-row cap for accuracy.
+ * Cached in memory for 30 minutes for instant response.
  */
 export async function findQuestionSources(opts: {
   subjectId: string;
   chapterIds?: string[];
   topicIds?: string[];
 }): Promise<{ sources: { name: string; count: number }[]; total: number; nullCount: number }> {
+  const cacheKey = `${opts.subjectId}:${opts.chapterIds?.slice().sort().join(",") ?? ""}:${opts.topicIds?.slice().sort().join(",") ?? ""}`;
+  const cached = sourcesCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < SOURCES_TTL_MS) {
+    return cached.data;
+  }
+
   const PAGE = 1_000;
   let offset = 0;
   const counts = new Map<string, number>();
@@ -255,5 +270,8 @@ export async function findQuestionSources(opts: {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  return { sources, total, nullCount };
+  const result = { sources, total, nullCount };
+  sourcesCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+  return result;
 }

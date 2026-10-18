@@ -1,0 +1,1086 @@
+[
+  {
+    "id": "b55e8588-e82e-4f0a-a769-72a1425749d4",
+    "class_name": "Class 10",
+    "created_at": "2026-08-05T21:02:05.189498",
+    "questionCount": 1232,
+    "subjects": [
+      {
+        "id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+        "class_id": "b55e8588-e82e-4f0a-a769-72a1425749d4",
+        "subject_name": "Computer Science",
+        "created_at": "2026-08-05T21:22:17.461841",
+        "questionCount": 1232,
+        "chapters": [
+          {
+            "id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 1,
+            "chapter_name": "Operating Systems: Structure and Services",
+            "created_at": "2026-08-06T01:07:28.375429",
+            "questionCount": 175,
+            "topics": [
+              {
+                "id": "6cce0421-87ee-4918-8f18-01f29c604d26",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Introduction to OS",
+                "topic_article_no": "1.1",
+                "created_at": "2026-08-06T01:07:29.00205",
+                "questionCount": 24
+              },
+              {
+                "id": "efaff2ba-6050-4bdb-a770-2765825fb179",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Architecture of OS",
+                "topic_article_no": "1.2",
+                "created_at": "2026-08-06T01:07:32.202404",
+                "questionCount": 33
+              },
+              {
+                "id": "fffc0a6a-bd3e-41ef-8ab4-a92d0c17ff55",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Process Management",
+                "topic_article_no": "1.3",
+                "created_at": "2026-08-06T01:07:34.084389",
+                "questionCount": 35
+              },
+              {
+                "id": "d99bf21c-4a82-4cbd-8466-3773fbd986c8",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Memory",
+                "topic_article_no": "1.4",
+                "created_at": "2026-08-06T01:07:48.760602",
+                "questionCount": 18
+              },
+              {
+                "id": "213c2e16-1cd0-4034-b2f6-be62bad32d1e",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Processes vs Threads",
+                "topic_article_no": "1.5",
+                "created_at": "2026-08-06T01:07:35.347991",
+                "questionCount": 11
+              },
+              {
+                "id": "8677c5cf-ceb9-47b6-9352-6797a5c48bf0",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "System Calls",
+                "topic_article_no": "1.6",
+                "created_at": "2026-08-06T01:07:36.778884",
+                "questionCount": 19
+              },
+              {
+                "id": "d0fdb352-e95a-4633-8346-2eb75077e299",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "File System",
+                "topic_article_no": "1.7",
+                "created_at": "2026-08-06T01:07:54.319157",
+                "questionCount": 18
+              },
+              {
+                "id": "599bc89b-a6f8-4425-9b4e-8567e0cb93f2",
+                "chapter_id": "ebcca7dc-81f2-47fe-af70-b1aba01c2aca",
+                "topic_name": "Types of OS",
+                "topic_article_no": "1.8",
+                "created_at": "2026-08-06T01:07:56.221146",
+                "questionCount": 17
+              }
+            ]
+          },
+          {
+            "id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 2,
+            "chapter_name": "System Recovery and Advanced Maintenance",
+            "created_at": "2026-08-06T01:07:58.124237",
+            "questionCount": 168,
+            "topics": [
+              {
+                "id": "33e25c27-d177-4d9d-9742-85e171028258",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "Post-Troubleshooting",
+                "topic_article_no": "2.1",
+                "created_at": "2026-08-06T01:07:58.763925",
+                "questionCount": 15
+              },
+              {
+                "id": "bdbc627a-30ec-4188-8cde-1778a022ff43",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "Diagnostic Tools",
+                "topic_article_no": "2.2",
+                "created_at": "2026-08-06T01:08:00.028717",
+                "questionCount": 29
+              },
+              {
+                "id": "0d15ab30-9613-4312-9ebf-bb70c78b9ff2",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "System Recovery Options",
+                "topic_article_no": "2.3",
+                "created_at": "2026-08-06T01:08:01.296554",
+                "questionCount": 41
+              },
+              {
+                "id": "5551027f-06d9-4f9c-9c30-8aaf659d7d3f",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "BIOS/UEFI",
+                "topic_article_no": "2.4",
+                "created_at": "2026-08-06T01:08:03.814486",
+                "questionCount": 29
+              },
+              {
+                "id": "073e40d1-9894-43cf-841b-d0e8f84dddd0",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "Data Recovery",
+                "topic_article_no": "2.5",
+                "created_at": "2026-08-06T01:08:05.063067",
+                "questionCount": 29
+              },
+              {
+                "id": "a4fc1f38-c18b-45a7-a69f-9c7d49268505",
+                "chapter_id": "5b1b70aa-c4a5-4130-ae4e-51e01d5eddde",
+                "topic_name": "Preventive Maintenance",
+                "topic_article_no": "2.6",
+                "created_at": "2026-08-06T01:08:06.940815",
+                "questionCount": 25
+              }
+            ]
+          },
+          {
+            "id": "a7a9381d-c7f9-4496-89f9-17b13b064013",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 3,
+            "chapter_name": "Introduction to Python Programming",
+            "created_at": "2026-08-06T01:08:20.551651",
+            "questionCount": 141,
+            "topics": [
+              {
+                "id": "3292e255-11cd-464e-ae7b-363423c1f75d",
+                "chapter_id": "a7a9381d-c7f9-4496-89f9-17b13b064013",
+                "topic_name": "Introduction to Python",
+                "topic_article_no": "3.1",
+                "created_at": "2026-08-06T01:08:21.23845",
+                "questionCount": 23
+              },
+              {
+                "id": "7e3c0581-ffc9-4dc2-ae08-9ecb78c9d891",
+                "chapter_id": "a7a9381d-c7f9-4496-89f9-17b13b064013",
+                "topic_name": "Basic Python Syntax",
+                "topic_article_no": "3.2",
+                "created_at": "2026-08-06T01:08:26.114778",
+                "questionCount": 66
+              },
+              {
+                "id": "8047e494-7b32-4b88-8f3f-a1021e0da6c3",
+                "chapter_id": "a7a9381d-c7f9-4496-89f9-17b13b064013",
+                "topic_name": "Operators and Expressions",
+                "topic_article_no": "3.3",
+                "created_at": "2026-08-06T01:08:24.526374",
+                "questionCount": 51
+              },
+              {
+                "id": "51956350-980b-435e-bd2e-ed432f0f4a4e",
+                "chapter_id": "a7a9381d-c7f9-4496-89f9-17b13b064013",
+                "topic_name": "Control Structures",
+                "topic_article_no": "4.1",
+                "created_at": "2026-08-06T01:09:07.70103",
+                "questionCount": 1
+              }
+            ]
+          },
+          {
+            "id": "e966dad0-5028-4a01-98ed-f5102bd27950",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 4,
+            "chapter_name": "Control Structures in Python",
+            "created_at": "2026-08-06T01:08:42.437264",
+            "questionCount": 136,
+            "topics": [
+              {
+                "id": "9a0cbcfb-3a03-4a6a-8b01-280167a65291",
+                "chapter_id": "e966dad0-5028-4a01-98ed-f5102bd27950",
+                "topic_name": "Control Structures",
+                "topic_article_no": "4.2",
+                "created_at": "2026-08-06T01:08:43.070405",
+                "questionCount": 136
+              }
+            ]
+          },
+          {
+            "id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 5,
+            "chapter_name": "Introduction to Data Science",
+            "created_at": "2026-08-06T01:09:37.203959",
+            "questionCount": 130,
+            "topics": [
+              {
+                "id": "10be96ab-f164-4763-b8a5-3adf514e891e",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Introduction to Data Science",
+                "topic_article_no": "5.1",
+                "created_at": "2026-08-06T01:13:04.985893",
+                "questionCount": 5
+              },
+              {
+                "id": "255ad399-9fb4-47bf-9131-ed5153cfd2cf",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Analyzing Data",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T01:10:09.82303",
+                "questionCount": 7
+              },
+              {
+                "id": "f20b0800-213c-40d8-990a-1e17e698616f",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Cleaning and Validating Data",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T01:09:42.342943",
+                "questionCount": 23
+              },
+              {
+                "id": "09568a67-ad39-4bf1-be24-41d6608ef98b",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Collecting Data",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T01:09:41.413994",
+                "questionCount": 29
+              },
+              {
+                "id": "fc147d16-e4dd-4b8c-af42-6b19f9a6c711",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Visualizing and Communicating Results",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T01:09:38.960484",
+                "questionCount": 15
+              },
+              {
+                "id": "2acdf0c7-d122-429c-9674-25a15daf9c8c",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Overview of the Data Science Life Cycle",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T01:09:37.913594",
+                "questionCount": 16
+              },
+              {
+                "id": "0696acbb-3d57-4f7b-b4f6-d09078b7cda2",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Tools for Visualization",
+                "topic_article_no": "5.3",
+                "created_at": "2026-08-06T01:09:43.316962",
+                "questionCount": 9
+              },
+              {
+                "id": "f4871d35-c196-40ce-a6d4-56e8bb8caec5",
+                "chapter_id": "1f568db3-5e18-4908-893c-8bdd1b5011a8",
+                "topic_name": "Databases and Storing Data",
+                "topic_article_no": "5.4",
+                "created_at": "2026-08-06T01:09:40.073675",
+                "questionCount": 26
+              }
+            ]
+          },
+          {
+            "id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 6,
+            "chapter_name": "Introduction to Artificial Intelligence (AI) and Machine Learning (ML)",
+            "created_at": "2026-08-06T01:09:44.319064",
+            "questionCount": 131,
+            "topics": [
+              {
+                "id": "81f68601-cb13-4f86-969b-a701861e1e8a",
+                "chapter_id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+                "topic_name": "AI, ML and Overview",
+                "topic_article_no": "6.1",
+                "created_at": "2026-08-06T01:09:47.361922",
+                "questionCount": 24
+              },
+              {
+                "id": "3289dc2c-3987-47da-b2f3-009693cb37de",
+                "chapter_id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+                "topic_name": "Machine Learning Types",
+                "topic_article_no": "6.2",
+                "created_at": "2026-08-06T01:09:45.099978",
+                "questionCount": 25
+              },
+              {
+                "id": "cb0d8f2e-f49a-4bf9-afd8-ff68e9a648ef",
+                "chapter_id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+                "topic_name": "Practical Applications of AI/ML",
+                "topic_article_no": "6.3",
+                "created_at": "2026-08-06T01:09:48.319665",
+                "questionCount": 32
+              },
+              {
+                "id": "b351c5c2-cfc4-461a-9bc4-aaf21edeb2bf",
+                "chapter_id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+                "topic_name": "Supervised and Unsupervised Algorithms",
+                "topic_article_no": "6.4",
+                "created_at": "2026-08-06T01:09:49.286391",
+                "questionCount": 24
+              },
+              {
+                "id": "b6879f63-7df5-4d23-80c5-46a251398a99",
+                "chapter_id": "5596d2b7-467c-4446-bbe3-bea4f4983c40",
+                "topic_name": "Evaluating Model Performance",
+                "topic_article_no": "6.5",
+                "created_at": "2026-08-06T01:09:46.065678",
+                "questionCount": 26
+              }
+            ]
+          },
+          {
+            "id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 7,
+            "chapter_name": "Applications of AI",
+            "created_at": "2026-08-06T01:09:50.256047",
+            "questionCount": 146,
+            "topics": [
+              {
+                "id": "544c11c7-6fbd-476f-85e5-02089c6cfd55",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Introduction to Artificial Intelligence (AI)",
+                "topic_article_no": "7.1",
+                "created_at": "2026-08-06T01:13:19.964774",
+                "questionCount": 17
+              },
+              {
+                "id": "de5516ff-d1ec-4f86-a4b5-42d038eb9595",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Data and AI",
+                "topic_article_no": "7.2",
+                "created_at": "2026-08-06T01:09:50.899028",
+                "questionCount": 29
+              },
+              {
+                "id": "853cbe78-2018-4771-a7ca-115a9b9e3b23",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Real-World Applications of AI",
+                "topic_article_no": "7.3",
+                "created_at": "2026-08-06T01:09:51.931194",
+                "questionCount": 43
+              },
+              {
+                "id": "228ae74c-1e2f-4ccf-aaf5-82c9fd8313c5",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Practical Applications of AI/ML",
+                "topic_article_no": "7.3",
+                "created_at": "2026-08-06T01:10:12.771209",
+                "questionCount": 1
+              },
+              {
+                "id": "bf1ab41d-937d-44bd-96cd-5c9bf688630f",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Benefits and Challenges of AI Applications",
+                "topic_article_no": "7.4",
+                "created_at": "2026-08-06T01:10:03.615988",
+                "questionCount": 11
+              },
+              {
+                "id": "bd827ee2-74e1-4c9a-b0f6-00a385c7b440",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Ethics, Fairness, and Social Impact of AI",
+                "topic_article_no": "7.5",
+                "created_at": "2026-08-06T01:09:52.927873",
+                "questionCount": 30
+              },
+              {
+                "id": "a55438ee-1a9b-436e-8e7c-d75e29044f97",
+                "chapter_id": "a349e4cc-a9b2-433c-8f78-6ec4fb579577",
+                "topic_name": "Responsibility of AI Designers",
+                "topic_article_no": "7.6",
+                "created_at": "2026-08-06T01:09:54.494538",
+                "questionCount": 15
+              }
+            ]
+          },
+          {
+            "id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+            "subject_id": "197cbe8d-0432-48e7-8afb-b9e33a48e021",
+            "chapter_number": 8,
+            "chapter_name": "Digital Entrepreneurship",
+            "created_at": "2026-08-06T01:09:55.438046",
+            "questionCount": 205,
+            "topics": [
+              {
+                "id": "aeea9398-dccc-4da1-a988-0962e928bd6d",
+                "chapter_id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+                "topic_name": "From Basics to Advanced Entrepreneurship",
+                "topic_article_no": "8.1",
+                "created_at": "2026-08-06T01:15:14.5157",
+                "questionCount": 1
+              },
+              {
+                "id": "63f0b965-7c30-4e4e-8365-265f6f496280",
+                "chapter_id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+                "topic_name": "Problem-Solving & Adaptability",
+                "topic_article_no": "8.2",
+                "created_at": "2026-08-06T01:09:56.064973",
+                "questionCount": 35
+              },
+              {
+                "id": "2b327db3-5faf-494a-bf77-9a70da622e20",
+                "chapter_id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+                "topic_name": "Ethical Business Practices & Digital Ethics",
+                "topic_article_no": "8.3",
+                "created_at": "2026-08-06T01:09:57.015905",
+                "questionCount": 52
+              },
+              {
+                "id": "d8b73eec-1073-4a32-96bf-8e2198a0bc3c",
+                "chapter_id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+                "topic_name": "Legal Framework & Compliance",
+                "topic_article_no": "8.4",
+                "created_at": "2026-08-06T01:10:00.040387",
+                "questionCount": 68
+              },
+              {
+                "id": "2f847cd0-8e9f-437f-b18a-78ff72e9dec4",
+                "chapter_id": "5d50aeee-6afa-4e2e-bea1-7200050b1fc8",
+                "topic_name": "Strategic Marketing & Branding",
+                "topic_article_no": "8.5",
+                "created_at": "2026-08-06T01:09:58.008006",
+                "questionCount": 49
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "4c4ee465-1de1-4b22-b46d-889fffab62f8",
+    "class_name": "Class 9",
+    "created_at": "2026-08-05T21:02:23.278176",
+    "questionCount": 891,
+    "subjects": [
+      {
+        "id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+        "class_id": "4c4ee465-1de1-4b22-b46d-889fffab62f8",
+        "subject_name": "Computer Science",
+        "created_at": "2026-08-06T00:54:21.833096",
+        "questionCount": 891,
+        "chapters": [
+          {
+            "id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 1,
+            "chapter_name": "Introduction to Computational Systems",
+            "created_at": "2026-08-06T17:22:47.282922",
+            "questionCount": 150,
+            "topics": [
+              {
+                "id": "3c7c2a6a-a241-4303-907b-83ff9a90dbfb",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Theory of Systems",
+                "topic_article_no": "1.1",
+                "created_at": "2026-08-06T17:22:48.150113",
+                "questionCount": 9
+              },
+              {
+                "id": "0af9a9d3-fb86-4684-957e-dbd9e6b44383",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Basic Concepts of Systems",
+                "topic_article_no": "1.1",
+                "created_at": "2026-08-06T17:22:50.820077",
+                "questionCount": 7
+              },
+              {
+                "id": "e3e9074b-47a1-40b1-b5c8-d7546fc874a3",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Software",
+                "topic_article_no": "1.2",
+                "created_at": "2026-08-06T17:22:54.499366",
+                "questionCount": 12
+              },
+              {
+                "id": "3243a9ff-d419-483b-9c7f-3933904a0601",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "The Architecture of von Neumann Computers",
+                "topic_article_no": "1.3",
+                "created_at": "2026-08-06T17:23:00.124678",
+                "questionCount": 14
+              },
+              {
+                "id": "bc18cc8d-d703-4dce-87d1-2ea353311085",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Working of Von Neumann",
+                "topic_article_no": "1.3",
+                "created_at": "2026-08-06T17:23:06.448045",
+                "questionCount": 9
+              },
+              {
+                "id": "428c8dfa-475e-4160-9a44-e0035e547bbe",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Number Systems",
+                "topic_article_no": "1.4",
+                "created_at": "2026-08-06T17:23:09.593547",
+                "questionCount": 29
+              },
+              {
+                "id": "fa5ff5fb-2ab7-487e-a2ca-2d30a5c5e58e",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Data Representation",
+                "topic_article_no": "1.5",
+                "created_at": "2026-08-06T17:23:18.611473",
+                "questionCount": 20
+              },
+              {
+                "id": "cb3585a2-24a8-4e5e-8be4-37372b716655",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Binary Arithmetic Operations",
+                "topic_article_no": "1.6",
+                "created_at": "2026-08-06T17:23:27.190872",
+                "questionCount": 19
+              },
+              {
+                "id": "3c1bd5c2-5d79-45b0-a986-08ef2a61c948",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "How Computers Store Files",
+                "topic_article_no": "1.7",
+                "created_at": "2026-08-06T17:23:40.212868",
+                "questionCount": 9
+              },
+              {
+                "id": "ee7d1e1a-162c-49c7-87e4-7e10eb020577",
+                "chapter_id": "bed7bacf-e58b-40de-8b72-b7be46ba97b2",
+                "topic_name": "Common Text Encoding Schemes",
+                "topic_article_no": "1.7",
+                "created_at": "2026-08-06T17:23:32.984524",
+                "questionCount": 22
+              }
+            ]
+          },
+          {
+            "id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 2,
+            "chapter_name": "System Design and Troubleshooting",
+            "created_at": "2026-08-06T17:23:43.62622",
+            "questionCount": 106,
+            "topics": [
+              {
+                "id": "36a07f55-1932-4b3f-9e44-ca1353d39a86",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Basic Concept of Digital Systems",
+                "topic_article_no": "2.1",
+                "created_at": "2026-08-06T17:23:44.398555",
+                "questionCount": 11
+              },
+              {
+                "id": "09a51c9f-9997-4b34-8795-5d5bf5d3ffb2",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Boolean Algebra and Logic Gates",
+                "topic_article_no": "2.2",
+                "created_at": "2026-08-06T17:23:50.44182",
+                "questionCount": 34
+              },
+              {
+                "id": "337508ac-dedb-4ed9-991d-cd46a69b24a6",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Simplification of Boolean Functions",
+                "topic_article_no": "2.3",
+                "created_at": "2026-08-06T17:24:00.703858",
+                "questionCount": 14
+              },
+              {
+                "id": "64d22ef1-ca9d-4ce5-afef-ebfa50d3a80a",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Creating Logic Diagrams",
+                "topic_article_no": "2.4",
+                "created_at": "2026-08-06T17:24:08.063617",
+                "questionCount": 5
+              },
+              {
+                "id": "b33967af-c90b-4744-a69e-12101273ba35",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Basic Hardware-Related Issues",
+                "topic_article_no": "2.5",
+                "created_at": "2026-08-06T17:25:20.654672",
+                "questionCount": 3
+              },
+              {
+                "id": "5e166757-6dd9-4252-bc61-101eb9a9e255",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Hardware Diagnosis and Maintenance",
+                "topic_article_no": "2.5",
+                "created_at": "2026-08-06T17:25:23.267739",
+                "questionCount": 15
+              },
+              {
+                "id": "51fb30e0-6c5b-4f52-8422-de3c05f108c5",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "Importance of Troubleshooting in Computing Systems",
+                "topic_article_no": "2.5",
+                "created_at": "2026-08-06T17:25:17.682604",
+                "questionCount": 5
+              },
+              {
+                "id": "44fc57e5-30bd-4f78-866c-2ad0da0ff6eb",
+                "chapter_id": "bd950db7-9f8a-4717-9f80-f5ddbf446916",
+                "topic_name": "System Troubleshooting",
+                "topic_article_no": "2.5",
+                "created_at": "2026-08-06T17:24:09.668988",
+                "questionCount": 19
+              }
+            ]
+          },
+          {
+            "id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 3,
+            "chapter_name": "Introduction to Computer Networks",
+            "created_at": "2026-08-06T17:32:34.22566",
+            "questionCount": 101,
+            "topics": [
+              {
+                "id": "b1fe47e2-586b-48b8-8eee-a9c268a2e532",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Network as a System",
+                "topic_article_no": "3.1",
+                "created_at": "2026-08-06T17:32:35.109514",
+                "questionCount": 10
+              },
+              {
+                "id": "f4a0e343-aaba-4c15-97e9-ea60bda037cf",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Types of Networks",
+                "topic_article_no": "3.11",
+                "created_at": "2026-08-06T17:33:25.931465",
+                "questionCount": 13
+              },
+              {
+                "id": "392011e7-3c92-4ae9-8f2f-5b5b0f3468f1",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Real-World Applications of Computer Networks",
+                "topic_article_no": "3.12",
+                "created_at": "2026-08-06T17:33:35.786969",
+                "questionCount": 1
+              },
+              {
+                "id": "c49f2188-a343-4b42-b5d6-7c6e4f761690",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Fundamental Concepts in Data Communication",
+                "topic_article_no": "3.2",
+                "created_at": "2026-08-06T17:32:39.553626",
+                "questionCount": 3
+              },
+              {
+                "id": "7d4679e5-8587-4d31-85a7-bc6a768b4ebe",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Networking Devices",
+                "topic_article_no": "3.3",
+                "created_at": "2026-08-06T17:32:42.495555",
+                "questionCount": 14
+              },
+              {
+                "id": "fb4af510-5f98-4db7-bbe0-42938549c548",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Network Topologies",
+                "topic_article_no": "3.4",
+                "created_at": "2026-08-06T17:32:49.966434",
+                "questionCount": 13
+              },
+              {
+                "id": "c9bddd42-0a69-491d-848a-e36e3f7bea87",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Transmission Modes",
+                "topic_article_no": "3.5",
+                "created_at": "2026-08-06T17:32:57.201358",
+                "questionCount": 10
+              },
+              {
+                "id": "adfec485-0af8-4b3f-a15a-9d963896537d",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "The OSI Networking Model",
+                "topic_article_no": "3.6",
+                "created_at": "2026-08-06T17:33:02.925903",
+                "questionCount": 15
+              },
+              {
+                "id": "f294aa0d-6510-4c4b-b4eb-c242b98cf86c",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "IPv4 and IPv6",
+                "topic_article_no": "3.7",
+                "created_at": "2026-08-06T17:33:09.465116",
+                "questionCount": 8
+              },
+              {
+                "id": "292aa496-4e0d-44e2-9288-e27a06090198",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Network Protocols",
+                "topic_article_no": "3.8",
+                "created_at": "2026-08-06T17:33:16.070835",
+                "questionCount": 10
+              },
+              {
+                "id": "5c792833-5713-4cd4-9df5-732e63a870a4",
+                "chapter_id": "f8015bd1-b6a4-49df-b670-1e4ca6af6919",
+                "topic_name": "Network Security",
+                "topic_article_no": "3.9",
+                "created_at": "2026-08-06T17:33:22.41969",
+                "questionCount": 4
+              }
+            ]
+          },
+          {
+            "id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 4,
+            "chapter_name": "Computational Thinking",
+            "created_at": "2026-08-06T17:33:37.36572",
+            "questionCount": 87,
+            "topics": [
+              {
+                "id": "ed0fc1d0-d43d-4172-b8c2-0336fdba3951",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Computational Thinking",
+                "topic_article_no": "4.1",
+                "created_at": "2026-08-06T17:33:38.380101",
+                "questionCount": 27
+              },
+              {
+                "id": "c4f7cab9-67a9-4df0-b79d-37a4a797597f",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Principles of Computational Thinking",
+                "topic_article_no": "4.2",
+                "created_at": "2026-08-06T17:33:45.925096",
+                "questionCount": 8
+              },
+              {
+                "id": "70dc8e3f-acd1-413e-8416-13691b1429da",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Algorithm Design Methods",
+                "topic_article_no": "4.3",
+                "created_at": "2026-08-06T17:33:47.511006",
+                "questionCount": 20
+              },
+              {
+                "id": "14b275b3-dd41-486f-8497-a887a9387981",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Differentiating Flowcharts and Pseudocode",
+                "topic_article_no": "4.3",
+                "created_at": "2026-08-06T17:35:13.29428",
+                "questionCount": 3
+              },
+              {
+                "id": "f39f1be3-adbe-4202-8b69-e73b0ab3cfc9",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Evaluation Techniques for an Algorithm",
+                "topic_article_no": "4.4",
+                "created_at": "2026-08-06T17:35:16.797368",
+                "questionCount": 8
+              },
+              {
+                "id": "4077ef12-2f66-43f6-8f6d-cf8702997fc7",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Simulation",
+                "topic_article_no": "4.5",
+                "created_at": "2026-08-06T17:35:24.983802",
+                "questionCount": 5
+              },
+              {
+                "id": "d30d0e5e-a55a-47c8-9357-740ef0b6bf08",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Dry Run",
+                "topic_article_no": "4.5",
+                "created_at": "2026-08-06T17:35:20.995516",
+                "questionCount": 6
+              },
+              {
+                "id": "465cf689-4e09-48b7-95da-d423dafcbdee",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Introduction to LARP",
+                "topic_article_no": "4.6",
+                "created_at": "2026-08-06T17:35:31.348173",
+                "questionCount": 4
+              },
+              {
+                "id": "6ca21734-b459-4f4d-a528-cf2a1a274b59",
+                "chapter_id": "1613abc1-3003-4ff3-a26f-5f14a040d6ab",
+                "topic_name": "Error Identification and Debugging",
+                "topic_article_no": "4.7",
+                "created_at": "2026-08-06T17:35:34.542268",
+                "questionCount": 6
+              }
+            ]
+          },
+          {
+            "id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 5,
+            "chapter_name": "Web Development with HTML, CSS and JavaScript",
+            "created_at": "2026-08-06T17:35:40.989963",
+            "questionCount": 53,
+            "topics": [
+              {
+                "id": "2ff673f5-b311-4945-bf23-f345f0945503",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Web Development",
+                "topic_article_no": "5.1",
+                "created_at": "2026-08-06T17:35:42.626608",
+                "questionCount": 5
+              },
+              {
+                "id": "64573549-fbfd-4f75-bd20-43d147776f20",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Basic Components of Web Development",
+                "topic_article_no": "5.2",
+                "created_at": "2026-08-06T17:35:46.405917",
+                "questionCount": 6
+              },
+              {
+                "id": "97c46d0d-9a22-4a14-9250-c0a9bde9d0c2",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Getting Started with HTML",
+                "topic_article_no": "5.3",
+                "created_at": "2026-08-06T17:35:49.26693",
+                "questionCount": 3
+              },
+              {
+                "id": "6dcee274-5205-43c0-9071-51096f7d01b5",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "HTML Basic Structure",
+                "topic_article_no": "5.4",
+                "created_at": "2026-08-06T17:35:52.87373",
+                "questionCount": 6
+              },
+              {
+                "id": "c2c91b26-5c10-4e04-af5c-c75e534e514b",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Creating Content with HTML",
+                "topic_article_no": "5.5",
+                "created_at": "2026-08-06T17:35:57.336366",
+                "questionCount": 13
+              },
+              {
+                "id": "d29d9abc-fd8d-4550-8530-af56107cdf66",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Styling with CSS",
+                "topic_article_no": "5.6",
+                "created_at": "2026-08-06T17:36:02.999123",
+                "questionCount": 11
+              },
+              {
+                "id": "80a92467-0810-486e-9855-3d4860ab8a75",
+                "chapter_id": "72208f9d-2856-4e7d-b650-511e1137c5bd",
+                "topic_name": "Introduction to JavaScript",
+                "topic_article_no": "5.7",
+                "created_at": "2026-08-06T17:36:09.421107",
+                "questionCount": 9
+              }
+            ]
+          },
+          {
+            "id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 6,
+            "chapter_name": "Data Science and Data Gathering",
+            "created_at": "2026-08-06T17:36:17.137457",
+            "questionCount": 114,
+            "topics": [
+              {
+                "id": "f35b5ebc-d33d-4c7a-b397-ea303507ac2c",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Data",
+                "topic_article_no": "6.1",
+                "created_at": "2026-08-06T17:36:18.338981",
+                "questionCount": 4
+              },
+              {
+                "id": "f0547c3d-8585-40e2-9efa-f646f924febd",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Data Types",
+                "topic_article_no": "6.2",
+                "created_at": "2026-08-06T17:36:20.838935",
+                "questionCount": 18
+              },
+              {
+                "id": "ae2f4fd3-4653-4368-9214-c6da15403b04",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Methods and Tools of Data Collection",
+                "topic_article_no": "6.3",
+                "created_at": "2026-08-06T17:36:27.978343",
+                "questionCount": 18
+              },
+              {
+                "id": "53c2a205-099a-47ee-b718-e0b9758f69d3",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Organising and Analysing Data",
+                "topic_article_no": "6.3",
+                "created_at": "2026-08-06T17:36:25.308793",
+                "questionCount": 6
+              },
+              {
+                "id": "50404738-c7de-4898-9c27-f9a6781c2a98",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Data Visualization",
+                "topic_article_no": "6.5",
+                "created_at": "2026-08-06T17:38:32.41607",
+                "questionCount": 10
+              },
+              {
+                "id": "caddb6ef-9730-43bd-989d-5509d624de47",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Data Pre-Processing and Analysis",
+                "topic_article_no": "6.6",
+                "created_at": "2026-08-06T17:38:37.197039",
+                "questionCount": 23
+              },
+              {
+                "id": "8f0b6bee-f2e8-4247-b693-632e0ba1c2fc",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Cloud Storage and Data Backups",
+                "topic_article_no": "6.7",
+                "created_at": "2026-08-06T17:38:45.286581",
+                "questionCount": 16
+              },
+              {
+                "id": "e5482bfc-77e6-42fe-af38-edcde3e7cc05",
+                "chapter_id": "98beac8e-781f-4531-8270-ede2147d5f2a",
+                "topic_name": "Introduction to Data Science",
+                "topic_article_no": "6.8",
+                "created_at": "2026-08-06T17:38:51.238906",
+                "questionCount": 19
+              }
+            ]
+          },
+          {
+            "id": "64670bee-b6b9-48eb-8024-fd2a0090a8de",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 7,
+            "chapter_name": "Emerging Technologies in Computer Science",
+            "created_at": "2026-08-06T17:38:59.438546",
+            "questionCount": 72,
+            "topics": [
+              {
+                "id": "5af09e92-35cb-4703-94e2-1ba00acd129e",
+                "chapter_id": "64670bee-b6b9-48eb-8024-fd2a0090a8de",
+                "topic_name": "Introduction to Artificial Intelligence (AI)",
+                "topic_article_no": "7.1",
+                "created_at": "2026-08-06T17:39:01.025731",
+                "questionCount": 29
+              },
+              {
+                "id": "b846ea50-7580-42af-beac-e3a3bd53e4f5",
+                "chapter_id": "64670bee-b6b9-48eb-8024-fd2a0090a8de",
+                "topic_name": "AI Algorithms and Techniques",
+                "topic_article_no": "7.2",
+                "created_at": "2026-08-06T17:39:11.294281",
+                "questionCount": 11
+              },
+              {
+                "id": "edabd76e-14b0-4993-9ea8-55f04b1d185d",
+                "chapter_id": "64670bee-b6b9-48eb-8024-fd2a0090a8de",
+                "topic_name": "Introduction to Internet of Things (IoT)",
+                "topic_article_no": "7.3",
+                "created_at": "2026-08-06T17:39:17.480948",
+                "questionCount": 32
+              }
+            ]
+          },
+          {
+            "id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 8,
+            "chapter_name": "Ethical, Social, and Legal Concerns in Computer Usage",
+            "created_at": "2026-08-06T17:41:09.087014",
+            "questionCount": 51,
+            "topics": [
+              {
+                "id": "272f6f47-621d-43f6-ad11-11fe9078853e",
+                "chapter_id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+                "topic_name": "Secure Computer Usage",
+                "topic_article_no": "8.1",
+                "created_at": "2026-08-06T17:41:09.888911",
+                "questionCount": 4
+              },
+              {
+                "id": "8eda4a24-36f8-4fb0-b4cf-a21a9635e03b",
+                "chapter_id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+                "topic_name": "Responsible Computer Usage",
+                "topic_article_no": "8.2",
+                "created_at": "2026-08-06T17:41:12.210134",
+                "questionCount": 19
+              },
+              {
+                "id": "0a6cd9de-da76-42c8-a6f8-5543a69bf816",
+                "chapter_id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+                "topic_name": "Best Practices in Online Behavior",
+                "topic_article_no": "8.3",
+                "created_at": "2026-08-06T17:41:20.636077",
+                "questionCount": 8
+              },
+              {
+                "id": "dca576f5-3ee8-4aa1-a021-e4eab7a9dd97",
+                "chapter_id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+                "topic_name": "Intellectual Property Rights",
+                "topic_article_no": "8.4",
+                "created_at": "2026-08-06T17:41:25.85885",
+                "questionCount": 11
+              },
+              {
+                "id": "64c2766f-595c-4270-b6e9-bd48e11b3c5f",
+                "chapter_id": "cc7af009-754b-4c4c-9a9b-b5c0076fcb34",
+                "topic_name": "Social Networking Safety and Online Interactions",
+                "topic_article_no": "8.4",
+                "created_at": "2026-08-06T17:41:35.272065",
+                "questionCount": 9
+              }
+            ]
+          },
+          {
+            "id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+            "subject_id": "4bf6537a-7992-4335-b3b2-4bd4c87b3bb4",
+            "chapter_number": 9,
+            "chapter_name": "Entrepreneurship in Digital Age",
+            "created_at": "2026-08-06T17:41:40.68955",
+            "questionCount": 157,
+            "topics": [
+              {
+                "id": "57094a74-a7d5-47dd-ab0e-6978caa14a25",
+                "chapter_id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+                "topic_name": "Entrepreneurship",
+                "topic_article_no": "9.1",
+                "created_at": "2026-08-06T17:41:42.231128",
+                "questionCount": 76
+              },
+              {
+                "id": "a6690a9f-63fd-4ead-ac96-0ead7d24da38",
+                "chapter_id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+                "topic_name": "Entrepreneurship in the Digital Landscape",
+                "topic_article_no": "9.2",
+                "created_at": "2026-08-06T17:41:50.7433",
+                "questionCount": 19
+              },
+              {
+                "id": "c0f68c92-55b3-4ac4-a5c1-95fc354fe3e9",
+                "chapter_id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+                "topic_name": "Business Idea Generation",
+                "topic_article_no": "9.3",
+                "created_at": "2026-08-06T17:42:02.735828",
+                "questionCount": 9
+              },
+              {
+                "id": "09b3d17f-7c81-4545-975b-eb9046c5c187",
+                "chapter_id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+                "topic_name": "Developing Business Plans",
+                "topic_article_no": "9.4",
+                "created_at": "2026-08-06T17:42:08.399079",
+                "questionCount": 11
+              },
+              {
+                "id": "98de2920-961a-4da0-bc02-2842e8e0b84b",
+                "chapter_id": "a3cbd635-6cf7-4f70-8c3d-4adb5587412c",
+                "topic_name": "Ethical and Sustainable Entrepreneurship",
+                "topic_article_no": "9.5",
+                "created_at": "2026-08-06T17:42:14.904162",
+                "questionCount": 42
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

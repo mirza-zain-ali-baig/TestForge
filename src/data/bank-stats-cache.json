@@ -1,0 +1,63 @@
+{
+  "counts": {
+    "classes": 2,
+    "subjects": 2,
+    "chapters": 17,
+    "topics": 110,
+    "questions": 2123
+  },
+  "byType": [
+    {
+      "name": "MCQ",
+      "count": 1000
+    },
+    {
+      "name": "Short",
+      "count": 779
+    },
+    {
+      "name": "Long",
+      "count": 344
+    }
+  ],
+  "byDifficulty": [
+    {
+      "name": "Easy",
+      "count": 332
+    },
+    {
+      "name": "Medium",
+      "count": 867
+    },
+    {
+      "name": "Hard",
+      "count": 924
+    }
+  ],
+  "byBloom": [
+    {
+      "name": "Understand",
+      "count": 357
+    },
+    {
+      "name": "Remember",
+      "count": 340
+    },
+    {
+      "name": "Apply",
+      "count": 126
+    },
+    {
+      "name": "Analyze",
+      "count": 116
+    },
+    {
+      "name": "Evaluate",
+      "count": 42
+    },
+    {
+      "name": "Create",
+      "count": 19
+    }
+  ]
+}
