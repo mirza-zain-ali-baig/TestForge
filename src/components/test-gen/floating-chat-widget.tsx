@@ -480,7 +480,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
                 e.preventDefault();
                 handleSend();
               }}
-              className="flex items-end gap-1.5 rounded-xl border border-border hover:border-emerald-500/80 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 bg-background p-1.5 transition-colors duration-200"
+              className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 shadow-none outline-none focus-within:ring-0 focus-within:border-border"
             >
               <Textarea
                 ref={textareaRef}
@@ -498,7 +498,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
                 }}
                 placeholder="Ask ExamForge AI... (Enter to send)"
                 rows={1}
-                className="min-h-[34px] max-h-[100px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs focus-visible:ring-0 shadow-none"
+                className="min-h-[34px] max-h-[100px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs focus-visible:ring-0 shadow-none outline-none focus:outline-none focus:ring-0"
               />
               {isGenerating ? (
                 <Button

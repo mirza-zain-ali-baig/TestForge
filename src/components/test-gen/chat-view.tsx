@@ -908,7 +908,7 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border hover:border-emerald-500/80 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 bg-background p-2 shadow-xs transition-colors duration-200"
+            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs outline-none focus-within:outline-none focus-within:ring-0 focus-within:border-border"
           >
             <Textarea
               ref={textareaRef}
@@ -926,7 +926,7 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
               }}
               placeholder="Ask ExamForge AI... (Enter to send, Shift+Enter for new line)"
               rows={1}
-              className="min-h-[38px] max-h-[140px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs sm:text-sm focus-visible:ring-0 shadow-none"
+              className="min-h-[38px] max-h-[140px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs sm:text-sm focus-visible:ring-0 shadow-none outline-none focus:outline-none focus:ring-0"
             />
 
             {isGenerating ? (

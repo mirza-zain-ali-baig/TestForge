@@ -19,14 +19,18 @@ export const metadata: Metadata = {
   title: "ExamForge — AI Test Generator for Classes",
   description: "Generate exam papers for classes from a Supabase question bank with AI-powered question generation, blueprint configuration, preview, print and export.",
   keywords: ["test generator", "exam generator", "question bank", "AI questions", "education", "Supabase"],
-  authors: [{ name: "Z.ai" }],
+  authors: [{ name: "ExamForge" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
   openGraph: {
     title: "ExamForge — AI Test Generator",
     description: "Generate exam papers in seconds from a curated question bank with AI assistance.",
-    url: "https://chat.z.ai",
     siteName: "ExamForge",
     type: "website",
   },
