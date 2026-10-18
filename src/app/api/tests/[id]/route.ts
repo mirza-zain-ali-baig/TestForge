@@ -40,8 +40,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ── RBAC Authorization: only educator or admin can delete saved tests ──
-    await authorizeRequest(request, ["educator", "admin"], "delete test papers");
+    // ── Authorization: all authenticated users can delete saved tests ──
+    await authorizeRequest(request, ["student", "educator", "admin"], "delete test papers");
 
     const { id } = await params;
     await deleteTest(id);

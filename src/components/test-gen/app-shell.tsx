@@ -54,7 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogIn, LogOut, User as UserIcon, Shield, Bot } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, Bot } from "lucide-react";
 import type { GeneratedTest } from "@/lib/types";
 
 type View = "dashboard" | "generate" | "bank" | "chat" | "saved" | "analytics" | "history" | "print";
@@ -436,50 +436,14 @@ export function TestGeneratorApp() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64" align="end">
                   <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold leading-none truncate max-w-[140px]">
-                          {user.name || "Signed-in User"}
-                        </p>
-                        <Badge
-                          variant={user.role === "educator" || user.role === "admin" ? "default" : "secondary"}
-                          className="text-[10px] capitalize px-1.5 py-0"
-                        >
-                          {user.role || "student"}
-                        </Badge>
-                      </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold leading-none truncate">
+                        {user.name || "Signed-in User"}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {user.role === "student" && (
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        try {
-                          const res = await fetch("/api/auth/me", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ role: "educator" }),
-                          });
-                          if (res.ok) {
-                            const updated = await res.json();
-                            setUser(updated.user || { ...user, role: "educator" });
-                            toast.success("Upgraded to Educator role! You can now save tests.");
-                          } else {
-                            setUser({ ...user, role: "educator" });
-                            toast.success("Account role set to Educator.");
-                          }
-                        } catch {
-                          setUser({ ...user, role: "educator" });
-                          toast.success("Account role set to Educator.");
-                        }
-                      }}
-                      className="cursor-pointer text-emerald-600 dark:text-emerald-400 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
-                    >
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Upgrade to Educator</span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={() => navigate("saved")} className="cursor-pointer">
                     <FolderOpen className="mr-2 h-4 w-4" />
                     <span>Saved Papers</span>

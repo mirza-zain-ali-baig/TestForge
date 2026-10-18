@@ -18,8 +18,8 @@ bootstrap();
 
 export async function POST(request: Request) {
   try {
-    // ── RBAC Authorization: only educator or admin can generate multi-variant exam sets ──
-    await authorizeRequest(request, ["educator", "admin"], "generate batch exam variants");
+    // ── Authorization: all authenticated users can generate batch exam variants ──
+    await authorizeRequest(request, ["student", "educator", "admin"], "generate batch exam variants");
 
     const body = (await request.json()) as {
       request: GenerateTestRequest;

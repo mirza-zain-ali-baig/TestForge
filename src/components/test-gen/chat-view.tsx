@@ -592,20 +592,8 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
           sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full w-0 md:w-0"
         } absolute md:relative inset-y-0 left-0 z-30 flex flex-col shrink-0 border-r border-border bg-card md:bg-muted/30 transition-all duration-200 ease-in-out overflow-hidden`}
       >
-        {/* New Chat & Move Backward Options */}
-        <div className="p-3 border-b border-border/60 flex flex-col gap-2">
-          {onBack && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onBack}
-              className="w-full justify-start gap-2 border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted text-xs h-8 shadow-xs font-medium"
-              title="Move backward to previous view"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back to Dashboard</span>
-            </Button>
-          )}
+        {/* New Chat Option */}
+        <div className="p-3 border-b border-border/60">
           <Button
             onClick={handleNewChat}
             className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs h-9 shadow-xs"
@@ -684,14 +672,14 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {onBack && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={onBack}
-                className="h-8 gap-1.5 px-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted border border-border/70 rounded-lg mr-1 shrink-0 shadow-2xs"
-                title="Move backward"
+                className="h-8 gap-1.5 px-2.5 sm:px-3 text-xs font-semibold text-foreground hover:bg-muted border border-border/80 rounded-lg shrink-0 shadow-2xs cursor-pointer"
+                title="Move to Dashboard"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="font-medium">Back</span>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Move to Dashboard</span>
               </Button>
             )}
             <Button
@@ -920,7 +908,7 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs focus-within:border-emerald-500/80 transition-colors"
+            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border hover:border-emerald-500/80 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 bg-background p-2 shadow-xs transition-colors duration-200"
           >
             <Textarea
               ref={textareaRef}

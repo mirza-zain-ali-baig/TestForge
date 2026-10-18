@@ -361,43 +361,6 @@ export function AuthDialog({
                 </div>
               </div>
 
-              {/* Role Selection */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Account Role</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole("educator")}
-                    className={[
-                      "flex flex-col items-start p-2.5 rounded-lg border text-left transition-all",
-                      role === "educator"
-                        ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
-                        : "border-border hover:border-emerald-400 bg-card",
-                    ].join(" ")}
-                  >
-                    <span className="text-xs font-bold text-foreground">Educator</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
-                      Generate, save & customize papers
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole("student")}
-                    className={[
-                      "flex flex-col items-start p-2.5 rounded-lg border text-left transition-all",
-                      role === "student"
-                        ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
-                        : "border-border hover:border-emerald-400 bg-card",
-                    ].join(" ")}
-                  >
-                    <span className="text-xs font-bold text-foreground">Student</span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
-                      Practice tests & prepare MCQs
-                    </span>
-                  </button>
-                </div>
-              </div>
-
               <Button
                 type="submit"
                 disabled={loading}

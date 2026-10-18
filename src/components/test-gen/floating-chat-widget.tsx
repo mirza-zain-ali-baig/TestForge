@@ -480,7 +480,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
                 e.preventDefault();
                 handleSend();
               }}
-              className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-emerald-500 transition-colors"
+              className="flex items-end gap-1.5 rounded-xl border border-border hover:border-emerald-500/80 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 bg-background p-1.5 transition-colors duration-200"
             >
               <Textarea
                 ref={textareaRef}
