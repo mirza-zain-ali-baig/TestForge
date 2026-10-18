@@ -123,6 +123,29 @@ export type BankQuestion = {
   } | null;
 };
 
+const questionClientCache = new Map<
+  string,
+  {
+    data: { questions: BankQuestion[]; total: number; limit: number; offset: number };
+    timestamp: number;
+  }
+>();
+const QUESTION_CLIENT_TTL_MS = 20 * 60 * 1000; // 20 minutes
+
+export function clearQuestionClientCache(): void {
+  questionClientCache.clear();
+  if (typeof window !== "undefined") {
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith("ef_qc_")) {
+          sessionStorage.removeItem(key);
+        }
+      }
+    } catch {}
+  }
+}
+
 export async function fetchQuestions(params: {
   subjectId?: string;
   chapterIds?: string[];
@@ -132,19 +155,57 @@ export async function fetchQuestions(params: {
   search?: string;
   limit?: number;
   offset?: number;
+  forceRefresh?: boolean;
 }) {
   const sp = new URLSearchParams();
   if (params.subjectId) sp.set("subjectId", params.subjectId);
-  if (params.chapterIds?.length) sp.set("chapterIds", params.chapterIds.join(","));
-  if (params.topicIds?.length) sp.set("topicIds", params.topicIds.join(","));
+  if (params.chapterIds?.length) sp.set("chapterIds", params.chapterIds.slice().sort().join(","));
+  if (params.topicIds?.length) sp.set("topicIds", params.topicIds.slice().sort().join(","));
   if (params.questionType) sp.set("questionType", params.questionType);
   if (params.difficulty) sp.set("difficulty", params.difficulty);
   if (params.search) sp.set("search", params.search);
   if (params.limit) sp.set("limit", String(params.limit));
   if (params.offset) sp.set("offset", String(params.offset));
-  const res = await fetch(`/api/questions?${sp.toString()}`, { cache: "no-store" });
+
+  const cacheKey = sp.toString();
+
+  if (!params.forceRefresh) {
+    const memoryCached = questionClientCache.get(cacheKey);
+    if (memoryCached && Date.now() - memoryCached.timestamp < QUESTION_CLIENT_TTL_MS) {
+      return memoryCached.data;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const item = sessionStorage.getItem(`ef_qc_${cacheKey}`);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (Date.now() - parsed.timestamp < QUESTION_CLIENT_TTL_MS) {
+            questionClientCache.set(cacheKey, parsed);
+            return parsed.data;
+          }
+        }
+      } catch {}
+    }
+  }
+
+  const res = await fetch(`/api/questions?${cacheKey}`);
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
-  return res.json() as Promise<{ questions: BankQuestion[]; total: number; limit: number; offset: number }>;
+  const data = (await res.json()) as {
+    questions: BankQuestion[];
+    total: number;
+    limit: number;
+    offset: number;
+  };
+
+  questionClientCache.set(cacheKey, { data, timestamp: Date.now() });
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(`ef_qc_${cacheKey}`, JSON.stringify({ data, timestamp: Date.now() }));
+    } catch {}
+  }
+
+  return data;
 }
 
 export async function generateTest(req: GenerateTestRequest): Promise<GeneratedTest> {
@@ -336,15 +397,24 @@ export async function explainQuestion(opts: {
   return (await res.json()).explanation as string;
 }
 
+const sourcesClientCache = new Map<
+  string,
+  {
+    data: { sources: { name: string; count: number }[]; total: number; nullCount: number };
+    timestamp: number;
+  }
+>();
+const SOURCES_CLIENT_TTL_MS = 20 * 60 * 1000;
+
 /**
  * Fetch distinct `question_from` values and their counts, scoped to the given
- * subject/chapter/topic filter. Used by the Blueprint step to render the
- * optional "Filter questions by source" UI with live count badges.
+ * subject/chapter/topic filter. Cached in memory for 0ms loads.
  */
 export async function fetchQuestionSources(params: {
   subjectId: string;
   chapterIds?: string[];
   topicIds?: string[];
+  forceRefresh?: boolean;
 }): Promise<{
   sources: { name: string; count: number }[];
   total: number;
@@ -353,13 +423,42 @@ export async function fetchQuestionSources(params: {
   const sp = new URLSearchParams();
   sp.set("subjectId", params.subjectId);
   if (params.chapterIds?.length)
-    sp.set("chapterIds", params.chapterIds.join(","));
+    sp.set("chapterIds", params.chapterIds.slice().sort().join(","));
   if (params.topicIds?.length)
-    sp.set("topicIds", params.topicIds.join(","));
-  const res = await fetch(`/api/question-sources?${sp.toString()}`, {
-    cache: "no-store",
-  });
+    sp.set("topicIds", params.topicIds.slice().sort().join(","));
+
+  const cacheKey = sp.toString();
+  if (!params.forceRefresh) {
+    const cached = sourcesClientCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < SOURCES_CLIENT_TTL_MS) {
+      return cached.data;
+    }
+  }
+
+  const res = await fetch(`/api/question-sources?${cacheKey}`);
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
+  const data = await res.json();
+  sourcesClientCache.set(cacheKey, { data, timestamp: Date.now() });
+  return data;
+}
+
+/**
+ * Fetch question availability counts across all 9 cells in a single fast call.
+ */
+export async function fetchQuestionsAvailability(params: {
+  subjectId: string;
+  chapterIds?: string[];
+  topicIds?: string[];
+}): Promise<Record<string, number>> {
+  const sp = new URLSearchParams();
+  sp.set("subjectId", params.subjectId);
+  if (params.chapterIds?.length)
+    sp.set("chapterIds", params.chapterIds.slice().sort().join(","));
+  if (params.topicIds?.length)
+    sp.set("topicIds", params.topicIds.slice().sort().join(","));
+
+  const res = await fetch(`/api/questions/availability?${sp.toString()}`);
+  if (!res.ok) throw new Error("Failed to check question availability");
   return res.json();
 }
 

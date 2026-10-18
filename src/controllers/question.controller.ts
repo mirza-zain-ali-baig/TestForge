@@ -47,9 +47,24 @@ export type QuestionListParams = {
   offset?: number;
 };
 
+const listCache = new Map<
+  string,
+  {
+    result: { questions: EnrichedQuestion[]; total: number; limit: number; offset: number };
+    timestamp: number;
+  }
+>();
+const LIST_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_LIST_CACHE_ENTRIES = 300;
+
+export function invalidateListQuestionsCache(): void {
+  listCache.clear();
+}
+
 /**
  * Returns a paginated, enriched list of questions from the bank.
  * Resolves type/difficulty names, topic/chapter names, and MCQ options.
+ * Cached in memory for 0ms sub-sequent loads.
  */
 export async function listQuestions(params: QuestionListParams): Promise<{
   questions: EnrichedQuestion[];
@@ -57,6 +72,22 @@ export async function listQuestions(params: QuestionListParams): Promise<{
   limit: number;
   offset: number;
 }> {
+  const cacheKey = [
+    params.subjectId ?? "",
+    params.chapterIds?.slice().sort().join(",") ?? "",
+    params.topicIds?.slice().sort().join(",") ?? "",
+    params.questionType ?? "",
+    params.difficulty ?? "",
+    params.search ?? "",
+    params.limit ?? 50,
+    params.offset ?? 0,
+  ].join("|");
+
+  const cached = listCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < LIST_CACHE_TTL_MS) {
+    return cached.result;
+  }
+
   const lookups = await getLookups();
 
   const questionTypeId = params.questionType
@@ -81,8 +112,15 @@ export async function listQuestions(params: QuestionListParams): Promise<{
   });
 
   const enriched = await enrichPage(rows, lookups);
+  const result = { questions: enriched, total, limit, offset };
 
-  return { questions: enriched, total, limit, offset };
+  if (listCache.size >= MAX_LIST_CACHE_ENTRIES) {
+    const firstKey = listCache.keys().next().value;
+    if (firstKey) listCache.delete(firstKey);
+  }
+  listCache.set(cacheKey, { result, timestamp: Date.now() });
+
+  return result;
 }
 
 import defaultCurriculum from "@/data/curriculum-cache.json";

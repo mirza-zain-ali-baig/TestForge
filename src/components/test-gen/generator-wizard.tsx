@@ -72,6 +72,7 @@ import {
   generateBatch,
   suggestBlueprint,
   fetchQuestionSources,
+  fetchQuestionsAvailability,
   TYPE_NAMES,
   DIFF_NAMES,
   TYPE_META,
@@ -2100,20 +2101,11 @@ function DifficultyEditor(props: {
   const checkAvailability = async () => {
     setChecking(true);
     try {
-      const results: Record<string, number> = {};
-      await Promise.all(
-        TYPE_NAMES.flatMap((t) =>
-          DIFF_NAMES.map(async (d) => {
-            const res = await fetch(
-              `/api/questions?subjectId=${subjectId}&chapterIds=${chapterIds.join(
-                ","
-              )}&topicIds=${topicIds.join(",")}&questionType=${t}&difficulty=${d}&limit=1`
-            );
-            const json = await res.json();
-            results[`${t}-${d}`] = json.total ?? 0;
-          })
-        )
-      );
+      const results = await fetchQuestionsAvailability({
+        subjectId,
+        chapterIds,
+        topicIds,
+      });
       setAvailability(results);
       toast.success("Availability checked against the question bank");
     } catch {

@@ -24,7 +24,11 @@ export async function GET(request: Request) {
     }
 
     const result = await findQuestionSources({ subjectId, chapterIds, topicIds });
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "public, max-age=120, s-maxage=600, stale-while-revalidate=86400",
+      },
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unknown error" },

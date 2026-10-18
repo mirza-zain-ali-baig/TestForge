@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   Search,
   Filter,
@@ -102,6 +102,8 @@ export function QuestionBank({
       .catch((e) => toast.error(e.message));
   }, [user]);
 
+  const reqSeqRef = useRef(0);
+
   const handleClassChange = (newClassId: string) => {
     setClassId(newClassId);
     if (newClassId === "all") {
@@ -115,41 +117,77 @@ export function QuestionBank({
       }
     }
     setChapterIds([]);
+    setPage(0);
+  };
+
+  const handleSubjectChange = (newSubId: string) => {
+    setSubjectId(newSubId);
+    setChapterIds([]);
+    setPage(0);
+  };
+
+  const handleTypeChange = (newType: string) => {
+    setTypeName(newType);
+    setPage(0);
+  };
+
+  const handleDiffChange = (newDiff: string) => {
+    setDiffName(newDiff);
+    setPage(0);
+  };
+
+  const handleChapterToggle = (chId: string) => {
+    setChapterIds((prev) =>
+      prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]
+    );
+    setPage(0);
+  };
+
+  const handleSelectAllChapters = () => {
+    setChapterIds([]);
+    setPage(0);
   };
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 300);
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => {
-    setChapterIds([]);
-  }, [subjectId]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [classId, subjectId, chapterIds, typeName, diffName, debouncedSearch]);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchQuestions({
-        subjectId: subjectId && subjectId !== "all" ? subjectId : undefined,
-        chapterIds: chapterIds.length > 0 ? chapterIds : undefined,
-        questionType: typeName === "all" ? undefined : typeName,
-        difficulty: diffName === "all" ? undefined : diffName,
-        search: debouncedSearch || undefined,
-        limit: PAGE_SIZE,
-        offset: page * PAGE_SIZE,
-      });
-      setQuestions(res.questions ?? []);
-      setTotal(res.total ?? 0);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load questions");
-    } finally {
-      setLoading(false);
-    }
-  }, [subjectId, chapterIds, typeName, diffName, debouncedSearch, page]);
+  const load = useCallback(
+    async (forceRefresh = false) => {
+      if (!user) return;
+      const reqSeq = ++reqSeqRef.current;
+      setLoading(true);
+      try {
+        const res = await fetchQuestions({
+          subjectId: subjectId && subjectId !== "all" ? subjectId : undefined,
+          chapterIds: chapterIds.length > 0 ? chapterIds : undefined,
+          questionType: typeName === "all" ? undefined : typeName,
+          difficulty: diffName === "all" ? undefined : diffName,
+          search: debouncedSearch || undefined,
+          limit: PAGE_SIZE,
+          offset: page * PAGE_SIZE,
+          forceRefresh,
+        });
+        if (reqSeq === reqSeqRef.current) {
+          setQuestions(res.questions ?? []);
+          setTotal(res.total ?? 0);
+        }
+      } catch (e) {
+        if (reqSeq === reqSeqRef.current) {
+          toast.error(e instanceof Error ? e.message : "Failed to load questions");
+        }
+      } finally {
+        if (reqSeq === reqSeqRef.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [subjectId, chapterIds, typeName, diffName, debouncedSearch, page, user]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -203,8 +241,10 @@ export function QuestionBank({
   const chapters =
     subjects.find((s) => s.id === subjectId)?.chapters ?? [];
 
-  const toggleChapter = (id: string) =>
+  const toggleChapter = (id: string) => {
     setChapterIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
+    setPage(0);
+  };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -256,13 +296,26 @@ export function QuestionBank({
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Database className="h-4 w-4 text-emerald-600" /> Question Bank
-          </CardTitle>
-          <CardDescription>
-            Browse all {total.toLocaleString()} matching questions in the curriculum database.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Database className="h-4 w-4 text-emerald-600" /> Question Bank
+            </CardTitle>
+            <CardDescription>
+              Browse all {total.toLocaleString()} matching questions in the curriculum database.
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => load(true)}
+            disabled={loading}
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            title="Refresh questions from database"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters row 1 */}
@@ -281,7 +334,7 @@ export function QuestionBank({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Subject</Label>
-              <Select value={subjectId || "all"} onValueChange={setSubjectId}>
+              <Select value={subjectId || "all"} onValueChange={handleSubjectChange}>
                 <SelectTrigger><SelectValue placeholder="All Subjects" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Subjects</SelectItem>
@@ -293,7 +346,7 @@ export function QuestionBank({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Question type</Label>
-              <Select value={typeName} onValueChange={setTypeName}>
+              <Select value={typeName} onValueChange={handleTypeChange}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All types</SelectItem>
@@ -305,7 +358,7 @@ export function QuestionBank({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Difficulty</Label>
-              <Select value={diffName} onValueChange={setDiffName}>
+              <Select value={diffName} onValueChange={handleDiffChange}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All levels</SelectItem>
@@ -379,7 +432,7 @@ export function QuestionBank({
                   size="sm"
                   variant={chapterIds.length === 0 ? "default" : "outline"}
                   className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium"
-                  onClick={() => setChapterIds([])}
+                  onClick={handleSelectAllChapters}
                 >
                   All Chapters
                 </Button>
