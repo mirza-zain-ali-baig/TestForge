@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Check, Copy, ChevronDown, ChevronRight, BrainCircuit, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import katex from "katex";
@@ -228,14 +228,33 @@ function CodeBlockSnippet({ language, code }: { language: string; code: string }
   );
 }
 
+// ─── Clean LaTeX Math Helper ──────────────────────────────────────────────────
+
+export function cleanLatexMath(str: string): string {
+  if (!str || typeof str !== "string") return "";
+  let s = str.trim();
+
+  // Strip unsupported KaTeX column separators/specifiers like @{\quad}, @{...}, >{...}, <{...} in \begin{array}{...}
+  s = s.replace(/\\begin\{array\}\{((?:[^{}]|\{[^{}]*\})*)\}/g, (_m, cols) => {
+    const cleaned = cols
+      .replace(/[@><]\{(?:[^{}]|\{[^{}]*\})*\}/g, "")
+      .replace(/\s+/g, "");
+    return `\\begin{array}{${cleaned || "l"}}`;
+  });
+
+  return s;
+}
+
 // ─── Display Math Block ────────────────────────────────────────────────────────
 
 function DisplayMathBlock({ math }: { math: string }) {
   const html = useMemo(() => {
     try {
-      return katex.renderToString(math, {
+      const cleaned = cleanLatexMath(math);
+      return katex.renderToString(cleaned, {
         throwOnError: false,
         displayMode: true,
+        strict: false,
       });
     } catch {
       return null;
@@ -438,12 +457,13 @@ export function renderInlineStyles(str: string): React.ReactNode {
 
   // Tokens:
   // 1. Math block `$$...$$` or `\[...\]`
-  // 2. Bold inline math: `**$...$**` or `**\(...\)**`
-  // 3. Math inline `$..$` or `\(...\)`
-  // 4. Inline code `` `...` ``
-  // 5. Bold `**...**` (handles nested math or styles)
-  // 6. Italic `*...*`
-  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\*\*\$[^$\n]+?\$\*\*|\*\*\\[\s\S]+?\\\]\*\*|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*(?:[^*]|\*(?!\*))+?\*\*|\*[^*]+?\*)/g;
+  // 2. LaTeX environment `\begin{env}...\end{env}`
+  // 3. Bold inline math: `**$...$**` or `**\(...\)**`
+  // 4. Math inline `$..$` or `\(...\)`
+  // 5. Inline code `` `...` ``
+  // 6. Bold `**...**` (handles nested math or styles)
+  // 7. Italic `*...*`
+  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\begin\{([a-zA-Z*]+)\}[\s\S]+?\\end\{\2\}|\*\*\$[^$\n]+?\$\*\*|\*\*\\[\s\S]+?\\\]\*\*|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*(?:[^*]|\*(?!\*))+?\*\*|\*[^*]+?\*)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -459,11 +479,12 @@ export function renderInlineStyles(str: string): React.ReactNode {
       (token.startsWith("$$") && token.endsWith("$$")) ||
       (token.startsWith("\\[") && token.endsWith("\\]"))
     ) {
-      const expr = token.slice(2, -2).trim();
+      const expr = cleanLatexMath(token.slice(2, -2).trim());
       try {
         const html = katex.renderToString(expr, {
           throwOnError: false,
           displayMode: true,
+          strict: false,
         });
         parts.push(
           <span
@@ -476,19 +497,41 @@ export function renderInlineStyles(str: string): React.ReactNode {
         parts.push(<code key={m.index} className="font-mono">{token}</code>);
       }
     }
+    // Raw LaTeX environment: \begin{...}...\end{...}
+    else if (token.startsWith("\\begin{")) {
+      const expr = cleanLatexMath(token);
+      try {
+        const html = katex.renderToString(expr, {
+          throwOnError: false,
+          displayMode: true,
+          strict: false,
+        });
+        parts.push(
+          <span
+            key={m.index}
+            className="my-2 block text-center overflow-x-auto max-w-full"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+      } catch {
+        parts.push(<code key={m.index} className="font-mono">{token}</code>);
+      }
+    }
     // Bold inline math: **$...$** or **\(...\)**
     else if (
       (token.startsWith("**$") && token.endsWith("$**")) ||
       (token.startsWith("**\\(") && token.endsWith("\\)**"))
     ) {
-      const expr = token.startsWith("**$")
+      const rawExpr = token.startsWith("**$")
         ? token.slice(3, -3).trim()
         : token.slice(4, -4).trim();
+      const expr = cleanLatexMath(rawExpr);
 
       try {
         const html = katex.renderToString(expr, {
           throwOnError: false,
           displayMode: false,
+          strict: false,
         });
         parts.push(
           <strong key={m.index} className="font-bold text-foreground inline-block">
@@ -516,11 +559,13 @@ export function renderInlineStyles(str: string): React.ReactNode {
         expr = expr.slice(2, -2).trim();
         isBoldMath = true;
       }
+      expr = cleanLatexMath(expr);
 
       try {
         const html = katex.renderToString(expr, {
           throwOnError: false,
           displayMode: false,
+          strict: false,
         });
         const mathNode = (
           <span
@@ -594,8 +639,21 @@ type Block =
     }
   | { type: "text"; text: string };
 
-function parseBlocks(content: string): Block[] {
-  if (!content) return [];
+function parseBlocks(rawContent: string): Block[] {
+  if (!rawContent) return [];
+
+  // Preprocess: Isolate multi-line display math environments so they stand on their own lines,
+  // without mutating code blocks.
+  const codeBlockSplit = rawContent.split(/(```[\s\S]*?```)/g);
+  const content = codeBlockSplit
+    .map((part) => {
+      if (part.startsWith("```")) return part;
+      let s = part;
+      s = s.replace(/([^\n])([ \t]*)(\\begin\{([a-zA-Z*]+)\})/g, "$1\n$3");
+      s = s.replace(/(\\end\{([a-zA-Z*]+)\})([ \t]*)([^\n]+)/g, "$1\n$4");
+      return s;
+    })
+    .join("");
 
   const blocks: Block[] = [];
   const lines = content.split("\n");
@@ -603,10 +661,11 @@ function parseBlocks(content: string): Block[] {
 
   while (i < lines.length) {
     const line = lines[i];
+    const trimmed = line.trim();
 
     // 1. Code Block ```
-    if (line.trim().startsWith("```")) {
-      const lang = line.trim().slice(3).trim();
+    if (trimmed.startsWith("```")) {
+      const lang = trimmed.slice(3).trim();
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].trim().startsWith("```")) {
@@ -623,14 +682,14 @@ function parseBlocks(content: string): Block[] {
     }
 
     // 2. Display Math Block $$ ... $$
-    if (line.trim().startsWith("$$")) {
+    if (trimmed.startsWith("$$")) {
       const mathLines: string[] = [];
-      const singleLine = line.trim().slice(2);
+      const singleLine = trimmed.slice(2);
       if (singleLine.endsWith("$$") && singleLine.length > 2) {
         // Single line $$math$$
         blocks.push({
           type: "display-math",
-          math: singleLine.slice(0, -2).trim(),
+          math: cleanLatexMath(singleLine.slice(0, -2).trim()),
         });
         i++;
         continue;
@@ -648,15 +707,78 @@ function parseBlocks(content: string): Block[] {
         }
         blocks.push({
           type: "display-math",
-          math: mathLines.join("\n").trim(),
+          math: cleanLatexMath(mathLines.join("\n").trim()),
         });
         continue;
       }
     }
 
-    // 3. Table detection: Header | Separator | Rows
+    // 3. Display Math Block \[ ... \]
+    if (trimmed.startsWith("\\[")) {
+      const mathLines: string[] = [];
+      const singleLine = trimmed.slice(2);
+      if (singleLine.endsWith("\\]") && singleLine.length > 2) {
+        // Single line \[math\]
+        blocks.push({
+          type: "display-math",
+          math: cleanLatexMath(singleLine.slice(0, -2).trim()),
+        });
+        i++;
+        continue;
+      } else {
+        mathLines.push(singleLine);
+        i++;
+        while (i < lines.length && !lines[i].trim().endsWith("\\]")) {
+          mathLines.push(lines[i]);
+          i++;
+        }
+        if (i < lines.length) {
+          const last = lines[i].trim();
+          mathLines.push(last.slice(0, -2));
+          i++;
+        }
+        blocks.push({
+          type: "display-math",
+          math: cleanLatexMath(mathLines.join("\n").trim()),
+        });
+        continue;
+      }
+    }
+
+    // 4. LaTeX Environment Block: \begin{...} ... \end{...}
+    const beginMatch = trimmed.match(/^\\begin\{([a-zA-Z*]+)\}/);
+    if (beginMatch) {
+      const envName = beginMatch[1];
+      const endTag = `\\end{${envName}}`;
+      if (trimmed.includes(endTag)) {
+        blocks.push({
+          type: "display-math",
+          math: cleanLatexMath(trimmed),
+        });
+        i++;
+        continue;
+      } else {
+        const envLines: string[] = [line];
+        i++;
+        while (i < lines.length && !lines[i].includes(endTag)) {
+          envLines.push(lines[i]);
+          i++;
+        }
+        if (i < lines.length) {
+          envLines.push(lines[i]);
+          i++;
+        }
+        blocks.push({
+          type: "display-math",
+          math: cleanLatexMath(envLines.join("\n").trim()),
+        });
+        continue;
+      }
+    }
+
+    // 5. Table detection: Header | Separator | Rows
     if (
-      line.trim().startsWith("|") &&
+      trimmed.startsWith("|") &&
       i + 1 < lines.length &&
       lines[i + 1].trim().startsWith("|") &&
       /^[|\s-:]+$/.test(lines[i + 1].trim()) &&
@@ -701,12 +823,14 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
-    // 4. Regular Text Paragraph
+    // 6. Regular Text Paragraph
     const textLines: string[] = [];
     while (
       i < lines.length &&
       !lines[i].trim().startsWith("```") &&
       !lines[i].trim().startsWith("$$") &&
+      !lines[i].trim().startsWith("\\[") &&
+      !lines[i].trim().match(/^\\begin\{([a-zA-Z*]+)\}/) &&
       !(
         lines[i].trim().startsWith("|") &&
         i + 1 < lines.length &&
