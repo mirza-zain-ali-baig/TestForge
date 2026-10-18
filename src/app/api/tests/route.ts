@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // ── RBAC Authorization: all registered users (student, educator, admin) can save their test papers ──
-    const auth = await authorizeRequest(request, ["student", "educator", "admin"], "save test papers");
+    const user = await authorizeRequest(request, ["student", "educator", "admin"], "save test papers");
 
     const body = (await request.json()) as { test: GeneratedTest; source?: string };
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     // ── Delegate to model ─────────────────────────────────────────────────
-    const created = await createTest(body.test, body.source, auth.user.email);
+    const created = await createTest(body.test, body.source, user.email);
 
     // ── Emit event (non-blocking) ─────────────────────────────────────────
     eventBus.emit(EVENTS.TEST_SAVED, {

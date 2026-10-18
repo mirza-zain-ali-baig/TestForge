@@ -213,7 +213,10 @@ export type SavedTest = {
 
 export async function fetchSavedTests(userEmail?: string) {
   if (!userEmail) return { tests: [] };
-  const res = await fetch(`/api/tests?userEmail=${encodeURIComponent(userEmail)}`, { cache: "no-store" });
+  const res = await fetch(`/api/tests?userEmail=${encodeURIComponent(userEmail)}`, {
+    cache: "no-store",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
   return res.json() as Promise<{ tests: SavedTest[] }>;
 }
@@ -222,6 +225,7 @@ export async function saveTest(test: GeneratedTest) {
   const res = await fetch("/api/tests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ test }),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
@@ -229,7 +233,10 @@ export async function saveTest(test: GeneratedTest) {
 }
 
 export async function deleteTest(id: string) {
-  const res = await fetch(`/api/tests/${id}`, { method: "DELETE" });
+  const res = await fetch(`/api/tests/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
   if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
   return res.json();
 }
