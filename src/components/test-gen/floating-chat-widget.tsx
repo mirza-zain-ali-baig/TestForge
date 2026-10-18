@@ -12,9 +12,9 @@ import {
   ArrowDown,
   User,
   RotateCcw,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ChatMarkdown } from "./chat-markdown";
@@ -24,9 +24,10 @@ import type { AuthUser } from "./lib";
 interface FloatingChatWidgetProps {
   user?: AuthUser | null;
   onExpandToFullPage?: () => void;
+  onSignIn?: () => void;
 }
 
-export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWidgetProps) {
+export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: FloatingChatWidgetProps) {
   const userEmail = user?.email ? user.email.toLowerCase().trim() : "guest";
   const SESSIONS_KEY = `examforge_chat_sessions_${userEmail}`;
   const ACTIVE_KEY = `examforge_active_session_${userEmail}`;
@@ -120,6 +121,12 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
   };
 
   const handleSend = async (textToSend?: string) => {
+    if (!user) {
+      toast.error("Please sign in or create an account to chat with ExamForge AI.");
+      onSignIn?.();
+      return;
+    }
+
     const prompt = (textToSend || input).trim();
     if (!prompt || isGenerating) return;
 
@@ -368,7 +375,24 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar bg-background text-xs"
           >
-            {messages.length === 0 ? (
+            {!user ? (
+              <div className="flex h-full flex-col items-center justify-center text-center p-4 my-auto">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 mb-2.5">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <p className="font-semibold text-foreground text-xs">Sign In Required</p>
+                <p className="text-[11px] text-muted-foreground mt-1 max-w-[240px] leading-relaxed">
+                  Please sign in or create an account to chat with ExamForge AI, ask questions, and solve exam problems.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={onSignIn}
+                  className="mt-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs"
+                >
+                  Sign In / Register
+                </Button>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 mb-2">
                   <Sparkles className="h-5 w-5" />
@@ -475,51 +499,72 @@ export function FloatingChatWidget({ user, onExpandToFullPage }: FloatingChatWid
 
           {/* Input Footer */}
           <div className="border-t border-border bg-card/60 p-2.5">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 shadow-none outline-none focus-within:ring-0 focus-within:border-border"
-            >
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Ask ExamForge AI... (Enter to send)"
-                rows={1}
-                className="min-h-[34px] max-h-[100px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs focus-visible:ring-0 shadow-none outline-none focus:outline-none focus:ring-0"
-              />
-              {isGenerating ? (
+            {!user ? (
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 px-3 py-2 text-xs">
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  Sign in to chat with AI
+                </span>
                 <Button
-                  type="button"
-                  onClick={handleStop}
-                  variant="destructive"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 rounded-lg"
+                  size="sm"
+                  onClick={onSignIn}
+                  className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                 >
-                  <Square className="h-3.5 w-3.5 fill-current" />
+                  Sign In
                 </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="h-8 w-8 shrink-0 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </form>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 shadow-none outline-none focus-within:ring-0 focus-within:border-border"
+              >
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px";
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask ExamForge AI... (Enter to send)"
+                  rows={1}
+                  className="chat-input-textarea min-h-[34px] max-h-[100px] flex-1 resize-none bg-transparent px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-none"
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    boxShadow: "none",
+                  }}
+                />
+                {isGenerating ? (
+                  <Button
+                    type="button"
+                    onClick={handleStop}
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 rounded-lg"
+                  >
+                    <Square className="h-3.5 w-3.5 fill-current" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={!input.trim()}
+                    className="h-8 w-8 shrink-0 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </form>
+            )}
           </div>
         </div>
       )}

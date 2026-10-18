@@ -106,6 +106,7 @@ import {
   explainQuestion,
   type BankQuestion,
   type SimilarityPair,
+  type AuthUser,
 } from "./lib";
 import { TYPE_NAMES, DIFF_NAMES, TYPE_META } from "./lib";
 import { formatDuration } from "./generator-wizard";
@@ -122,6 +123,8 @@ export function TestPreview({
   onPrintExport,
   initialMode,
   onExit,
+  user,
+  onRequireAuth,
 }: {
   test: GeneratedTest;
   onTestChange: (t: GeneratedTest) => void;
@@ -130,6 +133,8 @@ export function TestPreview({
   onPrintExport?: () => void;
   initialMode?: "preview" | "practice" | "print";
   onExit?: () => void;
+  user?: AuthUser | null;
+  onRequireAuth?: (tab?: "login" | "register") => void;
 }) {
   const [showAnswers, setShowAnswers] = useState(false);
   const [hidePaper, setHidePaper] = useState(false); // default: show paper
@@ -276,6 +281,11 @@ export function TestPreview({
   };
 
   const regenerateQuestion = async (sectionIndex: number, qIndex: number) => {
+    if (!user) {
+      toast.info("Please sign in or create an account to regenerate questions with AI.");
+      onRequireAuth?.("login");
+      return;
+    }
     const oldQ = test.sections[sectionIndex]?.questions[qIndex];
     if (!oldQ) return;
     setRegeneratingId(oldQ.id);
@@ -305,6 +315,11 @@ export function TestPreview({
   };
 
   const explainQuestionHandler = async (sectionIndex: number, qIndex: number) => {
+    if (!user) {
+      toast.info("Please sign in or create an account to view AI explanations.");
+      onRequireAuth?.("login");
+      return;
+    }
     const q = test.sections[sectionIndex]?.questions[qIndex];
     if (!q) return;
     // If already explained, toggle it off
@@ -335,6 +350,11 @@ export function TestPreview({
   /* ------------------------------- actions -------------------------------- */
 
   const handleSave = async () => {
+    if (!user) {
+      toast.info("Please sign in or create an account to save test papers.");
+      onRequireAuth?.("login");
+      return;
+    }
     setSaving(true);
     try {
       await saveTest(test);

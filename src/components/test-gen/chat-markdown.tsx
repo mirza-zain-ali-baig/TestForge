@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Check, Copy, ChevronDown, ChevronRight, BrainCircuit, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import katex from "katex";
+import { cn } from "@/lib/utils";
 
 export interface ChatMarkdownProps {
   content: string;
@@ -432,20 +433,24 @@ function TextFormatted({ text }: { text: string }) {
 export function renderInlineStyles(str: string): React.ReactNode {
   if (!str || typeof str !== "string") return typeof str === "number" ? String(str) : "";
 
+  // Pre-normalize LLM math edge cases: e.g. $**...**$ -> **$...$**
+  const normalizedStr = str.replace(/\$\*\*([\s\S]+?)\*\*\$/g, (_match, p1) => `**$${p1}$**`);
+
   // Tokens:
-  // 1. Math block `$$...$$` inside lines
-  // 2. Math inline `$..$` or `\(...\)`
-  // 3. Inline code `` `...` ``
-  // 4. Bold `**...**`
-  // 5. Italic `*...*`
-  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*[^*]+?\*\*|\*[^*]+?\*)/g;
+  // 1. Math block `$$...$$` or `\[...\]`
+  // 2. Bold inline math: `**$...$**` or `**\(...\)**`
+  // 3. Math inline `$..$` or `\(...\)`
+  // 4. Inline code `` `...` ``
+  // 5. Bold `**...**` (handles nested math or styles)
+  // 6. Italic `*...*`
+  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\*\*\$[^$\n]+?\$\*\*|\*\*\\[\s\S]+?\\\]\*\*|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|`[^`]+?`|\*\*(?:[^*]|\*(?!\*))+?\*\*|\*[^*]+?\*)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
 
-  while ((m = regex.exec(str)) !== null) {
+  while ((m = regex.exec(normalizedStr)) !== null) {
     if (m.index > lastIndex) {
-      parts.push(str.slice(lastIndex, m.index));
+      parts.push(normalizedStr.slice(lastIndex, m.index));
     }
     const token = m[0];
 
@@ -471,14 +476,14 @@ export function renderInlineStyles(str: string): React.ReactNode {
         parts.push(<code key={m.index} className="font-mono">{token}</code>);
       }
     }
-    // Inline math $...$ or \(...\)
+    // Bold inline math: **$...$** or **\(...\)**
     else if (
-      (token.startsWith("$") && token.endsWith("$")) ||
-      (token.startsWith("\\(") && token.endsWith("\\)"))
+      (token.startsWith("**$") && token.endsWith("$**")) ||
+      (token.startsWith("**\\(") && token.endsWith("\\)**"))
     ) {
-      const expr = token.startsWith("$")
-        ? token.slice(1, -1).trim()
-        : token.slice(2, -2).trim();
+      const expr = token.startsWith("**$")
+        ? token.slice(3, -3).trim()
+        : token.slice(4, -4).trim();
 
       try {
         const html = katex.renderToString(expr, {
@@ -486,11 +491,51 @@ export function renderInlineStyles(str: string): React.ReactNode {
           displayMode: false,
         });
         parts.push(
+          <strong key={m.index} className="font-bold text-foreground inline-block">
+            <span
+              className="inline-math font-bold px-0.5 align-baseline"
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </strong>
+        );
+      } catch {
+        parts.push(<strong key={m.index} className="font-bold font-mono text-xs">{token}</strong>);
+      }
+    }
+    // Inline math $...$ or \(...\)
+    else if (
+      (token.startsWith("$") && token.endsWith("$")) ||
+      (token.startsWith("\\(") && token.endsWith("\\)"))
+    ) {
+      let expr = token.startsWith("$")
+        ? token.slice(1, -1).trim()
+        : token.slice(2, -2).trim();
+
+      let isBoldMath = false;
+      if (expr.startsWith("**") && expr.endsWith("**")) {
+        expr = expr.slice(2, -2).trim();
+        isBoldMath = true;
+      }
+
+      try {
+        const html = katex.renderToString(expr, {
+          throwOnError: false,
+          displayMode: false,
+        });
+        const mathNode = (
           <span
-            key={m.index}
-            className="inline-math px-0.5 align-baseline"
+            className={cn("inline-math px-0.5 align-baseline", isBoldMath && "font-bold")}
             dangerouslySetInnerHTML={{ __html: html }}
           />
+        );
+        parts.push(
+          isBoldMath ? (
+            <strong key={m.index} className="font-bold text-foreground inline-block">
+              {mathNode}
+            </strong>
+          ) : (
+            <span key={m.index}>{mathNode}</span>
+          )
         );
       } catch {
         parts.push(<span key={m.index} className="font-mono text-xs">{token}</span>);
@@ -507,19 +552,21 @@ export function renderInlineStyles(str: string): React.ReactNode {
         </code>
       );
     }
-    // Bold **...**
+    // Bold **...** (recursively parses nested formulas & styles)
     else if (token.startsWith("**") && token.endsWith("**")) {
+      const inner = token.slice(2, -2);
       parts.push(
         <strong key={m.index} className="font-semibold text-foreground">
-          {token.slice(2, -2)}
+          {renderInlineStyles(inner)}
         </strong>
       );
     }
-    // Italic *...*
+    // Italic *...* (recursively parses nested styles)
     else if (token.startsWith("*") && token.endsWith("*")) {
+      const inner = token.slice(1, -1);
       parts.push(
         <em key={m.index} className="italic text-muted-foreground">
-          {token.slice(1, -1)}
+          {renderInlineStyles(inner)}
         </em>
       );
     }
@@ -527,11 +574,11 @@ export function renderInlineStyles(str: string): React.ReactNode {
     lastIndex = m.index + token.length;
   }
 
-  if (lastIndex < str.length) {
-    parts.push(str.slice(lastIndex));
+  if (lastIndex < normalizedStr.length) {
+    parts.push(normalizedStr.slice(lastIndex));
   }
 
-  return parts.length > 0 ? parts : str;
+  return parts.length > 0 ? parts : normalizedStr;
 }
 
 // ─── Block Parser ─────────────────────────────────────────────────────────────

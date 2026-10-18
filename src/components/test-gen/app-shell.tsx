@@ -192,6 +192,12 @@ export function TestGeneratorApp() {
   }, [setViewWithUrl]);
 
   const goGenerate = (opts?: { batch?: boolean }) => {
+    if (!user) {
+      toast.info("Please sign in or create an account to generate exam papers.");
+      setAuthDefaultTab("login");
+      setAuthOpen(true);
+      return;
+    }
     if (opts?.batch) {
       setInitialVariantCount(3);
     } else {
@@ -607,16 +613,33 @@ export function TestGeneratorApp() {
                     onPrintExport={goPrint}
                     initialMode={initialPreviewMode}
                     onExit={() => navigate(previousView === "generate" ? "dashboard" : previousView)}
+                    user={user}
+                    onRequireAuth={(tab = "login") => {
+                      setAuthDefaultTab(tab);
+                      setAuthOpen(true);
+                    }}
                   />
                 </>
               )}
             </>
           )}
-          {view === "bank" && <QuestionBank />}
+          {view === "bank" && (
+            <QuestionBank
+              user={user}
+              onSignIn={() => {
+                setAuthDefaultTab("login");
+                setAuthOpen(true);
+              }}
+            />
+          )}
           {view === "chat" && (
             <ChatView
               user={user}
               onBack={() => navigate(previousView === "chat" ? "dashboard" : previousView)}
+              onSignIn={() => {
+                setAuthDefaultTab("login");
+                setAuthOpen(true);
+              }}
               fullWindow
             />
           )}
@@ -669,7 +692,14 @@ export function TestGeneratorApp() {
 
       {/* Floating AI Chatbox Widget (shown on all pages except full Chat page and Generate/Print) */}
       {!["chat", "generate", "print"].includes(view) && (
-        <FloatingChatWidget user={user} onExpandToFullPage={() => navigate("chat")} />
+        <FloatingChatWidget
+          user={user}
+          onExpandToFullPage={() => navigate("chat")}
+          onSignIn={() => {
+            setAuthDefaultTab("login");
+            setAuthOpen(true);
+          }}
+        />
       )}
 
       {/* Keyboard shortcuts help */}

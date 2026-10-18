@@ -44,11 +44,18 @@ import {
   DIFF_META,
   type CurriculumNode,
   type BankQuestion,
+  type AuthUser,
 } from "./lib";
 
 const PAGE_SIZE = 20;
 
-export function QuestionBank() {
+export function QuestionBank({
+  user,
+  onSignIn,
+}: {
+  user?: AuthUser | null;
+  onSignIn?: () => void;
+} = {}) {
   const [tree, setTree] = useState<CurriculumNode[]>([]);
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
@@ -140,6 +147,11 @@ export function QuestionBank() {
   }, [load]);
 
   const toggleFavorite = (id: string) => {
+    if (!user) {
+      toast.info("Please sign in or create an account to save favorite questions.");
+      onSignIn?.();
+      return;
+    }
     setFavorites((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -436,7 +448,14 @@ export function QuestionBank() {
                   isFavorite={favorites.has(q.id)}
                   onToggleFavorite={() => toggleFavorite(q.id)}
                   note={notes[q.id] ?? ""}
-                  onEditNote={() => setNoteEditingId(q.id)}
+                  onEditNote={() => {
+                    if (!user) {
+                      toast.info("Please sign in or create an account to add question notes.");
+                      onSignIn?.();
+                      return;
+                    }
+                    setNoteEditingId(q.id);
+                  }}
                 />
               ))}
             </ol>

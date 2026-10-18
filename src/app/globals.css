@@ -336,3 +336,39 @@ input[type="number"] {
     display: none !important;
   }
 }
+
+/* ─── KaTeX Bold Math Typography ─────────────────────────────────────────── */
+strong .katex,
+b .katex,
+.font-bold .katex,
+.font-semibold .katex {
+  font-weight: 700 !important;
+}
+strong .katex .mord,
+strong .katex .mbin,
+strong .katex .mrel,
+strong .katex .minner,
+strong .katex .mopen,
+strong .katex .mclose,
+.font-bold .katex .mord,
+.font-bold .katex .mbin,
+.font-bold .katex .mrel {
+  font-weight: 700 !important;
+}
+
+/* ─── AI Chat & Quick Chat Input Field Border Removal ────────────────────── */
+.chat-input-textarea,
+.chat-input-textarea:hover,
+.chat-input-textarea:focus,
+.chat-input-textarea:focus-visible,
+.chat-input-textarea:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-shadow: 0 0 #0000 !important;
+  ring: 0 !important;
+}
+
+

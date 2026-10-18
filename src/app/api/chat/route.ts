@@ -9,6 +9,10 @@ import {
   streamGeminiChatCompletion,
   callGeminiChatCompletion,
 } from "@/lib/gemini";
+import {
+  extractTokenFromRequest,
+  authenticateSession,
+} from "@/controllers/auth.controller";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,9 +39,21 @@ export async function GET() {
  * Handles chat completions with smart model selection and automatic fallback:
  * 1. Primary: Google Gemini 3.5 Flash (1,500 free requests/day with ultra-fast streaming).
  * 2. Secondary: OpenRouter curated free models fallback chain.
+ *
+ * RBAC: All authenticated users (student, educator, admin).
  */
 export async function POST(req: NextRequest) {
   try {
+    // ── Enforce Authentication: user must be signed in to chat with AI ──
+    const token = await extractTokenFromRequest(req);
+    const user = await authenticateSession(token);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in or create an account to chat with ExamForge AI." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const {
       messages = [],

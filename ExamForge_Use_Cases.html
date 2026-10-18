@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ExamForge — UML Use Case Diagrams</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .actor-figure line, .actor-figure circle {
+      stroke: #0f172a;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .dark .actor-figure line, .dark .actor-figure circle {
+      stroke: #f1f5f9;
+    }
+    .uc-ellipse {
+      fill: #f0fdf4;
+      stroke: #059669;
+      stroke-width: 2;
+      transition: all 0.2s ease;
+    }
+    .dark .uc-ellipse {
+      fill: #064e3b;
+      stroke: #10b981;
+    }
+    .uc-text {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      fill: #064e3b;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    .dark .uc-text {
+      fill: #ecfdf5;
+    }
+    .assoc-line {
+      stroke: #334155;
+      stroke-width: 1.8;
+    }
+    .dark .assoc-line {
+      stroke: #94a3b8;
+    }
+    .dep-line {
+      stroke: #d97706;
+      stroke-width: 1.8;
+      stroke-dasharray: 6, 4;
+    }
+    .ext-line {
+      stroke: #2563eb;
+      stroke-width: 1.8;
+      stroke-dasharray: 6, 4;
+    }
+    .rel-label {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-4">
+  <div class="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-2xl p-6 shadow-sm max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-4 mb-5">
+      <div>
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+            EF
+          </div>
+          <h2 class="text-xl font-bold text-[var(--foreground)]">ExamForge — UML Use Case Diagrams</h2>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">
+          Accurate system use case models featuring authentic stick figure actors and standard <code class="bg-muted px-1 rounded text-emerald-600">&lt;&lt;depends on&gt;&gt;</code> and <code class="bg-muted px-1 rounded text-blue-600">&lt;&lt;extend&gt;&gt;</code> associations.
+        </p>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex flex-wrap gap-1.5 bg-muted/60 p-1.5 rounded-xl border border-[var(--border)]">
+        <button onclick="showTab(1)" id="tab-btn-1" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white shadow-xs transition">1. Test Creation</button>
+        <button onclick="showTab(2)" id="tab-btn-2" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-muted-foreground hover:bg-card hover:text-foreground transition">2. Batch Anti-Cheat</button>
+        <button onclick="showTab(3)" id="tab-btn-3" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-muted-foreground hover:bg-card hover:text-foreground transition">3. Studio &amp; Export</button>
+        <button onclick="showTab(4)" id="tab-btn-4" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-muted-foreground hover:bg-card hover:text-foreground transition">4. Authentication</button>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex flex-wrap items-center gap-4 text-xs bg-muted/30 border border-[var(--border)] rounded-xl p-3 mb-5">
+      <span class="font-bold text-[var(--foreground)]">UML Legend:</span>
+      <span class="flex items-center gap-1.5">
+        <span class="inline-block w-6 h-0.5 bg-slate-700 dark:bg-slate-300"></span>
+        <span>Association Line</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="inline-block w-6 h-0.5 border-t-2 border-dashed border-amber-600"></span>
+        <span class="text-amber-700 dark:text-amber-400 font-semibold">&lt;&lt;depends on&gt;&gt;</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="inline-block w-6 h-0.5 border-t-2 border-dashed border-blue-600"></span>
+        <span class="text-blue-700 dark:text-blue-400 font-semibold">&lt;&lt;extend&gt;&gt;</span>
+      </span>
+      <span class="flex items-center gap-1.5 ml-auto text-[11px] text-muted-foreground">
+        Actors modeled with classic UML stick figure specification
+      </span>
+    </div>
+
+    <!-- DIAGRAM 1: TEST GENERATION -->
+    <div id="tab-1" class="tab-content block">
+      <div class="mb-3">
+        <h3 class="text-base font-bold text-emerald-700 dark:text-emerald-400">Functionality 1: Exam Paper Creation &amp; Blueprint Engine</h3>
+        <p class="text-xs text-[var(--muted-foreground)]">Covers class/subject picking, curriculum syllabus filtering, blueprint configuration, and AI synthesis shortfall fallback.</p>
+      </div>
+      <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-card p-2 flex justify-center">
+        <svg viewBox="0 0 860 480" width="860" height="480" class="w-full h-auto">
+          <defs>
+            <marker id="arr-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+            </marker>
+            <marker id="arr-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+            </marker>
+          </defs>
+
+          <!-- System Boundary -->
+          <rect x="180" y="20" width="500" height="440" rx="16" fill="rgba(16, 185, 129, 0.04)" stroke="#10b981" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="430" y="45" text-anchor="middle" font-weight="bold" font-size="14" fill="#047857">ExamForge — Exam Creation Subsystem</text>
+
+          <!-- Primary Actor: Teacher (Stick Figure) -->
+          <g class="actor-figure" transform="translate(60, 160)">
+            <circle cx="40" cy="25" r="16" />
+            <line x1="40" y1="41" x2="40" y2="85" />
+            <line x1="12" y1="56" x2="68" y2="56" />
+            <line x1="40" y1="85" x2="16" y2="128" />
+            <line x1="40" y1="85" x2="64" y2="128" />
+            <text x="40" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="currentColor">Teacher</text>
+            <text x="40" y="165" text-anchor="middle" font-size="10.5" fill="#64748b">(Primary Actor)</text>
+          </g>
+
+          <!-- Secondary Actor: Gemini AI Engine -->
+          <g class="actor-figure" transform="translate(730, 220)">
+            <rect x="15" y="10" width="50" height="34" rx="6" stroke="currentColor" stroke-width="2" fill="none"/>
+            <circle cx="30" cy="27" r="4" fill="currentColor"/>
+            <circle cx="50" cy="27" r="4" fill="currentColor"/>
+            <line x1="40" y1="44" x2="40" y2="80" />
+            <line x1="15" y1="55" x2="65" y2="55" />
+            <line x1="40" y1="80" x2="20" y2="115" />
+            <line x1="40" y1="80" x2="60" y2="115" />
+            <text x="40" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="currentColor">Gemini AI</text>
+            <text x="40" y="150" text-anchor="middle" font-size="10" fill="#64748b">(External AI)</text>
+          </g>
+
+          <!-- Use Cases (Ellipses) -->
+          <!-- UC1 -->
+          <g transform="translate(230, 80)">
+            <ellipse cx="90" cy="25" rx="95" ry="24" class="uc-ellipse"/>
+            <text x="90" y="25" class="uc-text">Select Class &amp; Subject</text>
+          </g>
+          <!-- UC2 -->
+          <g transform="translate(230, 150)">
+            <ellipse cx="90" cy="25" rx="95" ry="24" class="uc-ellipse"/>
+            <text x="90" y="25" class="uc-text">Filter Syllabus &amp; Topics</text>
+          </g>
+          <!-- UC3 -->
+          <g transform="translate(230, 220)">
+            <ellipse cx="90" cy="25" rx="95" ry="24" class="uc-ellipse"/>
+            <text x="90" y="25" class="uc-text">Configure Blueprint Matrix</text>
+          </g>
+          <!-- UC4 (Extends UC3) -->
+          <g transform="translate(460, 220)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse"/>
+            <text x="95" y="25" class="uc-text">Apply AI Blueprint Suggestion</text>
+          </g>
+          <!-- UC5 -->
+          <g transform="translate(230, 310)">
+            <ellipse cx="95" cy="26" rx="105" ry="26" class="uc-ellipse" style="stroke-width: 2.5; stroke: #047857;"/>
+            <text x="95" y="26" class="uc-text" style="font-weight: bold;">Generate Test Paper</text>
+          </g>
+          <!-- UC6 (Extends UC5 fallback) -->
+          <g transform="translate(460, 310)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse"/>
+            <text x="95" y="25" class="uc-text">AI Question Shortfall Fill</text>
+          </g>
+          <!-- UC7 (Depends on UC5) -->
+          <g transform="translate(230, 390)">
+            <ellipse cx="90" cy="25" rx="95" ry="24" class="uc-ellipse"/>
+            <text x="90" y="25" class="uc-text">Save Paper to My Tests</text>
+          </g>
+
+          <!-- Association Lines from Teacher -->
+          <line x1="120" y1="210" x2="235" y2="105" class="assoc-line" />
+          <line x1="120" y1="215" x2="230" y2="175" class="assoc-line" />
+          <line x1="120" y1="220" x2="230" y2="245" class="assoc-line" />
+          <line x1="120" y1="225" x2="230" y2="335" class="assoc-line" />
+          <line x1="120" y1="230" x2="235" y2="415" class="assoc-line" />
+
+          <!-- Dependency / Extend Lines -->
+          <!-- UC5 depends on UC1, UC2, UC3 -->
+          <line x1="320" y1="130" x2="320" y2="305" class="dep-line" marker-end="url(#arr-amber)" />
+          <text x="328" y="200" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- UC4 extends UC3 -->
+          <line x1="460" y1="245" x2="425" y2="245" class="ext-line" marker-end="url(#arr-blue)" />
+          <text x="428" y="235" fill="#2563eb" class="rel-label" text-anchor="middle">&lt;&lt;extend&gt;&gt;</text>
+          <line x1="660" y1="245" x2="730" y2="270" class="assoc-line" />
+
+          <!-- UC6 extends UC5 -->
+          <line x1="460" y1="335" x2="440" y2="335" class="ext-line" marker-end="url(#arr-blue)" />
+          <text x="435" y="325" fill="#2563eb" class="rel-label" text-anchor="middle">&lt;&lt;extend&gt;&gt;</text>
+          <line x1="660" y1="335" x2="730" y2="280" class="assoc-line" />
+
+          <!-- UC7 depends on UC5 -->
+          <line x1="325" y1="365" x2="325" y2="390" class="dep-line" marker-end="url(#arr-amber)" />
+          <text x="335" y="380" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- DIAGRAM 2: BATCH ANTI-CHEAT -->
+    <div id="tab-2" class="tab-content hidden">
+      <div class="mb-3">
+        <h3 class="text-base font-bold text-teal-700 dark:text-teal-400">Functionality 2: Multi-Variant Batch Generation (Anti-Cheat Engine)</h3>
+        <p class="text-xs text-[var(--muted-foreground)]">Covers algorithmic creation of up to 6 parallel disjoint paper sets with question scrambling and cognitive parity.</p>
+      </div>
+      <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-card p-2 flex justify-center">
+        <svg viewBox="0 0 860 480" width="860" height="480" class="w-full h-auto">
+          <defs>
+            <marker id="arr-amber-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+            </marker>
+            <marker id="arr-blue-2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+            </marker>
+          </defs>
+          <!-- System Boundary -->
+          <rect x="180" y="20" width="620" height="440" rx="16" fill="rgba(15, 118, 110, 0.04)" stroke="#0d9488" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="490" y="45" text-anchor="middle" font-weight="bold" font-size="14" fill="#0f766e">ExamForge — Anti-Cheat Batch Subsystem</text>
+
+          <!-- Primary Actor: Examination Officer (Stick Figure) -->
+          <g class="actor-figure" transform="translate(60, 160)">
+            <circle cx="40" cy="25" r="16" />
+            <line x1="40" y1="41" x2="40" y2="85" />
+            <line x1="12" y1="56" x2="68" y2="56" />
+            <line x1="40" y1="85" x2="16" y2="128" />
+            <line x1="40" y1="85" x2="64" y2="128" />
+            <text x="40" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="currentColor">Exam Officer</text>
+            <text x="40" y="165" text-anchor="middle" font-size="10.5" fill="#64748b">(Instructor)</text>
+          </g>
+
+          <!-- Use Cases -->
+          <g transform="translate(230, 80)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="100" y="25" class="uc-text">Set Variant Count (2 to 6 Sets)</text>
+          </g>
+
+          <g transform="translate(230, 170)">
+            <ellipse cx="105" cy="26" rx="110" ry="26" class="uc-ellipse" style="stroke-width: 2.5; stroke: #0f766e;"/>
+            <text x="105" y="26" class="uc-text" style="font-weight: bold;">Generate Multi-Variant Batch</text>
+          </g>
+
+          <g transform="translate(540, 100)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">Partition Disjoint Question Pool</text>
+          </g>
+
+          <g transform="translate(540, 170)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">Scramble Question &amp; Options</text>
+          </g>
+
+          <g transform="translate(540, 240)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">Verify Cognitive &amp; Mark Parity</text>
+          </g>
+
+          <g transform="translate(230, 290)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">Inspect Variants in Tabs (A–F)</text>
+          </g>
+
+          <g transform="translate(540, 320)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">AI Similarity &amp; Duplicate Check</text>
+          </g>
+
+          <g transform="translate(230, 380)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse" style="stroke: #0d9488;"/>
+            <text x="105" y="25" class="uc-text">Batch Export All Parallel Papers</text>
+          </g>
+
+          <!-- Association Lines -->
+          <line x1="120" y1="210" x2="235" y2="105" class="assoc-line" />
+          <line x1="120" y1="220" x2="230" y2="195" class="assoc-line" />
+          <line x1="120" y1="225" x2="230" y2="315" class="assoc-line" />
+          <line x1="120" y1="230" x2="235" y2="405" class="assoc-line" />
+
+          <!-- Dependency / Extend Lines -->
+          <!-- Generate depends on Set Variant Count -->
+          <line x1="335" y1="130" x2="335" y2="170" class="dep-line" marker-end="url(#arr-amber-2)" />
+          <text x="340" y="152" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Partition Disjoint depends on Generate Batch -->
+          <line x1="345" y1="185" x2="540" y2="125" class="dep-line" marker-end="url(#arr-amber-2)" />
+          <text x="440" y="145" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Scramble options extends Partition -->
+          <line x1="645" y1="170" x2="645" y2="150" class="ext-line" marker-end="url(#arr-blue-2)" />
+          <text x="650" y="162" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Verify parity depends on Generate Batch -->
+          <line x1="345" y1="205" x2="540" y2="255" class="dep-line" marker-end="url(#arr-amber-2)" />
+          <text x="440" y="240" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Inspect variants depends on Generate Batch -->
+          <line x1="335" y1="225" x2="335" y2="290" class="dep-line" marker-end="url(#arr-amber-2)" />
+          <text x="340" y="260" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- AI Similarity extends Inspect Variants -->
+          <line x1="540" y1="345" x2="445" y2="325" class="ext-line" marker-end="url(#arr-blue-2)" />
+          <text x="490" y="325" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Batch Export depends on Inspect Variants -->
+          <line x1="335" y1="340" x2="335" y2="380" class="dep-line" marker-end="url(#arr-amber-2)" />
+          <text x="340" y="362" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- DIAGRAM 3: STUDIO & EXPORT -->
+    <div id="tab-3" class="tab-content hidden">
+      <div class="mb-3">
+        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Functionality 3: Interactive Paper Studio, Word/PDF Export &amp; Online Practice</h3>
+        <p class="text-xs text-[var(--muted-foreground)]">Covers inline editing, question AI regeneration, school branding, Word (.docx) export, and timed online practice.</p>
+      </div>
+      <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-card p-2 flex justify-center">
+        <svg viewBox="0 0 860 480" width="860" height="480" class="w-full h-auto">
+          <defs>
+            <marker id="arr-amber-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+            </marker>
+            <marker id="arr-blue-3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+            </marker>
+          </defs>
+          <!-- System Boundary -->
+          <rect x="180" y="20" width="620" height="440" rx="16" fill="rgba(30, 41, 59, 0.03)" stroke="#475569" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="490" y="45" text-anchor="middle" font-weight="bold" font-size="14" fill="#1e293b">ExamForge — Paper Studio &amp; Export Subsystem</text>
+
+          <!-- Primary Actor: Educator / Student (Stick Figure) -->
+          <g class="actor-figure" transform="translate(60, 160)">
+            <circle cx="40" cy="25" r="16" />
+            <line x1="40" y1="41" x2="40" y2="85" />
+            <line x1="12" y1="56" x2="68" y2="56" />
+            <line x1="40" y1="85" x2="16" y2="128" />
+            <line x1="40" y1="85" x2="64" y2="128" />
+            <text x="40" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="currentColor">User</text>
+            <text x="40" y="165" text-anchor="middle" font-size="10.5" fill="#64748b">(Teacher/Student)</text>
+          </g>
+
+          <!-- Use Cases -->
+          <g transform="translate(230, 80)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse"/>
+            <text x="100" y="25" class="uc-text">Preview Formatted Exam Paper</text>
+          </g>
+
+          <g transform="translate(540, 80)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse"/>
+            <text x="105" y="25" class="uc-text">Drag &amp; Drop Reorder Questions</text>
+          </g>
+
+          <g transform="translate(230, 160)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse"/>
+            <text x="100" y="25" class="uc-text">Inline Edit Questions &amp; Marks</text>
+          </g>
+
+          <g transform="translate(540, 150)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse"/>
+            <text x="105" y="25" class="uc-text">Regenerate Question with AI</text>
+          </g>
+
+          <g transform="translate(540, 210)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse"/>
+            <text x="105" y="25" class="uc-text">Explain Question with AI</text>
+          </g>
+
+          <g transform="translate(230, 240)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse"/>
+            <text x="100" y="25" class="uc-text">Set Academy Name &amp; Logo</text>
+          </g>
+
+          <g transform="translate(230, 320)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse"/>
+            <text x="100" y="25" class="uc-text">Export to Word (.docx)</text>
+          </g>
+
+          <g transform="translate(230, 395)">
+            <ellipse cx="100" cy="25" rx="105" ry="24" class="uc-ellipse"/>
+            <text x="100" y="25" class="uc-text">Export to PDF / Print Paper</text>
+          </g>
+
+          <g transform="translate(540, 360)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse"/>
+            <text x="105" y="25" class="uc-text">Generate Detached Answer Key</text>
+          </g>
+
+          <g transform="translate(540, 285)">
+            <ellipse cx="105" cy="25" rx="110" ry="24" class="uc-ellipse"/>
+            <text x="105" y="25" class="uc-text">Launch Practice Online Mode</text>
+          </g>
+
+          <!-- Association Lines -->
+          <line x1="120" y1="210" x2="235" y2="105" class="assoc-line" />
+          <line x1="120" y1="215" x2="230" y2="185" class="assoc-line" />
+          <line x1="120" y1="220" x2="230" y2="265" class="assoc-line" />
+          <line x1="120" y1="225" x2="230" y2="345" class="assoc-line" />
+          <line x1="120" y1="230" x2="235" y2="420" class="assoc-line" />
+
+          <!-- Extends & Depends -->
+          <!-- Reorder extends Preview -->
+          <line x1="540" y1="105" x2="440" y2="105" class="ext-line" marker-end="url(#arr-blue-3)" />
+          <text x="490" y="95" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Regenerate extends Inline Edit -->
+          <line x1="540" y1="175" x2="440" y2="185" class="ext-line" marker-end="url(#arr-blue-3)" />
+          <text x="490" y="172" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Explain extends Inline Edit -->
+          <line x1="540" y1="225" x2="440" y2="195" class="ext-line" marker-end="url(#arr-blue-3)" />
+          <text x="495" y="215" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Export Word depends on Academy Name -->
+          <line x1="330" y1="290" x2="330" y2="320" class="dep-line" marker-end="url(#arr-amber-3)" />
+          <text x="335" y="305" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Export PDF depends on Academy Name -->
+          <line x1="330" y1="370" x2="330" y2="395" class="dep-line" marker-end="url(#arr-amber-3)" />
+          <text x="335" y="385" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Answer Key extends Export Word & PDF -->
+          <line x1="540" y1="375" x2="440" y2="350" class="ext-line" marker-end="url(#arr-blue-3)" />
+          <text x="495" y="355" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+
+          <!-- Practice Online extends Preview -->
+          <line x1="540" y1="300" x2="420" y2="120" class="ext-line" marker-end="url(#arr-blue-3)" />
+          <text x="460" y="195" fill="#2563eb" class="rel-label">&lt;&lt;extend&gt;&gt;</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- DIAGRAM 4: AUTH & UNIVERSAL ACCESS -->
+    <div id="tab-4" class="tab-content hidden">
+      <div class="mb-3">
+        <h3 class="text-base font-bold text-indigo-700 dark:text-indigo-400">Functionality 4: User Authentication &amp; Universal Access Management</h3>
+        <p class="text-xs text-[var(--muted-foreground)]">Covers registration, credential and OAuth login, universal authoring permissions, and past history.</p>
+      </div>
+      <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-card p-2 flex justify-center">
+        <svg viewBox="0 0 860 480" width="860" height="480" class="w-full h-auto">
+          <defs>
+            <marker id="arr-amber-4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+            </marker>
+            <marker id="arr-blue-4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+            </marker>
+          </defs>
+          <!-- System Boundary -->
+          <rect x="180" y="20" width="500" height="440" rx="16" fill="rgba(67, 56, 202, 0.03)" stroke="#6366f1" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="430" y="45" text-anchor="middle" font-weight="bold" font-size="14" fill="#4338ca">ExamForge — Authentication &amp; Access Subsystem</text>
+
+          <!-- Primary Actor: User (Stick Figure) -->
+          <g class="actor-figure" transform="translate(60, 160)">
+            <circle cx="40" cy="25" r="16" />
+            <line x1="40" y1="41" x2="40" y2="85" />
+            <line x1="12" y1="56" x2="68" y2="56" />
+            <line x1="40" y1="85" x2="16" y2="128" />
+            <line x1="40" y1="85" x2="64" y2="128" />
+            <text x="40" y="150" text-anchor="middle" font-size="13" font-weight="bold" fill="currentColor">User</text>
+            <text x="40" y="165" text-anchor="middle" font-size="10.5" fill="#64748b">(Instructor/Student)</text>
+          </g>
+
+          <!-- Secondary Actor: Google OAuth -->
+          <g class="actor-figure" transform="translate(730, 160)">
+            <circle cx="40" cy="25" r="16" />
+            <line x1="40" y1="41" x2="40" y2="85" />
+            <line x1="12" y1="56" x2="68" y2="56" />
+            <line x1="40" y1="85" x2="16" y2="128" />
+            <line x1="40" y1="85" x2="64" y2="128" />
+            <text x="40" y="150" text-anchor="middle" font-size="12.5" font-weight="bold" fill="currentColor">Google OAuth</text>
+            <text x="40" y="165" text-anchor="middle" font-size="10" fill="#64748b">(Identity Provider)</text>
+          </g>
+
+          <!-- Use Cases -->
+          <g transform="translate(230, 80)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse" style="stroke: #6366f1; fill: #eef2ff;"/>
+            <text x="95" y="25" class="uc-text" style="fill: #312e81;">Register New Account</text>
+          </g>
+
+          <g transform="translate(230, 155)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse" style="stroke: #6366f1; fill: #eef2ff;"/>
+            <text x="95" y="25" class="uc-text" style="fill: #312e81;">Sign In with Email &amp; Password</text>
+          </g>
+
+          <g transform="translate(460, 155)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse" style="stroke: #6366f1; fill: #eef2ff;"/>
+            <text x="95" y="25" class="uc-text" style="fill: #312e81;">Sign In with Google OAuth</text>
+          </g>
+
+          <g transform="translate(230, 240)">
+            <ellipse cx="100" cy="26" rx="105" ry="26" class="uc-ellipse" style="stroke: #4338ca; stroke-width: 2.2; fill: #eef2ff;"/>
+            <text x="100" y="26" class="uc-text" style="fill: #312e81; font-weight: bold;">Universal Authoring Access</text>
+          </g>
+
+          <g transform="translate(230, 320)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse" style="stroke: #6366f1; fill: #eef2ff;"/>
+            <text x="95" y="25" class="uc-text" style="fill: #312e81;">View Generation History</text>
+          </g>
+
+          <g transform="translate(230, 395)">
+            <ellipse cx="95" cy="25" rx="100" ry="24" class="uc-ellipse" style="stroke: #6366f1; fill: #eef2ff;"/>
+            <text x="95" y="25" class="uc-text" style="fill: #312e81;">Sign Out of System</text>
+          </g>
+
+          <!-- Association Lines -->
+          <line x1="120" y1="210" x2="235" y2="105" class="assoc-line" />
+          <line x1="120" y1="215" x2="230" y2="180" class="assoc-line" />
+          <line x1="120" y1="220" x2="230" y2="265" class="assoc-line" />
+          <line x1="120" y1="225" x2="230" y2="345" class="assoc-line" />
+          <line x1="120" y1="230" x2="235" y2="420" class="assoc-line" />
+
+          <!-- Extends: Google OAuth extends Sign In -->
+          <line x1="460" y1="180" x2="430" y2="180" class="ext-line" marker-end="url(#arr-blue-4)" />
+          <text x="445" y="170" fill="#2563eb" class="rel-label" text-anchor="middle">&lt;&lt;extend&gt;&gt;</text>
+          <line x1="660" y1="180" x2="730" y2="210" class="assoc-line" />
+
+          <!-- Depends: Universal Access depends on Sign In -->
+          <line x1="325" y1="205" x2="325" y2="240" class="dep-line" marker-end="url(#arr-amber-4)" />
+          <text x="330" y="225" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Depends: History depends on Universal Access -->
+          <line x1="325" y1="295" x2="325" y2="320" class="dep-line" marker-end="url(#arr-amber-4)" />
+          <text x="330" y="310" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+
+          <!-- Depends: Sign Out depends on Sign In -->
+          <line x1="325" y1="370" x2="325" y2="395" class="dep-line" marker-end="url(#arr-amber-4)" />
+          <text x="330" y="385" fill="#d97706" class="rel-label">&lt;&lt;depends on&gt;&gt;</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(n) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('tab-' + i);
+        const btn = document.getElementById('tab-btn-' + i);
+        if (i === n) {
+          el.classList.remove('hidden');
+          el.classList.add('block');
+          btn.classList.add('bg-emerald-600', 'text-white', 'shadow-xs');
+          btn.classList.remove('text-muted-foreground', 'hover:bg-card');
+        } else {
+          el.classList.remove('block');
+          el.classList.add('hidden');
+          btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-xs');
+          btn.classList.add('text-muted-foreground', 'hover:bg-card');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

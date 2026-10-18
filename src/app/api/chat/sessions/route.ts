@@ -7,15 +7,28 @@
 
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import {
+  extractTokenFromRequest,
+  authenticateSession,
+} from "@/controllers/auth.controller";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get("email")?.toLowerCase().trim();
+    const token = await extractTokenFromRequest(request);
+    const user = await authenticateSession(token);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in." },
+        { status: 401 }
+      );
+    }
 
-    if (!email) {
+    const { searchParams } = new URL(request.url);
+    const email = (searchParams.get("email") || user.email).toLowerCase().trim();
+
+    if (!email || email !== user.email.toLowerCase().trim()) {
       return NextResponse.json({ sessions: [] });
     }
 
@@ -85,14 +98,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, session } = body;
-
-    if (!email || !session || !session.id) {
-      return NextResponse.json({ error: "email and session are required" }, { status: 400 });
+    const token = await extractTokenFromRequest(request);
+    const user = await authenticateSession(token);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in." },
+        { status: 401 }
+      );
     }
 
-    const normalizedEmail = String(email).toLowerCase().trim();
+    const body = await request.json();
+    const { session } = body;
+
+    if (!session || !session.id) {
+      return NextResponse.json({ error: "session is required" }, { status: 400 });
+    }
+
+    const normalizedEmail = user.email.toLowerCase().trim();
     const nowIso = new Date().toISOString();
 
     // 1. Upsert session row
@@ -137,18 +159,28 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const token = await extractTokenFromRequest(request);
+    const user = await authenticateSession(token);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required. Please sign in." },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const email = searchParams.get("email")?.toLowerCase().trim();
 
     if (!id) {
       return NextResponse.json({ error: "Session id required" }, { status: 400 });
     }
 
-    let q = supabase.from("app_chat_sessions").delete().eq("id", id);
-    if (email) {
-      q = q.eq("user_email", email);
-    }
+    const normalizedEmail = user.email.toLowerCase().trim();
+    const q = supabase
+      .from("app_chat_sessions")
+      .delete()
+      .eq("id", id)
+      .eq("user_email", normalizedEmail);
     await q;
 
     return NextResponse.json({ success: true });

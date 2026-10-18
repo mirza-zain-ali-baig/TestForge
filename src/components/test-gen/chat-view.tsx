@@ -19,9 +19,9 @@ import {
   RotateCcw,
   AlertCircle,
   ArrowLeft,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -69,9 +69,10 @@ interface ChatViewProps {
   user?: AuthUser | null;
   onBack?: () => void;
   fullWindow?: boolean;
+  onSignIn?: () => void;
 }
 
-export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
+export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatViewProps) {
   const userEmail = user?.email ? user.email.toLowerCase().trim() : "guest";
   const SESSIONS_KEY = `examforge_chat_sessions_${userEmail}`;
   const ACTIVE_KEY = `examforge_active_session_${userEmail}`;
@@ -238,6 +239,12 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
 
   // Add new session (prevents duplicate empty chats!)
   const handleNewChat = () => {
+    if (!user) {
+      toast.error("Please sign in or create an account to start a new conversation.");
+      onSignIn?.();
+      return;
+    }
+
     if (isGenerating && abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsGenerating(false);
@@ -336,6 +343,12 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
 
   // Send message
   const handleSendMessage = async (textToSend?: string) => {
+    if (!user) {
+      toast.error("Please sign in or create an account to chat with ExamForge AI.");
+      onSignIn?.();
+      return;
+    }
+
     const prompt = (textToSend || input).trim();
     if (!prompt || isGenerating) return;
 
@@ -745,13 +758,42 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
                 Ask any question, solve math & science problems step-by-step, generate board-exam MCQs, or review difficult concepts.
               </p>
 
+              {/* Sign In Required Banner if guest */}
+              {!user && (
+                <div className="mt-4 mb-2 max-w-2xl w-full rounded-2xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 p-5 text-center shadow-xs">
+                  <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">Sign In Required to Chat</h3>
+                  <p className="mt-1 text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+                    You must be signed in to ask questions, solve exam problems, and save your chat history with ExamForge AI.
+                  </p>
+                  <div className="mt-3 flex justify-center">
+                    <Button
+                      size="sm"
+                      onClick={onSignIn}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs"
+                    >
+                      Sign In / Register
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Starter Prompts */}
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl w-full text-left">
                 {STARTER_PROMPTS.map((sp, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => handleSendMessage(sp.prompt)}
+                    onClick={() => {
+                      if (!user) {
+                        toast.info("Please sign in or create an account to chat with AI.");
+                        onSignIn?.();
+                        return;
+                      }
+                      handleSendMessage(sp.prompt);
+                    }}
                     className="flex flex-col rounded-xl border border-border p-3 text-left transition-all hover:border-emerald-500/60 hover:bg-emerald-500/5 group"
                   >
                     <span className="text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
@@ -903,54 +945,75 @@ export function ChatView({ user, onBack, fullWindow = false }: ChatViewProps) {
 
         {/* Input Bar */}
         <div className="p-3 sm:p-4 border-t border-border bg-card/60">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs outline-none focus-within:outline-none focus-within:ring-0 focus-within:border-border"
-          >
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
+          {!user ? (
+            <div className="max-w-3xl mx-auto flex items-center justify-between gap-3 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Lock className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Please sign in or create an account to chat with ExamForge AI.</span>
+              </div>
+              <Button
+                size="sm"
+                onClick={onSignIn}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shrink-0 h-8 text-xs shadow-xs"
+              >
+                Sign In
+              </Button>
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Ask ExamForge AI... (Enter to send, Shift+Enter for new line)"
-              rows={1}
-              className="min-h-[38px] max-h-[140px] flex-1 resize-none border-0 bg-transparent px-2 py-1 text-xs sm:text-sm focus-visible:ring-0 shadow-none outline-none focus:outline-none focus:ring-0"
-            />
+              className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs outline-none focus-within:outline-none focus-within:ring-0 focus-within:border-border"
+            >
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Ask ExamForge AI... (Enter to send, Shift+Enter for new line)"
+                rows={1}
+                className="chat-input-textarea min-h-[38px] max-h-[140px] flex-1 resize-none bg-transparent px-2 py-1.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-none"
+                style={{
+                  border: "none",
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+              />
 
-            {isGenerating ? (
-              <Button
-                type="button"
-                onClick={handleStop}
-                variant="destructive"
-                size="icon"
-                className="h-9 w-9 shrink-0 rounded-xl"
-                title="Stop generating"
-              >
-                <Square className="h-4 w-4 fill-current" />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                disabled={!input.trim()}
-                className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
-                title="Send message"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            )}
-          </form>
+              {isGenerating ? (
+                <Button
+                  type="button"
+                  onClick={handleStop}
+                  variant="destructive"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 rounded-xl"
+                  title="Stop generating"
+                >
+                  <Square className="h-4 w-4 fill-current" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
+                  title="Send message"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              )}
+            </form>
+          )}
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
             ExamForge AI • Academic & Exam Preparation Assistant
           </p>
