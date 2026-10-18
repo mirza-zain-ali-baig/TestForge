@@ -80,7 +80,7 @@ export function Dashboard({
               <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/25">
                 <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
               </Badge>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-snug">
+              <h1 className="text-[28px] sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
                 Create custom exam papers & practice online
               </h1>
               <p className="max-w-xl text-xs sm:text-sm text-white/85 leading-relaxed">
@@ -297,7 +297,7 @@ export function Dashboard({
         <Button
           size="sm"
           onClick={onStart}
-          className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-1.5 h-10 border border-emerald-400/30"
+          className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-1.5 h-11 min-h-[44px] min-w-[44px] border border-emerald-400/30"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span>Generate Test</span>

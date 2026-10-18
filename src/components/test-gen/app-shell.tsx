@@ -370,16 +370,17 @@ export function TestGeneratorApp() {
     <div className={cn("flex min-h-screen flex-col bg-background", view === "chat" && "h-screen overflow-hidden")}>
       {/* Unified Persistent Header — Hidden in full AI Chat window, Generate Test, and Print views */}
       {!["chat", "generate", "print"].includes(view) && (
-        <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/65 overflow-x-clip">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-2.5 sm:gap-4 sm:px-6">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => navigate("dashboard")}
-              className="flex items-center gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg p-0.5"
+              className="flex items-center gap-2 sm:gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg p-1 min-h-[44px] shrink-0"
+              aria-label="ExamForge Home"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm shrink-0">
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div className="leading-tight">
@@ -398,8 +399,8 @@ export function TestGeneratorApp() {
             </button>
           </div>
 
-          {/* Desktop Navigation (All 7 views always available, never hidden — Bug 19) */}
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Main Navigation">
+          {/* Desktop Navigation (Visible at lg: 1024px+ to avoid 768px tablet portrait overflow) */}
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Main Navigation">
             {NAV.map((n) => {
               const isActive = view === n.id;
               return (
@@ -418,7 +419,7 @@ export function TestGeneratorApp() {
                     }
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap min-h-[38px]",
                     isActive
                       ? "bg-emerald-50 text-emerald-800 font-semibold shadow-xs dark:bg-emerald-950/60 dark:text-emerald-300"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -431,14 +432,14 @@ export function TestGeneratorApp() {
             })}
           </nav>
 
-          {/* Right Header Utilities (Single Auth Button, Accessible Theme & Shortcuts — Bug 20, Bug 29, Bug 34) */}
-          <div className="flex items-center gap-2">
+          {/* Right Header Utilities (Single Auth Button, Accessible Theme & Shortcuts) */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative flex h-9 items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="relative flex h-11 min-h-[44px] min-w-[44px] items-center gap-2 rounded-full p-0 px-2 ring-1 ring-border hover:ring-emerald-500/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     <Avatar className="h-7 w-7">
                       <AvatarFallback className="bg-emerald-600 text-xs font-semibold text-white">
@@ -505,16 +506,19 @@ export function TestGeneratorApp() {
                   setAuthDefaultTab("login");
                   setAuthOpen(true);
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium h-9 px-3"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs text-xs font-medium h-11 min-h-[44px] min-w-[44px] px-2.5 sm:px-3 active:scale-95"
+                aria-label="Sign In"
+                title="Sign In"
               >
-                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In
+                <LogIn className="h-4 w-4 min-[380px]:mr-1.5 shrink-0" />
+                <span className="hidden min-[380px]:inline">Sign In</span>
               </Button>
             )}
 
             <Button
               variant="ghost"
               size="icon"
-              className="hidden h-9 w-9 sm:flex focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hidden h-11 w-11 min-h-[44px] min-w-[44px] sm:flex sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none"
               onClick={() => setShowHelp(true)}
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
@@ -525,7 +529,7 @@ export function TestGeneratorApp() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] lg:hidden"
               onClick={() => setMobileNav((v) => !v)}
               aria-label="Toggle menu"
             >
@@ -534,9 +538,9 @@ export function TestGeneratorApp() {
           </div>
         </div>
 
-        {/* Mobile nav */}
+        {/* Mobile nav drawer */}
         {mobileNav && (
-          <div className="border-t md:hidden bg-background">
+          <div className="border-t lg:hidden bg-background">
             <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-1 p-3">
               {NAV.map((n) => (
                 <button
@@ -582,7 +586,7 @@ export function TestGeneratorApp() {
             ? "w-full h-screen p-0 m-0 overflow-hidden"
             : view === "generate"
             ? "mx-auto w-full max-w-7xl px-3 py-4 pb-20 sm:px-6 sm:py-6 sm:pb-6"
-            : "mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-8"
+            : "mx-auto w-full max-w-7xl px-3 py-5 pb-24 sm:px-6 sm:py-8 sm:pb-8"
         )}
       >
         <ErrorBoundary>
