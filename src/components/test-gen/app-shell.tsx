@@ -292,22 +292,24 @@ export function TestGeneratorApp() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setView("dashboard")}
-                className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent"
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent px-2 sm:px-3"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Exit to Dashboard</span>
+                <span className="hidden sm:inline">Exit to Dashboard</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
 
             {/* Center: Title / Breadcrumb */}
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
                 <GraduationCap className="h-4 w-4" />
               </div>
-              <span className="text-xs sm:text-sm font-semibold tracking-tight">
-                {preview ? "Test Preview & Customization" : "Create Test Paper"}
+              <span className="truncate text-xs sm:text-sm font-semibold tracking-tight">
+                <span className="hidden sm:inline">{preview ? "Test Preview & Customization" : "Create Test Paper"}</span>
+                <span className="sm:hidden">{preview ? "Preview" : "Create Test"}</span>
               </span>
-              <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] font-medium bg-emerald-100/60 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium bg-emerald-100/60 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                 Focus Mode
               </Badge>
             </div>

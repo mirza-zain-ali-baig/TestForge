@@ -146,7 +146,14 @@ export async function exportTestToDocxBlob(
   }
 
   // 3. Instructions
-  if (test.instructions && test.instructions.length > 0) {
+  const rawInstructions = test.instructions;
+  const instructionLines: string[] = typeof rawInstructions === "string"
+    ? rawInstructions.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+    : Array.isArray(rawInstructions)
+    ? (rawInstructions as string[]).map((s) => String(s).trim()).filter(Boolean)
+    : [];
+
+  if (instructionLines.length > 0) {
     docChildren.push(
       new Paragraph({
         spacing: { before: 80, after: 40 },
@@ -162,7 +169,7 @@ export async function exportTestToDocxBlob(
       })
     );
 
-    for (const inst of test.instructions) {
+    for (const inst of instructionLines) {
       docChildren.push(
         new Paragraph({
           spacing: { before: 20, after: 20 },
@@ -193,7 +200,22 @@ export async function exportTestToDocxBlob(
   // 4. Test Sections & Questions
   let questionCounter = 1;
 
-  for (const section of test.sections || []) {
+  for (let sIdx = 0; sIdx < (test.sections || []).length; sIdx++) {
+    const section = test.sections[sIdx];
+    const sectionLetter = String.fromCharCode(65 + sIdx);
+    const sectionTypeLabel =
+      section.type_name === "MCQ"
+        ? "Multiple Choice Questions"
+        : section.type_name === "Short"
+        ? "Short Answer Questions"
+        : section.type_name === "Long"
+        ? "Long / Essay Questions"
+        : section.type_name || "Questions";
+    const sectionTitle = `SECTION ${sectionLetter}: ${sectionTypeLabel.toUpperCase()}`;
+    const sectionMarks =
+      section.sectionMarks ??
+      (section.questions || []).reduce((acc, q) => acc + (q.marks || 1), 0);
+
     // Section Header
     docChildren.push(
       new Paragraph({
@@ -201,14 +223,14 @@ export async function exportTestToDocxBlob(
         heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
-            text: section.title.toUpperCase(),
+            text: sectionTitle,
             bold: true,
             size: 22,
             font: "Calibri",
             color: "047857",
           }),
           new TextRun({
-            text: ` (${section.totalMarks} Marks)`,
+            text: ` (${sectionMarks} Marks)`,
             bold: true,
             size: 20,
             font: "Calibri",
@@ -333,13 +355,24 @@ export async function exportTestToDocxBlob(
     );
 
     let ansCounter = 1;
-    for (const section of test.sections || []) {
+    for (let sIdx = 0; sIdx < (test.sections || []).length; sIdx++) {
+      const section = test.sections[sIdx];
+      const sectionLetter = String.fromCharCode(65 + sIdx);
+      const sectionTypeLabel =
+        section.type_name === "MCQ"
+          ? "Multiple Choice Questions"
+          : section.type_name === "Short"
+          ? "Short Answer Questions"
+          : section.type_name === "Long"
+          ? "Long / Essay Questions"
+          : section.type_name || "Questions";
+
       docChildren.push(
         new Paragraph({
           spacing: { before: 140, after: 60 },
           children: [
             new TextRun({
-              text: section.title,
+              text: `Section ${sectionLetter}: ${sectionTypeLabel}`,
               bold: true,
               size: 21,
               font: "Calibri",

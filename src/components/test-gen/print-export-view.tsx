@@ -1263,7 +1263,7 @@ export function PrintExportView({
       toast.success("Word document (.docx) exported successfully");
     } catch (e) {
       console.error("DOCX export error:", e);
-      toast.error("Failed to export Word document");
+      toast.error(e instanceof Error ? `Export failed: ${e.message}` : "Failed to export Word document");
     }
   };
 

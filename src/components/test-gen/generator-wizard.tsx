@@ -316,13 +316,17 @@ export function GeneratorWizard({
     }
   }, [classId, tree, subjectId]);
 
-  /* -------------------- When subject changes, deselect chapters by default -------------------- */
+  /* -------------------- When subject actively changes, deselect chapters -------------------- */
+  const prevSubjectIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!subjectId || tree.length === 0) return;
-    setChapterIds([]);
-    setTopicIds([]);
-    setQuestionSources([]);
-  }, [subjectId, tree]);
+    if (!subjectId) return;
+    if (prevSubjectIdRef.current && prevSubjectIdRef.current !== subjectId) {
+      setChapterIds([]);
+      setTopicIds([]);
+      setQuestionSources([]);
+    }
+    prevSubjectIdRef.current = subjectId;
+  }, [subjectId]);
 
   const totalQuestions = useMemo(
     () =>
