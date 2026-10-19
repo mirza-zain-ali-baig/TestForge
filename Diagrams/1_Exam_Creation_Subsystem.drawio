@@ -1,0 +1,76 @@
+<mxfile host="Electron" agent="Mozilla/5.0">
+  <diagram id="diag_1" name="Exam Creation Subsystem">
+    <mxGraphModel dx="1012" dy="713" grid="1" gridSize="10" guides="1" tooltips="0" connect="0" arrows="0" fold="1" page="1" pageScale="1" pageWidth="1050" pageHeight="800" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="subsys_1" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;swimlaneLine=1;rounded=1;arcSize=4;strokeColor=#000000;strokeWidth=1.5;fillColor=none;collapsible=0;container=0;pointerEvents=0;connectable=0;align=center;verticalAlign=middle;fontStyle=1;fontSize=13.5;fontFamily=Helvetica;fontColor=#000000;" value="Exam Paper Creation &amp;amp; Blueprint Engine" vertex="1">
+          <mxGeometry height="675" width="570" x="230" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_teacher" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;fontStyle=1;" value="Teacher&#xa;(Primary Actor)" vertex="1">
+          <mxGeometry height="90" width="45" x="110" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_gemini" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;fontStyle=1;" value="Gemini AI&#xa;(External AI)" vertex="1">
+          <mxGeometry height="90" width="45" x="870" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_select" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Select Class &amp;amp; Subject" vertex="1">
+          <mxGeometry height="48" width="180" x="270" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_filter" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Filter Syllabus &amp;amp; Topics" vertex="1">
+          <mxGeometry height="48" width="180" x="270" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_config" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Configure Blueprint Matrix" vertex="1">
+          <mxGeometry height="50" width="185" x="270" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_suggest" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Apply AI Blueprint Suggestion" vertex="1">
+          <mxGeometry height="50" width="195" x="560" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_generate" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;;fontStyle=1;" value="Generate Test Paper" vertex="1">
+          <mxGeometry height="52" width="195" x="265" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_fill" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="AI Question Shortfall Fill" vertex="1">
+          <mxGeometry height="50" width="195" x="560" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_save" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Save Paper to My Tests" vertex="1">
+          <mxGeometry height="48" width="185" x="270" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_t_uc_select" edge="1" parent="1" source="actor_teacher" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_select">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_t_uc_filter" edge="1" parent="1" source="actor_teacher" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_filter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_t_uc_config" edge="1" parent="1" source="actor_teacher" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_config">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_t_uc_generate" edge="1" parent="1" source="actor_teacher" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_generate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_t_uc_save" edge="1" parent="1" source="actor_teacher" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_save">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_g_uc_suggest" edge="1" parent="1" source="actor_gemini" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_suggest">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_g_uc_fill" edge="1" parent="1" source="actor_gemini" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_fill">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_1" edge="1" parent="1" source="uc_select" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_filter" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_2" edge="1" parent="1" source="uc_filter" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_config" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_3" edge="1" parent="1" source="uc_generate" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_save" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_1" edge="1" parent="1" source="uc_suggest" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=bottom;" target="uc_config" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_2" edge="1" parent="1" source="uc_fill" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=bottom;" target="uc_generate" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

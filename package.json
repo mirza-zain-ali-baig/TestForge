@@ -1,6 +1,7 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
-  "version": "0.2.1",
+  "name": "examforge-ai",
+  "version": "1.0.0",
+  "description": "ExamForge AI — Enterprise Examination Paper Generation and Blueprint Studio",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",

@@ -1,0 +1,313 @@
+<mxfile host="Electron" agent="Mozilla/5.0">
+  <diagram id="class_diagram" name="UML Class Diagram">
+    <mxGraphModel dx="2878" dy="2028" grid="1" gridSize="10" guides="1" tooltips="0" connect="0" arrows="0" fold="1" page="1" pageScale="1" pageWidth="3200" pageHeight="1600" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="diagram_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontFamily=Helvetica;fontColor=#000000;" value="UML Class Diagram: Exam Paper Generation &amp;amp; Assessment Architecture" vertex="1">
+          <mxGeometry height="30" width="900" x="1100" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_AuthController" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;controller&gt;&gt;&#xa;&lt;b&gt;AuthController&lt;/b&gt;" vertex="1">
+          <mxGeometry height="150" width="510" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_AuthController_empty_attr" parent="cls_AuthController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=6;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="510" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_AuthController_sep" parent="cls_AuthController" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="510" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_AuthController_methods" parent="cls_AuthController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ register(string email, string password, string name): Promise&lt;UserRecord&gt;&#xa;+ login(string email, string password): Promise&lt;SessionWithUser&gt;&#xa;+ logout(string token): Promise&lt;void&gt;&#xa;+ getCurrentUser(string token): Promise&lt;UserRecord&gt;" vertex="1">
+          <mxGeometry height="82" width="510" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_SavedTestRecord" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;persistent record&gt;&gt;&#xa;&lt;b&gt;SavedTestRecord&lt;/b&gt;" vertex="1">
+          <mxGeometry height="210" width="180" x="590" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_SavedTestRecord_attrs" parent="cls_SavedTestRecord" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ id: string&#xa;+ userEmail: string&#xa;+ title: string&#xa;+ totalMarks: number&#xa;+ testJson: string&#xa;+ source: string&#xa;+ createdAt: Date" vertex="1">
+          <mxGeometry height="136" width="180" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_DocxExportService" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;service adapter&gt;&gt;&#xa;&lt;b&gt;DocxExportService&lt;/b&gt;" vertex="1">
+          <mxGeometry height="210" width="560" x="810" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_DocxExportService_attrs" parent="cls_DocxExportService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- defaultTheme: DocxThemeConfig" vertex="1">
+          <mxGeometry height="28" width="560" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_DocxExportService_sep" parent="cls_DocxExportService" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="560" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_DocxExportService_methods" parent="cls_DocxExportService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ exportTestToDocxBlob(GeneratedTest test, DocxExportOptions opts): Promise&lt;Blob&gt;&#xa;+ buildAcademyHeader(opts): Paragraph[]&#xa;+ buildStudentInfoGrid(opts): Table&#xa;+ buildQuestionSection(TestSection sec): Paragraph[]&#xa;+ buildDetachedAnswerKey(GeneratedTest test): Paragraph[]&#xa;+ compileOpenXMLDocument(nodes): Document" vertex="1">
+          <mxGeometry height="118" width="560" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestController" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;controller&gt;&gt;&#xa;&lt;b&gt;TestController&lt;/b&gt;" vertex="1">
+          <mxGeometry height="210" width="530" x="1980" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestController_attrs" parent="cls_TestController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- TYPE_ORDER: QuestionTypeName[]&#xa;- DIFF_ORDER: DifficultyName[]" vertex="1">
+          <mxGeometry height="46" width="530" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestController_sep" parent="cls_TestController" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="530" y="88" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestController_methods" parent="cls_TestController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ generateTest(GenerateTestRequest req): Promise&lt;GeneratedTest&gt;&#xa;+ generateBatch(GenerateTestRequest req, int count): Promise&lt;GeneratedTest[]&gt;&#xa;- shuffleOptions(GeneratedQuestion q): GeneratedQuestion&#xa;- enrichBankPicks(picks, lookups, ...): Promise&lt;GeneratedQuestion[]&gt;&#xa;- fillShortfallWithAI(shortfalls): Promise&lt;GeneratedQuestion[]&gt;" vertex="1">
+          <mxGeometry height="100" width="530" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_UserRecord" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;entity&gt;&gt;&#xa;&lt;b&gt;UserRecord&lt;/b&gt;" vertex="1">
+          <mxGeometry height="204" width="180" x="205" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_UserRecord_attrs" parent="cls_UserRecord" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ id: string&#xa;+ email: string&#xa;+ name: string&#xa;+ passwordHash: string&#xa;+ role: string&#xa;+ createdAt: Date&#xa;+ updatedAt: Date" vertex="1">
+          <mxGeometry height="136" width="180" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedTest" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;aggregate root&gt;&gt;&#xa;&lt;b&gt;GeneratedTest&lt;/b&gt;" vertex="1">
+          <mxGeometry height="330" width="305" x="680" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedTest_attrs" parent="cls_GeneratedTest" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ title: string&#xa;+ className: string&#xa;+ subjectName: string&#xa;+ durationMins: number&#xa;+ instructions: string&#xa;+ totalMarks: number&#xa;+ totalQuestions: number&#xa;+ source: GenerateSource&#xa;+ sections: TestSection[]&#xa;+ meta: GenerationMeta" vertex="1">
+          <mxGeometry height="190" width="305" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedTest_sep" parent="cls_GeneratedTest" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="305" y="232" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedTest_methods" parent="cls_GeneratedTest" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ calculateSummary(): object&#xa;+ cloneVariant(string label): GeneratedTest&#xa;+ toSerializedJson(): string" vertex="1">
+          <mxGeometry height="64" width="305" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_BlueprintController" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;b&gt;BlueprintController&lt;/b&gt;" vertex="1">
+          <mxGeometry height="142" width="435" x="1025" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_BlueprintController_attrs" parent="cls_BlueprintController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- DEFAULT_MCQ_MARKS: number" vertex="1">
+          <mxGeometry height="28" width="435" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_BlueprintController_sep" parent="cls_BlueprintController" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="435" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_BlueprintController_methods" parent="cls_BlueprintController" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ getBlueprintSuggestions(string subjectId): Promise&lt;Blueprint&gt;&#xa;+ validateBlueprint(Blueprint bp): boolean&#xa;+ calculateTotalMarks(Blueprint bp): number" vertex="1">
+          <mxGeometry height="64" width="435" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeminiAIService" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;service adapter&gt;&gt;&#xa;&lt;b&gt;GeminiAIService&lt;/b&gt;" vertex="1">
+          <mxGeometry height="210" width="550" x="1500" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeminiAIService_attrs" parent="cls_GeminiAIService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- apiKey: string&#xa;- model: string" vertex="1">
+          <mxGeometry height="46" width="550" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeminiAIService_sep" parent="cls_GeminiAIService" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="550" y="88" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeminiAIService_methods" parent="cls_GeminiAIService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ generateAIQuestions(params): Promise&lt;GeneratedQuestion[]&gt;&#xa;+ suggestBlueprint(string subject, number duration): Promise&lt;Blueprint&gt;&#xa;+ regenerateQuestion(GeneratedQuestion q, string hint): Promise&lt;GeneratedQuestion&gt;&#xa;+ explainQuestion(GeneratedQuestion q): Promise&lt;string&gt;&#xa;+ auditVariantSimilarity(GeneratedTest[] tests): Promise&lt;SimilarityReport&gt;" vertex="1">
+          <mxGeometry height="100" width="550" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_EventBus" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;event dispatcher&gt;&gt;&#xa;&lt;b&gt;EventBus&lt;/b&gt;" vertex="1">
+          <mxGeometry height="190" width="300" x="2095" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_EventBus_attrs" parent="cls_EventBus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- listeners: Map&lt;EventName, Set&lt;Function&gt;&gt;" vertex="1">
+          <mxGeometry height="28" width="300" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_EventBus_sep" parent="cls_EventBus" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="300" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_EventBus_methods" parent="cls_EventBus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ on(EventName event, Function fn): void&#xa;+ emit(EventName event, any payload): void&#xa;+ off(EventName event, Function fn): void&#xa;+ clear(): void&#xa;+ listenerCount(EventName event): number" vertex="1">
+          <mxGeometry height="100" width="300" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_QuestionBankRepository" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;repository&gt;&gt;&#xa;&lt;b&gt;QuestionBankRepository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="265" width="390" x="2435" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_QuestionBankRepository_attrs" parent="cls_QuestionBankRepository" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="- client: SupabaseClient&#xa;- cache: CurriculumCache" vertex="1">
+          <mxGeometry height="46" width="390" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_QuestionBankRepository_sep" parent="cls_QuestionBankRepository" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="390" y="88" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_QuestionBankRepository_methods" parent="cls_QuestionBankRepository" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ findClasses(): Promise&lt;ClassRow[]&gt;&#xa;+ findSubjects(string classId): Promise&lt;SubjectRow[]&gt;&#xa;+ findChapters(string subjectId): Promise&lt;ChapterRow[]&gt;&#xa;+ findTopics(string[] chapterIds): Promise&lt;TopicRow[]&gt;&#xa;+ findQuestionsByCellPaged(...): Promise&lt;QuestionRow[]&gt;&#xa;+ findMcqOptions(string[] qIds): Promise&lt;McqOptionRow[]&gt;&#xa;+ getLookups(): Promise&lt;LookupMap&gt;&#xa;+ getBankStatistics(): Promise&lt;BankStats&gt;" vertex="1">
+          <mxGeometry height="154" width="390" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GenerateTestRequest" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;specification&gt;&gt;&#xa;&lt;b&gt;GenerateTestRequest&lt;/b&gt;" vertex="1">
+          <mxGeometry height="265" width="220" x="2865" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GenerateTestRequest_attrs" parent="cls_GenerateTestRequest" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ classId: string&#xa;+ subjectId: string&#xa;+ durationMins: number&#xa;+ chapterIds: string[]&#xa;+ topicIds: string[]&#xa;+ blueprint: Blueprint&#xa;+ source: string&#xa;+ shuffle: boolean&#xa;+ excludeQuestionIds: string[]" vertex="1">
+          <mxGeometry height="172" width="220" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GenerateTestRequest_sep" parent="cls_GenerateTestRequest" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="220" y="214" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GenerateTestRequest_methods" parent="cls_GenerateTestRequest" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ validate(): boolean" vertex="1">
+          <mxGeometry height="28" width="220" y="222" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestSection" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;entity&gt;&gt;&#xa;&lt;b&gt;TestSection&lt;/b&gt;" vertex="1">
+          <mxGeometry height="165" width="230" x="720" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestSection_attrs" parent="cls_TestSection" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ type_name: QuestionTypeName&#xa;+ marksPerQuestion: number&#xa;+ sectionMarks: number&#xa;+ questions: GeneratedQuestion[]" vertex="1">
+          <mxGeometry height="82" width="230" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestSection_sep" parent="cls_TestSection" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="230" y="124" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_TestSection_methods" parent="cls_TestSection" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ getQuestionCount(): number" vertex="1">
+          <mxGeometry height="28" width="230" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_Blueprint" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;br&gt;&lt;b&gt;Blueprint&lt;/b&gt;" vertex="1">
+          <mxGeometry height="178" width="250" x="1160" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_Blueprint_attrs" parent="cls_Blueprint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ MCQ: BlueprintType&#xa;+ Short: BlueprintType&#xa;+ Long: BlueprintType" vertex="1">
+          <mxGeometry height="64" width="250" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_Blueprint_sep" parent="cls_Blueprint" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#000000;connectable=0;pointerEvents=0;" value="" vertex="1">
+          <mxGeometry height="8" width="250" y="106" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_Blueprint_methods" parent="cls_Blueprint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ getTotalQuestions(): number&#xa;+ calculateExpectedMarks(): number&#xa;+ getDifficultyRatio(): object" vertex="1">
+          <mxGeometry height="64" width="250" y="114" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedQuestion" parent="1" style="swimlane;fontStyle=0;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=42;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;" value="&lt;&lt;entity&gt;&gt;&#xa;&lt;b&gt;GeneratedQuestion&lt;/b&gt;" vertex="1">
+          <mxGeometry height="205" width="235" x="720" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="cls_GeneratedQuestion_attrs" parent="cls_GeneratedQuestion" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;overflow=hidden;rotatable=0;points=[];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=#000000;connectable=0;" value="+ id: string&#xa;+ source: string&#xa;+ question_text: string&#xa;+ difficulty_name: DifficultyName&#xa;+ marks: number&#xa;+ options: McqOptions&#xa;+ model_answer: string" vertex="1">
+          <mxGeometry height="136" width="235" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_aggregates_blueprint" edge="1" parent="1" source="cls_GenerateTestRequest" style="startArrow=diamond;startFill=0;startSize=14;endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontFamily=Helvetica;fontSize=11;fontStyle=0;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.68;entryY=0.0;entryDx=0;entryDy=0;" target="cls_Blueprint" value="aggregates specification">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2975" y="835" />
+              <mxPoint x="1330" y="835" />
+            </Array>
+            <mxPoint x="2975" y="705" as="sourcePoint" />
+            <mxPoint x="1330" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_aggregates_blueprint_src_card" connectable="0" parent="rel_aggregates_blueprint" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint x="-12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_aggregates_blueprint_trg_card" connectable="0" parent="rel_aggregates_blueprint" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint x="12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_composed_of_sections" edge="1" parent="1" source="cls_GeneratedTest" style="startArrow=diamond;startFill=1;startSize=14;endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontFamily=Helvetica;fontSize=11;fontStyle=0;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_TestSection" value="composed of sections">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="835" y="770" as="sourcePoint" />
+            <mxPoint x="835" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_composed_of_sections_src_card" connectable="0" parent="rel_composed_of_sections" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint x="-12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_composed_of_sections_trg_card" connectable="0" parent="rel_composed_of_sections" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint x="12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_contains_questions" edge="1" parent="1" source="cls_TestSection" style="startArrow=diamond;startFill=1;startSize=14;endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontFamily=Helvetica;fontSize=11;fontStyle=0;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GeneratedQuestion" value="contains questions">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="835" y="1065" as="sourcePoint" />
+            <mxPoint x="835" y="1220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_contains_questions_src_card" connectable="0" parent="rel_contains_questions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint x="-12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_contains_questions_trg_card" connectable="0" parent="rel_contains_questions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1..*" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint x="12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tc_consumes_req" edge="1" parent="1" source="cls_TestController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.83;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GenerateTestRequest" value="consumes parameter">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2420" y="350" />
+              <mxPoint x="2975" y="350" />
+            </Array>
+            <mxPoint x="2420" y="310" as="sourcePoint" />
+            <mxPoint x="2975" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tc_instantiates_test" edge="1" parent="1" source="cls_TestController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.17;exitY=1.0;exitDx=0;exitDy=0;entryX=0.75;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GeneratedTest" value="instantiates &amp; returns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2070" y="350" />
+              <mxPoint x="910" y="350" />
+            </Array>
+            <mxPoint x="2070" y="310" as="sourcePoint" />
+            <mxPoint x="910" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tc_queries_bank" edge="1" parent="1" source="cls_TestController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.66;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_QuestionBankRepository" value="queries question pool">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2330" y="370" />
+              <mxPoint x="2630" y="370" />
+            </Array>
+            <mxPoint x="2330" y="310" as="sourcePoint" />
+            <mxPoint x="2630" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tc_gemini_fallback" edge="1" parent="1" source="cls_TestController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.34;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GeminiAIService" value="fallback synthesis &amp; shortfalls">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2160" y="370" />
+              <mxPoint x="1775" y="370" />
+            </Array>
+            <mxPoint x="2160" y="310" as="sourcePoint" />
+            <mxPoint x="1775" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tc_eventbus" edge="1" parent="1" source="cls_TestController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_EventBus" value="emits TEST_GENERATION_COMPLETED">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2245" y="310" as="sourcePoint" />
+            <mxPoint x="2245" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_bpc_blueprint" edge="1" parent="1" source="cls_BlueprintController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.32;entryY=0.0;entryDx=0;entryDy=0;" target="cls_Blueprint" value="suggests &amp; validates">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1240" y="750" as="sourcePoint" />
+            <mxPoint x="1240" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_auth_user" edge="1" parent="1" source="cls_AuthController" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_UserRecord" value="manages credentials &amp; lifecycle">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="295" y="250" as="sourcePoint" />
+            <mxPoint x="295" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_docx_test" edge="1" parent="1" source="cls_DocxExportService" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.46;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GeneratedTest" value="compiles into OpenXML docx">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1070" y="390" />
+              <mxPoint x="835" y="390" />
+            </Array>
+            <mxPoint x="1070" y="310" as="sourcePoint" />
+            <mxPoint x="835" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_saved_test_json" edge="1" parent="1" source="cls_SavedTestRecord" style="dashed=1;dashPattern=6 4;endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=10.5;fontStyle=2;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.61;exitY=1.0;exitDx=0;exitDy=0;entryX=0.23;entryY=0.0;entryDx=0;entryDy=0;" target="cls_GeneratedTest" value="serializes testJson">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="350" />
+              <mxPoint x="750" y="350" />
+            </Array>
+            <mxPoint x="700" y="310" as="sourcePoint" />
+            <mxPoint x="750" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_saved_user_assoc" edge="1" parent="1" source="cls_SavedTestRecord" style="endArrow=open;endFill=0;endSize=8;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.2;fontFamily=Helvetica;fontSize=11;fontStyle=0;fontColor=#000000;align=center;verticalAlign=bottom;labelBackgroundColor=#FFFFFF;exitX=0.3;exitY=1.0;exitDx=0;exitDy=0;entryX=0.78;entryY=0.0;entryDx=0;entryDy=0;" target="cls_UserRecord" value="references by userEmail">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="645" y="390" />
+              <mxPoint x="345" y="390" />
+            </Array>
+            <mxPoint x="645" y="310" as="sourcePoint" />
+            <mxPoint x="345" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_saved_user_assoc_src_card" connectable="0" parent="rel_saved_user_assoc" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" as="geometry">
+            <mxPoint x="-12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_saved_user_assoc_trg_card" connectable="0" parent="rel_saved_user_assoc" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#000000;labelBackgroundColor=#FFFFFF;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" as="geometry">
+            <mxPoint x="12" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

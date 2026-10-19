@@ -1,0 +1,73 @@
+<mxfile host="Electron" agent="Mozilla/5.0">
+  <diagram id="diag_2" name="Anti-Cheat Batch Subsystem">
+    <mxGraphModel dx="1012" dy="713" grid="1" gridSize="10" guides="1" tooltips="0" connect="0" arrows="0" fold="1" page="1" pageScale="1" pageWidth="1050" pageHeight="800" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="subsys_2" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;swimlaneLine=1;rounded=1;arcSize=4;strokeColor=#000000;strokeWidth=1.5;fillColor=none;collapsible=0;container=0;pointerEvents=0;connectable=0;align=center;verticalAlign=middle;fontStyle=1;fontSize=13.5;fontFamily=Helvetica;fontColor=#000000;" value="Anti-Cheat Multi-Variant Generation" vertex="1">
+          <mxGeometry height="675" width="770" x="210" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_officer" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;fontStyle=1;" value="Exam Officer&#xa;(Instructor)" vertex="1">
+          <mxGeometry height="90" width="45" x="90" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_variant" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Set Variant Count (2 to 6 Sets)" vertex="1">
+          <mxGeometry height="48" width="235" x="250" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_batch" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;;fontStyle=1;" value="Generate Multi-Variant Batch" vertex="1">
+          <mxGeometry height="52" width="240" x="250" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_inspect" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Inspect Variants in Tabs (A–F)" vertex="1">
+          <mxGeometry height="48" width="240" x="250" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_export_batch" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Batch Export All Parallel Papers" vertex="1">
+          <mxGeometry height="48" width="240" x="250" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_partition" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Partition Disjoint Question Pool" vertex="1">
+          <mxGeometry height="48" width="245" x="680" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_scramble" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Scramble Question &amp;amp; Options" vertex="1">
+          <mxGeometry height="48" width="245" x="680" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_parity" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="Verify Cognitive &amp;amp; Mark Parity" vertex="1">
+          <mxGeometry height="48" width="245" x="680" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_similarity" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;fontColor=#000000;fontFamily=Helvetica;fontSize=12;align=center;" value="AI Similarity &amp;amp; Duplicate Check" vertex="1">
+          <mxGeometry height="48" width="245" x="680" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_o_uc_variant" edge="1" parent="1" source="actor_officer" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_variant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_o_uc_batch" edge="1" parent="1" source="actor_officer" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_batch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_o_uc_inspect" edge="1" parent="1" source="actor_officer" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_inspect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_o_uc_export_batch" edge="1" parent="1" source="actor_officer" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;" target="uc_export_batch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_b1" edge="1" parent="1" source="uc_variant" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_batch" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_b2" edge="1" parent="1" source="uc_batch" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_inspect" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_b3" edge="1" parent="1" source="uc_inspect" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_export_batch" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_b4" edge="1" parent="1" source="uc_batch" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_partition" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_b5" edge="1" parent="1" source="uc_batch" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=middle;" target="uc_parity" value="&amp;lt;&amp;lt;depends on&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_b1" edge="1" parent="1" source="uc_scramble" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=bottom;" target="uc_partition" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_b2" edge="1" parent="1" source="uc_similarity" style="endArrow=open;dashed=1;html=1;rounded=0;strokeColor=#000000;strokeWidth=1.2;fontColor=#000000;fontSize=10.5;fontStyle=2;fontFamily=Helvetica;endFill=0;align=center;verticalAlign=bottom;" target="uc_inspect" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
