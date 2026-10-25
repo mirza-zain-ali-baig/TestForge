@@ -821,32 +821,33 @@ export function GeneratorWizard({
           {/* STEP 1: CLASS SELECTION WINDOW                                            */}
           {/* ========================================================================= */}
           {step === "class" && (
-            <div className="space-y-6">
-              <div className="text-center sm:text-left">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">Select Class</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pick a class to continue.
+            <div className="space-y-6 max-w-4xl">
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-foreground leading-tight">
+                  Select a Class
+                </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground font-sans mt-2">
+                  Choose a class to begin. Subject and chapters come next.
                 </p>
               </div>
 
               <div
-                className={`grid gap-5 ${
+                className={`grid gap-4 sm:gap-5 ${
                   sortedTree.length <= 1
-                    ? "grid-cols-1 max-w-md mx-auto"
-                    : sortedTree.length === 2
-                    ? "grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto"
-                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                    ? "grid-cols-1 max-w-md"
+                    : "grid-cols-1 sm:grid-cols-2"
                 }`}
               >
                 {sortedTree.map((cls) => {
                   const isSelected = classId === cls.id;
-                  const subjectsCount = cls.subjects?.length ?? 0;
-                  const totalChapters = cls.subjects?.reduce((acc, s) => acc + (s.chapters?.length ?? 0), 0) ?? 0;
-                  const qCount = cls.questionCount ?? 0;
 
                   return (
                     <div
                       key={cls.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Select ${cls.class_name}`}
+                      aria-pressed={isSelected}
                       onClick={() => {
                         setClassId(cls.id);
                         if (cls.subjects && cls.subjects.length > 0) {
@@ -857,105 +858,43 @@ export function GeneratorWizard({
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-[colors,box-shadow] duration-200 cursor-pointer shadow-xs hover:shadow-md ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setClassId(cls.id);
+                          if (cls.subjects && cls.subjects.length > 0) {
+                            setSubjectId(cls.subjects[0].id);
+                          }
+                          setChapterIds([]);
+                          setTopicIds([]);
+                          setStep("subject");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }
+                      }}
+                      className={`group relative flex flex-col justify-between rounded-2xl border p-6 sm:p-7 min-h-[140px] sm:min-h-[160px] text-left transition-[colors,box-shadow] duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
-                          ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
-                          : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
+                          ? "border-emerald-500/60 bg-card ring-1 ring-emerald-500/30"
+                          : "border-border/80 bg-card hover:border-emerald-500/40 hover:bg-muted/20"
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <div
-                            className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${
-                              isSelected
-                                ? "bg-emerald-600 text-white shadow-xs"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            }`}
-                          >
-                            <GraduationCap className="h-6 w-6" />
-                          </div>
-                          {isSelected ? (
-                            <Badge className="bg-emerald-600 text-white border-0 text-xs font-semibold px-2.5 py-0.5">
-                              ✓ Selected
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-slate-700 text-xs">
-                              Click to Select
-                            </Badge>
-                          )}
+                      {/* Top right circular arrow */}
+                      <div className="flex justify-end w-full">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                            isSelected
+                              ? "bg-emerald-400 text-slate-950 font-bold shadow-xs"
+                              : "border border-border/80 bg-background/50 text-muted-foreground group-hover:border-emerald-500/40 group-hover:bg-emerald-950/30 group-hover:text-emerald-400"
+                          }`}
+                        >
+                          <ArrowRight className="h-4 w-4" />
                         </div>
-
-                        <h3 className="text-xl font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                          {cls.class_name}
-                        </h3>
-
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-semibold text-slate-700 dark:text-slate-200">
-                            <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
-                            {subjectsCount > 1 ? `${subjectsCount} Subjects · ` : ""}{totalChapters} {totalChapters === 1 ? "Chapter" : "Chapters"}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-semibold text-slate-700 dark:text-slate-200">
-                            <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
-                            {qCount.toLocaleString()} Questions
-                          </span>
-                        </div>
-
-                        {cls.subjects && cls.subjects.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {cls.subjects.slice(0, 4).map((sub) => (
-                              <span
-                                key={sub.id}
-                                className="rounded-md border border-slate-200 dark:border-slate-700 bg-background/90 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300"
-                              >
-                                {sub.subject_name}
-                              </span>
-                            ))}
-                            {cls.subjects.length > 4 && (
-                              <span className="rounded-md border border-slate-200 dark:border-slate-700 bg-background/90 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                                +{cls.subjects.length - 4} more
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
 
-                      <div className="mt-6 border-t pt-3.5">
-                        {isSelected ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setStep("subject");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs shadow-xs cursor-pointer"
-                          >
-                            <span>Continue to Subjects</span>
-                            <ArrowRight className="ml-1.5 h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setClassId(cls.id);
-                              if (cls.subjects && cls.subjects.length > 0) {
-                                setSubjectId(cls.subjects[0].id);
-                              }
-                              setChapterIds([]);
-                              setTopicIds([]);
-                              setStep("subject");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="w-full text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 h-9 cursor-pointer"
-                          >
-                            <span>Select &amp; Continue</span>
-                            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                      {/* Bottom left class title */}
+                      <div>
+                        <h3 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-normal tracking-tight text-foreground group-hover:text-emerald-400 transition-colors">
+                          {cls.class_name}
+                        </h3>
                       </div>
                     </div>
                   );
