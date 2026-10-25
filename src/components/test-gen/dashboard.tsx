@@ -11,8 +11,6 @@ import {
   TrendingUp,
   Brain,
   Zap,
-  Wand2,
-  Database,
   History,
   CopyPlus,
   FolderOpen,
@@ -40,6 +38,71 @@ import { fetchStats } from "./lib";
 const PIE_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 type Stats = Awaited<ReturnType<typeof fetchStats>>;
+
+interface ChartTooltipPayloadItem {
+  name?: string;
+  value?: number;
+  fill?: string;
+  color?: string;
+  payload?: {
+    name?: string;
+    count?: number;
+    fill?: string;
+  };
+}
+
+function CustomBarTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadItem[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  const count = item.value ?? item.payload?.count ?? 0;
+  const typeName = label || item.payload?.name || "Questions";
+  const color = item.fill || item.color || item.payload?.fill || "var(--chart-1)";
+
+  return (
+    <div className="rounded-xl border border-border bg-popover/95 px-3.5 py-2.5 shadow-md backdrop-blur-sm text-xs min-w-[150px]">
+      <div className="font-semibold text-popover-foreground">{typeName} Questions</div>
+      <div className="mt-1.5 flex items-center gap-2 text-muted-foreground">
+        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+        <span>Total:</span>
+        <span className="font-bold tabular-nums text-foreground">{count.toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
+
+function CustomPieTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ChartTooltipPayloadItem[];
+}) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  const name = item.name || item.payload?.name || "";
+  const count = item.value ?? item.payload?.count ?? 0;
+  const fill = item.payload?.fill || item.fill || item.color || "var(--chart-1)";
+
+  return (
+    <div className="rounded-xl border border-border bg-popover/95 px-3.5 py-2.5 shadow-md backdrop-blur-sm text-xs min-w-[140px]">
+      <div className="font-semibold text-popover-foreground flex items-center gap-2">
+        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: fill }} />
+        <span>{name}</span>
+      </div>
+      <div className="mt-1.5 pl-4.5 text-muted-foreground">
+        <span className="font-bold tabular-nums text-foreground">{count.toLocaleString()}</span> questions
+      </div>
+    </div>
+  );
+}
 
 export function Dashboard({
   onStart,
@@ -69,7 +132,7 @@ export function Dashboard({
     { key: "subjects", label: "Subjects", icon: BookOpen, value: stats?.counts.subjects },
     { key: "chapters", label: "Chapters", icon: Layers, value: stats?.counts.chapters },
     { key: "topics", label: "Topics", icon: ListTree, value: stats?.counts.topics },
-    { key: "questions", label: "Curriculum Questions", icon: FileQuestion, value: stats?.counts.questions, highlight: true },
+    { key: "questions", label: "Curriculum Questions", icon: FileQuestion, value: stats?.counts.questions },
   ];
 
   return (
@@ -91,21 +154,13 @@ export function Dashboard({
                 Configure curriculum classes, syllabus chapters, and question distribution. Generate print-ready test papers with official school styling or practice interactively online.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+            <div className="flex shrink-0">
               <Button
                 size="lg"
                 onClick={onStart}
-                className="h-12 px-6 bg-white text-emerald-800 hover:bg-emerald-50 shadow-lg font-bold text-sm sm:text-base cursor-pointer press-effect transition-colors"
+                className="h-12 px-7 bg-white text-emerald-800 hover:bg-emerald-50 shadow-lg font-bold text-sm sm:text-base cursor-pointer press-effect transition-colors"
               >
                 <Sparkles className="mr-2 h-4 w-4 text-emerald-600" /> Create Exam Paper
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => (onNavigate ? onNavigate("bank") : onStart())}
-                className="h-12 px-6 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm font-semibold text-sm sm:text-base cursor-pointer transition-colors"
-              >
-                <Database className="mr-2 h-4 w-4" /> Browse Question Bank
               </Button>
             </div>
           </div>
@@ -114,41 +169,30 @@ export function Dashboard({
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-        {cards.map((c, i) => {
-          const isFeatured = c.highlight;
-          return (
-            <div
-              key={c.key}
-              className={`rounded-xl border p-4 sm:p-5 transition-colors duration-200 ${
-                isFeatured
-                  ? "col-span-2 sm:col-span-1 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs"
-                  : "bg-card border-border shadow-xs hover:border-border/80"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] sm:text-xs font-semibold text-muted-foreground">
-                  {c.label}
-                </span>
-                <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                  isFeatured
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-muted text-muted-foreground"
-                }`}>
-                  <c.icon className="h-4 w-4" />
-                </span>
-              </div>
-              <div className="mt-3">
-                {c.value === undefined ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight text-foreground">
-                    {c.value.toLocaleString()}
-                  </div>
-                )}
-              </div>
+        {cards.map((c) => (
+          <div
+            key={c.key}
+            className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-xs hover:border-border/80 transition-colors duration-200"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] sm:text-xs font-semibold text-muted-foreground">
+                {c.label}
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <c.icon className="h-4 w-4" />
+              </span>
             </div>
-          );
-        })}
+            <div className="mt-3">
+              {c.value === undefined ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <div className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight text-foreground">
+                  {c.value.toLocaleString()}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {error && (
@@ -201,15 +245,8 @@ export function Dashboard({
                         tick={{ fill: "var(--muted-foreground)" }}
                       />
                       <Tooltip
-                        cursor={{ fill: "var(--accent)", opacity: 0.3 }}
-                        contentStyle={{
-                          borderRadius: 10,
-                          border: "1px solid var(--border)",
-                          background: "var(--popover)",
-                          color: "var(--popover-foreground)",
-                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                          fontSize: 12,
-                        }}
+                        cursor={{ fill: "var(--accent)", opacity: 0.2 }}
+                        content={<CustomBarTooltip />}
                       />
                       <Bar dataKey="count" name="Questions" radius={[6, 6, 0, 0]} maxBarSize={56}>
                         {stats.byType.map((_, i) => (
@@ -279,24 +316,22 @@ export function Dashboard({
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={78}
-                        innerRadius={50}
-                        paddingAngle={3}
+                        outerRadius={80}
+                        innerRadius={56}
+                        paddingAngle={2}
+                        stroke="none"
+                        strokeWidth={0}
                       >
                         {stats.byBloom.map((_, i) => (
-                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                          <Cell
+                            key={i}
+                            fill={PIE_COLORS[i % PIE_COLORS.length]}
+                            stroke="none"
+                            strokeWidth={0}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: 10,
-                          border: "1px solid var(--border)",
-                          background: "var(--popover)",
-                          color: "var(--popover-foreground)",
-                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                          fontSize: 12,
-                        }}
-                      />
+                      <Tooltip content={<CustomPieTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
 
