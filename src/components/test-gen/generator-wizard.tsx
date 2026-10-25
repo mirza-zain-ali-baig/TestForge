@@ -1251,78 +1251,55 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "setup" && (
             <div className="space-y-6">
+              {/* Header: Executive & Clean */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">Test Setup</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Configure question counts, marks, duration, and generate your test.
-                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Configure Examination
+                  </h2>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                    <span>{currentClass?.class_name}</span>
+                    <span>·</span>
+                    <span>{currentSubject?.subject_name}</span>
+                    <span>·</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 rounded-xl border bg-muted/40 p-1.5 text-xs">
-                  <Badge variant="outline" className="bg-background font-semibold">
-                    {currentClass?.class_name}
-                  </Badge>
-                  <span className="text-muted-foreground">›</span>
-                  <Badge variant="outline" className="bg-background font-semibold">
-                    {currentSubject?.subject_name}
-                  </Badge>
-                  <span className="text-muted-foreground">›</span>
-                  <Badge className="bg-emerald-600 text-white font-semibold border-0">
-                    {chapterIds.length} Chapters
-                  </Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStepNavigate("syllabus")}
+                    className="h-8 text-xs font-semibold cursor-pointer rounded-lg"
+                  >
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Change Syllabus
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleStepNavigate("syllabus")}
-                    className="h-6 px-2 text-[11px] text-emerald-700 dark:text-emerald-300 hover:text-emerald-800"
+                    onClick={() => setAiOpen(true)}
+                    className="h-8 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800"
                   >
-                    Change
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>AI Suggester</span>
                   </Button>
                 </div>
               </div>
 
-              {/* 2-Column Responsive Layout */}
+              {/* 2-Column Senior Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* ================= LEFT COLUMN: CONFIGURATION ================= */}
-                <div className="lg:col-span-7 space-y-5">
-                  {/* Card 1: Question Source Filter, Presets & Duration */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3.5">
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <h3 className="text-sm font-bold flex items-center gap-2">
-                          <SlidersHorizontal className="h-4 w-4 text-emerald-600" /> Exam Setup
-                        </h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Source filter, exam preset & time duration.
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] font-semibold">
-                        {formatDuration(durationMins)} · {selectedPreset || "Custom"}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {/* Dropdown 1: Question Source Filter */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <Filter className="h-3.5 w-3.5 text-emerald-600" />
-                          Source Filter
-                        </Label>
-                        <SourceFilterDropdown
-                          subjectId={subjectId}
-                          chapterIds={chapterIds}
-                          topicIds={topicIds}
-                          questionSources={questionSources}
-                          setQuestionSources={setQuestionSources}
-                        />
-                      </div>
-
-                      {/* Dropdown 2: Exam Preset */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <Wand2 className="h-3.5 w-3.5 text-emerald-600" />
-                          Preset
+                {/* ================= LEFT COLUMN: MAIN STAGE ================= */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* 1. Exam Parameters Toolbar */}
+                  <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {/* Control 1: Preset */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Wand2 className="h-3.5 w-3.5 text-emerald-600" /> Preset
                         </Label>
                         <Select
                           value={selectedPreset || "custom"}
@@ -1335,7 +1312,7 @@ export function GeneratorWizard({
                             }
                           }}
                         >
-                          <SelectTrigger className="h-9 text-xs font-semibold bg-background">
+                          <SelectTrigger className="h-9 text-xs font-semibold bg-background" aria-label="Exam preset">
                             <SelectValue placeholder="Custom" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1351,38 +1328,72 @@ export function GeneratorWizard({
                         </Select>
                       </div>
 
-                      {/* Dropdown 3: Exam Duration */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-emerald-600" />
-                          Duration
+                      {/* Control 2: Duration */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-emerald-600" /> Duration
                         </Label>
                         <DurationDropdown
                           durationMins={durationMins}
                           setDurationMins={setDurationMins}
                         />
                       </div>
+
+                      {/* Control 3: Variants */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <CopyPlus className="h-3.5 w-3.5 text-emerald-600" /> Variants
+                        </Label>
+                        <Select
+                          value={String(variantCount)}
+                          onValueChange={(v) => setVariantCount(parseInt(v, 10))}
+                        >
+                          <SelectTrigger className="h-9 text-xs font-semibold bg-background" aria-label="Paper variants">
+                            <SelectValue placeholder="1 Paper" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 Paper (Standard)</SelectItem>
+                            <SelectItem value="2">2 Sets (A / B)</SelectItem>
+                            <SelectItem value="3">3 Sets (A / B / C)</SelectItem>
+                            <SelectItem value="4">4 Sets</SelectItem>
+                            <SelectItem value="5">5 Sets</SelectItem>
+                            <SelectItem value="6">6 Sets</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Control 4: Source Filter */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Filter className="h-3.5 w-3.5 text-emerald-600" /> Source Filter
+                        </Label>
+                        <SourceFilterDropdown
+                          subjectId={subjectId}
+                          chapterIds={chapterIds}
+                          topicIds={topicIds}
+                          questionSources={questionSources}
+                          setQuestionSources={setQuestionSources}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Card 2: Question Breakdown */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between border-b pb-3">
+                  {/* 2. Question Distribution Table */}
+                  <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+                    <div className="flex items-center justify-between p-4 border-b bg-muted/20">
                       <div>
-                        <h3 className="text-sm font-bold flex items-center gap-2">
-                          <SquareStack className="h-4 w-4 text-emerald-600" /> Question Breakdown
+                        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <SquareStack className="h-4 w-4 text-emerald-600" /> Question Distribution
                         </h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Adjust question counts easily with <strong className="text-foreground">+</strong> and <strong className="text-foreground">-</strong> buttons.
-                        </p>
                       </div>
-                      <Badge variant="secondary" className="font-bold text-xs">
-                        {totalQuestions} Questions · {totalMarks} Marks
-                      </Badge>
+                      <div className="text-xs font-semibold text-muted-foreground">
+                        <span className="font-bold text-foreground">{totalQuestions}</span> Questions ·{" "}
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{totalMarks}</span> Marks
+                      </div>
                     </div>
 
-                    {/* Question Breakdown Stepper Rows */}
-                    <div className="space-y-3">
+                    {/* Table-like row layout */}
+                    <div className="divide-y divide-border">
                       {TYPE_NAMES.map((t) => {
                         const cfg = blueprint[t];
                         const meta = TYPE_META[t];
@@ -1393,105 +1404,102 @@ export function GeneratorWizard({
                         return (
                           <div
                             key={t}
-                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3 sm:p-3.5 transition-colors ${
-                              count > 0
-                                ? "border-emerald-500/40 bg-emerald-500/5"
-                                : "border-border/60 bg-muted/20 opacity-80"
+                            className={`flex items-center justify-between gap-3 p-3.5 transition-colors ${
+                              count > 0 ? "hover:bg-accent/40" : "opacity-70 hover:opacity-100 hover:bg-accent/30"
                             }`}
                           >
-                            {/* Left: Icon, Name & Marks Per Question */}
-                            <div className="flex items-center gap-3 min-w-0">
+                            {/* Left: Type name & color indicator */}
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               <span
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
                                 style={{ background: colorVar }}
-                              >
-                                <TypeIcon name={t} />
-                              </span>
+                              />
                               <div className="min-w-0">
-                                <div className="text-sm font-bold truncate text-foreground">
+                                <div className="text-sm font-semibold truncate text-foreground">
                                   {meta.label}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                                  <span>Marks each:</span>
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={20}
-                                    value={cfg.marksPerQuestion === 0 ? "" : cfg.marksPerQuestion}
-                                    placeholder="1"
-                                    onChange={(e) => {
-                                      const raw = e.target.value;
-                                      if (raw === "") {
-                                        setMarks(t, 0);
-                                        return;
-                                      }
-                                      const n = parseInt(raw, 10);
-                                      if (!isNaN(n)) setMarks(t, Math.max(1, n));
-                                    }}
-                                    onBlur={() => {
-                                      if (cfg.marksPerQuestion < 1) setMarks(t, 1);
-                                    }}
-                                    onFocus={(e) => e.target.select()}
-                                    className="h-7 w-12 rounded border border-input bg-background px-1 text-center font-bold text-xs"
-                                    title={`${meta.label} marks per question`}
-                                    aria-label={`${meta.label} marks per question`}
-                                  />
-                                  <span className="hidden sm:inline">·</span>
-                                  <span className="text-[11px] font-medium text-foreground">Subtotal: {subtotalMarks} marks</span>
+                                <div className="text-[11px] text-muted-foreground sm:hidden">
+                                  {cfg.marksPerQuestion}m each · {subtotalMarks}m total
                                 </div>
                               </div>
                             </div>
 
-                            {/* Right: Interactive Stepper with touch-friendly 40px buttons */}
-                            <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-border/50 pt-2 sm:border-0 sm:pt-0 shrink-0">
-                              <span className="text-xs font-semibold text-muted-foreground sm:hidden">
-                                Question count:
-                              </span>
-                              <div className="flex items-center rounded-xl border border-input bg-muted/30 p-0.5">
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => incrementTypeCount(t, -1)}
-                                  disabled={count <= 0}
-                                  className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
-                                  aria-label={`Decrease ${meta.label} count`}
-                                  title={`Decrease ${meta.label} count`}
-                                >
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={100}
-                                  value={count === 0 ? "" : count}
-                                  placeholder="0"
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    if (raw === "") {
-                                      setTypeCount(t, 0);
-                                      return;
-                                    }
-                                    const n = parseInt(raw, 10);
-                                    if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
-                                  }}
-                                  onFocus={(e) => e.target.select()}
-                                  className="h-9 w-14 sm:h-8 bg-transparent text-center font-bold text-sm focus:outline-none"
-                                  title={`${meta.label} question count`}
-                                  aria-label={`${meta.label} question count`}
-                                />
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => incrementTypeCount(t, 1)}
-                                  className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
-                                  aria-label={`Increase ${meta.label} count`}
-                                  title={`Increase ${meta.label} count`}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            {/* Middle: Marks per Question */}
+                            <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
+                              <span>Marks:</span>
+                              <input
+                                type="number"
+                                min={1}
+                                max={20}
+                                value={cfg.marksPerQuestion === 0 ? "" : cfg.marksPerQuestion}
+                                placeholder="1"
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === "") {
+                                    setMarks(t, 0);
+                                    return;
+                                  }
+                                  const n = parseInt(raw, 10);
+                                  if (!isNaN(n)) setMarks(t, Math.max(1, n));
+                                }}
+                                onBlur={() => {
+                                  if (cfg.marksPerQuestion < 1) setMarks(t, 1);
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                className="h-8 w-11 rounded-lg border border-input bg-background px-1 text-center font-bold text-xs"
+                                title={`${meta.label} marks per question`}
+                                aria-label={`${meta.label} marks per question`}
+                              />
+                            </div>
+
+                            {/* Stepper: - Count + */}
+                            <div className="flex items-center rounded-xl border border-input bg-muted/20 p-0.5 shrink-0">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => incrementTypeCount(t, -1)}
+                                disabled={count <= 0}
+                                className="h-8 w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
+                                aria-label={`Decrease ${meta.label} count`}
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </Button>
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={count === 0 ? "" : count}
+                                placeholder="0"
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw === "") {
+                                    setTypeCount(t, 0);
+                                    return;
+                                  }
+                                  const n = parseInt(raw, 10);
+                                  if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                className="h-8 w-12 bg-transparent text-center font-bold text-sm focus:outline-none"
+                                title={`${meta.label} question count`}
+                                aria-label={`${meta.label} question count`}
+                              />
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => incrementTypeCount(t, 1)}
+                                className="h-8 w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
+                                aria-label={`Increase ${meta.label} count`}
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+
+                            {/* Subtotal */}
+                            <div className="hidden sm:block text-right w-20 shrink-0 font-bold text-xs text-foreground">
+                              {subtotalMarks} marks
                             </div>
                           </div>
                         );
@@ -1499,209 +1507,113 @@ export function GeneratorWizard({
                     </div>
                   </div>
 
-                  {/* Paper Variants (Batch Mode) — Disjoint Exam Sets (Bug 18) */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <CopyPlus className="h-4 w-4 text-emerald-600" />
-                          Paper Variants (Batch Mode)
-                          {variantCount > 1 && (
-                            <Badge className="bg-emerald-600 text-white text-[10px] py-0 px-1.5 font-bold">
-                              {variantCount} Disjoint Variants
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground">
-                          Create multiple distinct versions of this paper (Set A, Set B, Set C) with disjoint questions for exam halls.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Select
-                          value={String(variantCount)}
-                          onValueChange={(v) => setVariantCount(parseInt(v, 10))}
-                        >
-                          <SelectTrigger className="w-40 h-8 text-xs font-semibold bg-background" aria-label="Paper variants count">
-                            <SelectValue placeholder="1 Paper (Standard)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 Paper (Standard)</SelectItem>
-                            <SelectItem value="2">2 Variants (Set A/B)</SelectItem>
-                            <SelectItem value="3">3 Variants (Set A/B/C)</SelectItem>
-                            <SelectItem value="4">4 Variants</SelectItem>
-                            <SelectItem value="5">5 Variants</SelectItem>
-                            <SelectItem value="6">6 Variants</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Advanced Options (Source Engine, Difficulty & Analytics, Instructions & Shuffle) */}
-                  <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
+                  {/* 3. Advanced Parameters (Accordion) */}
+                  <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
                     <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
                       <CollapsibleTrigger asChild>
                         <button
                           type="button"
-                          className="flex w-full items-center justify-between text-xs font-semibold text-foreground hover:text-emerald-600 py-1"
+                          className="flex w-full items-center justify-between text-xs font-semibold text-foreground hover:text-emerald-600 py-0.5 cursor-pointer whitespace-nowrap"
                         >
                           <span className="flex items-center gap-2">
                             <Settings2 className="h-4 w-4 text-emerald-600" />
-                            Advanced Options (Source Engine, Difficulty & Analytics, Instructions & Shuffle)
+                            <span>Additional Parameters</span>
                           </span>
-                          <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${
+                              advancedOpen ? "rotate-180" : ""
+                            }`}
+                          />
                         </button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-4 space-y-4 border-t mt-3">
-                        {/* Generation Engine */}
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-semibold flex items-center gap-1.5">
-                            <Bot className="h-3.5 w-3.5 text-emerald-600" />
-                            Source Engine
-                          </Label>
-                          <Select value={source} onValueChange={(v) => setSource(v as any)}>
-                            <SelectTrigger className="h-9 text-xs font-semibold bg-background">
-                              <SelectValue placeholder="Source" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SOURCES.map((s) => (
-                                <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
-                                  <span className="flex items-center gap-2">
-                                    <s.icon className="h-3.5 w-3.5 text-emerald-600" />
-                                    <span>{s.label}</span>
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-[11px] text-muted-foreground">
-                            Choose question source: Curated Question Bank, AI Generation, or Hybrid.
-                          </p>
-                        </div>
-
-                        {/* Difficulty Distribution & Analytics */}
-                        <div className="rounded-xl border bg-background/60 p-4 space-y-3.5 shadow-xs">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5">
-                            <div>
-                              <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                <BarChart3 className="h-4 w-4 text-emerald-600" />
-                                Difficulty Distribution & Analytics
-                              </div>
-                              <p className="text-[11px] text-muted-foreground mt-0.5">
-                                Default is <strong>Balanced</strong> (35% Easy, 45% Medium, 20% Hard) for standard exam difficulty.
-                              </p>
-                            </div>
-                            <Badge variant="outline" className={`font-bold text-xs shrink-0 self-start sm:self-auto ${difficultyIndexColor}`}>
+                      <CollapsibleContent className="pt-4 space-y-4 border-t border-border mt-3">
+                        {/* Difficulty Profile Quick Switcher */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-foreground flex items-center gap-1.5">
+                              <BarChart3 className="h-3.5 w-3.5 text-emerald-600" /> Difficulty Balance
+                            </span>
+                            <Badge variant="outline" className={`font-semibold text-[11px] ${difficultyIndexColor}`}>
                               {difficultyStats.index}% · {difficultyIndexLabel}
                             </Badge>
                           </div>
 
-                          {/* Visual Stacked Bar */}
-                          <div className="space-y-1.5">
-                            <div className="h-3 w-full overflow-hidden rounded-full bg-muted flex">
+                          {/* 3-Profile Segmented Control */}
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => applyDifficultyRatio(50, 35, 15)}
+                              className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-emerald-500 cursor-pointer"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                              <span>Easy</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => applyDifficultyRatio(35, 45, 20)}
+                              className="text-xs h-9 justify-center gap-1.5 font-semibold border-emerald-600/50 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                              <span>Balanced</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => applyDifficultyRatio(20, 40, 40)}
+                              className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-rose-500 cursor-pointer"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+                              <span>Challenging</span>
+                            </Button>
+                          </div>
+
+                          {/* Distribution Bar */}
+                          <div className="space-y-1">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted flex">
                               {difficultyStats.total > 0 && (
                                 <>
                                   <div
                                     style={{ width: `${(difficultyStats.easy / difficultyStats.total) * 100}%` }}
-                                    className="bg-emerald-500 h-full transition-opacity duration-300"
+                                    className="bg-emerald-500 h-full"
                                     title={`Easy: ${difficultyStats.easy} questions`}
                                   />
                                   <div
                                     style={{ width: `${(difficultyStats.medium / difficultyStats.total) * 100}%` }}
-                                    className="bg-amber-500 h-full transition-opacity duration-300"
+                                    className="bg-amber-500 h-full"
                                     title={`Medium: ${difficultyStats.medium} questions`}
                                   />
                                   <div
                                     style={{ width: `${(difficultyStats.hard / difficultyStats.total) * 100}%` }}
-                                    className="bg-rose-500 h-full transition-opacity duration-300"
+                                    className="bg-rose-500 h-full"
                                     title={`Hard: ${difficultyStats.hard} questions`}
                                   />
                                 </>
                               )}
                             </div>
                             <div className="flex justify-between text-[11px] text-muted-foreground">
-                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                                ● Easy ({difficultyStats.total > 0 ? Math.round((difficultyStats.easy / difficultyStats.total) * 100) : 35}%)
-                              </span>
-                              <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                ● Medium ({difficultyStats.total > 0 ? Math.round((difficultyStats.medium / difficultyStats.total) * 100) : 45}%)
-                              </span>
-                              <span className="text-rose-600 dark:text-rose-400 font-medium">
-                                ● Hard ({difficultyStats.total > 0 ? Math.round((difficultyStats.hard / difficultyStats.total) * 100) : 20}%)
-                              </span>
+                              <span>Easy: {difficultyStats.easy} Qs</span>
+                              <span>Medium: {difficultyStats.medium} Qs</span>
+                              <span>Hard: {difficultyStats.hard} Qs</span>
                             </div>
                           </div>
 
-                          {/* Metric summary cards */}
-                          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                            <div className="rounded-lg border border-emerald-500/25 bg-emerald-50/40 dark:bg-emerald-950/20 p-2">
-                              <div className="font-semibold text-emerald-700 dark:text-emerald-300">Easy</div>
-                              <div className="text-base font-extrabold text-foreground">{difficultyStats.easy}</div>
-                              <div className="text-[10px] text-muted-foreground">{difficultyStats.easyMarks} marks</div>
-                            </div>
-                            <div className="rounded-lg border border-amber-500/25 bg-amber-50/40 dark:bg-amber-950/20 p-2">
-                              <div className="font-semibold text-amber-700 dark:text-amber-300">Medium</div>
-                              <div className="text-base font-extrabold text-foreground">{difficultyStats.medium}</div>
-                              <div className="text-[10px] text-muted-foreground">{difficultyStats.mediumMarks} marks</div>
-                            </div>
-                            <div className="rounded-lg border border-rose-500/25 bg-rose-50/40 dark:bg-rose-950/20 p-2">
-                              <div className="font-semibold text-rose-700 dark:text-rose-300">Hard</div>
-                              <div className="text-base font-extrabold text-foreground">{difficultyStats.hard}</div>
-                              <div className="text-[10px] text-muted-foreground">{difficultyStats.hardMarks} marks</div>
-                            </div>
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDifficultyOpen(!difficultyOpen)}
+                              className="h-6 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer"
+                            >
+                              {difficultyOpen ? "Hide Matrix Editor" : "Open Cell-by-Cell Matrix"}
+                            </Button>
                           </div>
 
-                          {/* Quick 1-click profiles */}
-                          <div className="space-y-1.5 pt-1 border-t">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-muted-foreground">
-                                Quick Difficulty Profiles:
-                              </span>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setDifficultyOpen(!difficultyOpen)}
-                                className="h-6 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold"
-                              >
-                                {difficultyOpen ? "Hide Cell-by-Cell" : "Fine-Tune Cell-by-Cell"}
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => applyDifficultyRatio(50, 35, 15)}
-                                className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-emerald-500 hover:bg-accent transition-colors cursor-pointer"
-                              >
-                                <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                                <span>Easy (50/35/15)</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => applyDifficultyRatio(35, 45, 20)}
-                                className="text-xs h-9 justify-center gap-1.5 font-semibold border-emerald-600/50 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500 hover:bg-accent transition-colors cursor-pointer"
-                              >
-                                <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-                                <span>Balanced (35/45/20)</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => applyDifficultyRatio(20, 40, 40)}
-                                className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-rose-500 hover:bg-accent transition-colors cursor-pointer"
-                              >
-                                <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
-                                <span>Hard (20/40/40)</span>
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Expandable fine-tune matrix */}
                           {difficultyOpen && (
                             <div className="pt-2 border-t">
                               <DifficultyEditor
@@ -1719,17 +1631,10 @@ export function GeneratorWizard({
                               />
                             </div>
                           )}
-
-                          <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
-                            <span>Higher-order thinking questions (Medium + Hard):</span>
-                            <span className="font-bold text-foreground">
-                              {difficultyStats.higherOrderPct}%
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Instructions */}
-                        <div>
+                        {/* Instructions for Students */}
+                        <div className="space-y-1.5 pt-2 border-t">
                           <Label htmlFor="inst" className="text-xs font-semibold">
                             Instructions for Students
                           </Label>
@@ -1739,21 +1644,43 @@ export function GeneratorWizard({
                             onChange={(e) => setInstructions(e.target.value)}
                             rows={2}
                             placeholder="e.g. Attempt all questions. Calculators not allowed."
-                            className="mt-1 text-xs"
+                            className="text-xs"
                           />
                         </div>
 
-                        {/* Shuffle switch */}
-                        <div className="flex items-center justify-between rounded-lg border bg-background p-2.5">
-                          <div className="flex items-center gap-2">
-                            <Shuffle className="h-3.5 w-3.5 text-emerald-600" />
-                            <span className="text-xs font-medium">Shuffle Question Order</span>
+                        {/* Source Engine & Shuffle */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                              <Bot className="h-3.5 w-3.5 text-emerald-600" /> Source Engine
+                            </Label>
+                            <Select value={source} onValueChange={(v) => setSource(v as any)}>
+                              <SelectTrigger className="h-9 text-xs font-semibold bg-background">
+                                <SelectValue placeholder="Source" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SOURCES.map((s) => (
+                                  <SelectItem key={s.id} value={s.id} className="text-xs font-medium">
+                                    <span className="flex items-center gap-2">
+                                      <s.icon className="h-3.5 w-3.5 text-emerald-600" />
+                                      <span>{s.label}</span>
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <Switch checked={shuffle} onCheckedChange={setShuffle} />
+
+                          <div className="flex items-center justify-between rounded-xl border border-input bg-background p-2.5 self-end h-9">
+                            <span className="text-xs font-medium flex items-center gap-1.5">
+                              <Shuffle className="h-3.5 w-3.5 text-emerald-600" /> Shuffle Order
+                            </span>
+                            <Switch checked={shuffle} onCheckedChange={setShuffle} />
+                          </div>
                         </div>
 
-                        {/* Templates & AI Suggester */}
-                        <div className="space-y-3 pt-1 border-t">
+                        {/* Templates */}
+                        <div className="pt-2 border-t">
                           <BlueprintTemplates
                             blueprint={blueprint}
                             onApply={(bp) => {
@@ -1762,50 +1689,36 @@ export function GeneratorWizard({
                               toast.success("Template applied");
                             }}
                           />
-
-                          <AIBlueprintSuggester
-                            open={aiOpen}
-                            setOpen={setAiOpen}
-                            onApply={(bp) => {
-                              setBlueprint(bp);
-                              setSelectedPreset("");
-                              toast.success("AI blueprint applied");
-                            }}
-                            className={currentClass?.class_name ?? ""}
-                            subjectName={currentSubject?.subject_name ?? ""}
-                            currentTotalMarks={totalMarks}
-                          />
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
                   </div>
                 </div>
 
-                {/* ================= RIGHT / STICKY SUMMARY & ACTION COLUMN ================= */}
+                {/* ================= RIGHT COLUMN: EXECUTIVE SUMMARY & ACTIONS ================= */}
                 <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-4">
-                  {/* Unified Assessment Blueprint & Action Studio */}
-                  <div className="rounded-2xl border-2 border-emerald-500/30 bg-card p-5 shadow-sm space-y-4">
+                  <div className="rounded-2xl border border-border bg-card p-5 shadow-xs space-y-4">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div>
                         <h3 className="text-base font-bold text-foreground">
-                          Assessment Blueprint
+                          Assessment Summary
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {currentClass?.class_name} · {currentSubject?.subject_name}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="text-xs font-semibold">
+                      <Badge variant="outline" className="text-xs font-semibold">
                         {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"}
                       </Badge>
                     </div>
 
-                    {/* Big Key Stats */}
-                    <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 p-3 text-center">
+                    {/* Key Metrics Grid */}
+                    <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/30 p-3 text-center border border-border/50">
                       <div>
                         <div className="text-2xl font-black text-foreground">{totalQuestions}</div>
                         <div className="text-[11px] font-medium text-muted-foreground">Questions</div>
                       </div>
-                      <div className="border-x">
+                      <div className="border-x border-border/50">
                         <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{totalMarks}</div>
                         <div className="text-[11px] font-medium text-muted-foreground">Marks</div>
                       </div>
@@ -1815,21 +1728,21 @@ export function GeneratorWizard({
                       </div>
                     </div>
 
-                    {/* Question Breakdown Chips */}
-                    <div className="space-y-1.5 text-xs">
-                      <div className="text-[11px] font-semibold text-muted-foreground">Section Breakdown:</div>
-                      <div className="flex flex-col gap-1.5">
+                    {/* Composition Breakdown */}
+                    <div className="space-y-2 text-xs">
+                      <div className="text-[11px] font-semibold text-muted-foreground">Section Composition:</div>
+                      <div className="space-y-1.5">
                         {TYPE_NAMES.map((t) => {
                           const count = blueprint[t].difficulties.Easy + blueprint[t].difficulties.Medium + blueprint[t].difficulties.Hard;
                           const marks = count * blueprint[t].marksPerQuestion;
                           return (
-                            <div key={t} className="flex items-center justify-between rounded-lg bg-background px-3 py-1.5 border text-xs">
+                            <div key={t} className="flex items-center justify-between rounded-lg bg-background px-3 py-1.5 border border-border/70 text-xs">
                               <span className="font-medium flex items-center gap-1.5">
                                 <span className="h-2 w-2 rounded-full" style={{ background: `var(--chart-${TYPE_NAMES.indexOf(t) + 1})` }} />
                                 {TYPE_META[t].label}
                               </span>
-                              <span className="font-bold text-muted-foreground">
-                                {count} Qs ({marks} Marks)
+                              <span className="font-semibold text-foreground">
+                                {count} Qs <span className="text-muted-foreground font-normal">({marks}m)</span>
                               </span>
                             </div>
                           );
@@ -1837,13 +1750,26 @@ export function GeneratorWizard({
                       </div>
                     </div>
 
-                    {/* Action Buttons Integrated Directly */}
-                    <div className="pt-2 border-t border-border/70 space-y-2">
+                    {/* Batch Variants Notice */}
+                    {variantCount > 1 && (
+                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 p-2.5 text-xs">
+                        <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                          <CopyPlus className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Batch Mode: {variantCount} Disjoint Exam Sets</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Generates distinct question pools (Sets A through {String.fromCharCode(64 + variantCount)}).
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t border-border space-y-2">
                       <Button
                         size="lg"
                         disabled={generating || (!!user && !canGenerate)}
                         onClick={() => handleGenerate("preview")}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-11 shadow-xs transition-colors cursor-pointer"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 shadow-xs transition-colors cursor-pointer"
                       >
                         {!user ? (
                           <>
@@ -1858,7 +1784,7 @@ export function GeneratorWizard({
                           <>
                             <Printer className="mr-2 h-4 w-4" />
                             {variantCount > 1
-                              ? `Generate ${variantCount} Paper Variants (Batch)`
+                              ? `Generate ${variantCount} Paper Sets`
                               : "Generate Printable Paper"}
                           </>
                         )}
@@ -1895,7 +1821,7 @@ export function GeneratorWizard({
               </div>
 
               {/* Mobile sticky action bar for Step 4 (<lg screens) */}
-              <div className="lg:hidden sticky bottom-[4.25rem] z-30 rounded-xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur-md flex items-center justify-between gap-3">
+              <div className="lg:hidden sticky bottom-[4.25rem] z-30 rounded-xl border border-border bg-card/95 p-3 shadow-md backdrop-blur-md flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
                     <span>{totalQuestions} Qs</span>
