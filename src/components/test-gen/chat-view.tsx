@@ -589,7 +589,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
     <div
       className={`relative flex w-full overflow-hidden bg-card ${
         fullWindow
-          ? "h-screen rounded-none border-0 shadow-none"
+          ? "h-full rounded-none border-0 shadow-none"
           : "h-[calc(100vh-8.5rem)] min-h-[550px] rounded-2xl border border-border shadow-sm"
       }`}
     >
@@ -597,22 +597,25 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="absolute inset-0 bg-black/50 z-20 md:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 bg-black/60 z-50 md:hidden backdrop-blur-xs transition-opacity"
+          aria-hidden="true"
         />
       )}
 
-      {/* ─── ChatGPT-style Sidebar ─── */}
+      {/* ─── Modern AI Sidebar ─── */}
       <aside
         className={`${
-          sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full w-0 md:w-0"
-        } absolute md:relative inset-y-0 left-0 z-30 flex flex-col shrink-0 border-r border-border bg-muted/40 md:bg-muted/30 transition-transform duration-200 ease-in-out overflow-hidden`}
+          sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-0 md:w-0"
+        } fixed md:relative inset-y-0 left-0 z-50 md:z-auto flex flex-col shrink-0 border-r border-border bg-background md:bg-muted/30 transition-transform duration-200 ease-in-out overflow-hidden shadow-2xl md:shadow-none`}
       >
-        {/* Mobile Drawer Header with Close Button */}
+        {/* Sidebar Header */}
         <div className="flex items-center justify-between p-3 border-b border-border/60">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-emerald-600" />
             <span className="text-xs font-bold text-foreground">Chat History</span>
-            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">{sessions.length}</Badge>
+            {user && sessions.length > 0 && (
+              <Badge variant="secondary" className="text-[10px] py-0 px-1.5">{sessions.length}</Badge>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -645,57 +648,85 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             <span>Recent Conversations</span>
           </div>
 
-          {sessions.map((sess) => {
-            const isActive = sess.id === activeSessionId;
-            return (
-              <div
-                key={sess.id}
-                onClick={() => {
-                  handleSelectSession(sess.id);
-                  setSidebarOpen(false);
-                }}
-                className={`group relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs cursor-pointer transition-colors ${
-                  isActive
-                    ? "bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 font-semibold border border-emerald-500/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                <span className="flex-1 truncate text-left">{sess.title}</span>
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteSession(sess.id, e)}
-                  title="Delete chat"
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-destructive rounded transition-opacity shrink-0"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+          {!user ? (
+            <div className="flex flex-col items-center justify-center p-4 text-center text-xs text-muted-foreground my-auto space-y-2">
+              <div className="h-8 w-8 rounded-xl bg-muted/60 flex items-center justify-center text-muted-foreground">
+                <Lock className="h-4 w-4" />
               </div>
-            );
-          })}
+              <p className="font-semibold text-foreground text-xs">Sign in to save history</p>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Your conversations are saved and synced across devices.
+              </p>
+              <Button
+                size="sm"
+                onClick={onSignIn}
+                className="mt-1 h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs"
+              >
+                Sign In
+              </Button>
+            </div>
+          ) : sessions.length === 0 ? (
+            <div className="p-4 text-center text-xs text-muted-foreground">
+              No recent conversations yet.
+            </div>
+          ) : (
+            sessions.map((sess) => {
+              const isActive = sess.id === activeSessionId;
+              return (
+                <div
+                  key={sess.id}
+                  onClick={() => {
+                    handleSelectSession(sess.id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`group relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs cursor-pointer transition-colors ${
+                    isActive
+                      ? "bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 font-semibold border border-emerald-500/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                  <span className="flex-1 truncate text-left">{sess.title}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteSession(sess.id, e)}
+                    aria-label="Delete conversation"
+                    title="Delete conversation"
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:text-destructive rounded transition-opacity shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* User Account / Email Scoped Indicator */}
         <div className="p-3 border-t border-border/60 bg-background/50">
           <div className="flex items-center gap-2 text-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white shadow-xs">
-              {user?.name
-                ? user.name.slice(0, 2).toUpperCase()
-                : userEmail.slice(0, 2).toUpperCase()}
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-[11px] font-bold shadow-xs">
+              {user ? (
+                <span className="text-emerald-700 dark:text-emerald-300">
+                  {user.name ? user.name.slice(0, 2).toUpperCase() : user.email.slice(0, 2).toUpperCase()}
+                </span>
+              ) : (
+                <User className="h-3.5 w-3.5" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold text-foreground text-[11px]">
-                {user?.name || "ExamForge User"}
+                {user?.name || (user ? user.email.split("@")[0] : "Guest Mode")}
               </p>
               <p className="truncate text-[10px] text-muted-foreground">
-                {user?.email || "Local Guest Mode"}
+                {user?.email || "Sign in to sync conversations"}
               </p>
             </div>
           </div>
           <div className="mt-2 flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
             <span className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 motion-safe:animate-pulse" />
-              100% Free AI Active
+              Free AI quota active
             </span>
           </div>
         </div>
@@ -703,38 +734,44 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
 
       {/* ─── Main Chat Interface ─── */}
       <div className="relative flex flex-1 flex-col overflow-hidden bg-background min-w-0 w-full">
+        {/* Accessible Page Heading (Screen readers) */}
+        <h1 className="sr-only">ExamForge AI: Academic and Exam Assistant</h1>
+
         {/* Top Navbar */}
         <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/80 px-2 sm:px-4 bg-card/60 backdrop-blur-xs gap-2">
-          {/* Left: Back button + History drawer toggle + Branding */}
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {/* Left: Dashboard Back + Sidebar Toggle + Branding */}
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             {onBack && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onBack}
-                className="h-8 gap-1.5 px-2 text-xs font-semibold text-foreground hover:bg-muted rounded-lg shrink-0 cursor-pointer"
-                title="Return to Dashboard"
+                className="h-8 gap-1 px-2 text-xs font-semibold text-foreground hover:bg-muted rounded-lg shrink-0 cursor-pointer"
+                aria-label="Back to Dashboard"
+                title="Back to Dashboard"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden xs:inline">Back</span>
+                <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                <span className="hidden sm:inline">Dashboard</span>
               </Button>
             )}
+
+            {/* Intuitive Sidebar Toggle Icon */}
             <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground border-border/80 rounded-lg shrink-0 cursor-pointer"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg shrink-0 cursor-pointer"
               onClick={() => setSidebarOpen((v) => !v)}
-              title={sidebarOpen ? "Hide chat history" : "Show chat history"}
+              aria-label={sidebarOpen ? "Collapse conversation history" : "Expand conversation history"}
+              title={sidebarOpen ? "Collapse history" : "Expand history"}
             >
-              <History className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">History</span>
-              {sessions.length > 0 && (
-                <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-bold text-foreground">
-                  {sessions.length}
-                </span>
+              {sidebarOpen ? (
+                <PanelLeftClose className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
               )}
             </Button>
-            <div className="flex items-center gap-2 min-w-0">
+
+            <div className="flex items-center gap-2 min-w-0 ml-1">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
@@ -758,17 +795,19 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
               title="Start a new chat conversation"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>New Chat</span>
+              <span className="hidden xs:inline">New Chat</span>
             </Button>
             {messages.length > 0 && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                size="sm"
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive cursor-pointer gap-1"
                 onClick={handleClearCurrentChat}
-                title="Clear current chat messages"
+                aria-label="Clear current conversation"
+                title="Clear current conversation"
               >
                 <Trash2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Clear</span>
               </Button>
             )}
           </div>
@@ -828,10 +867,11 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                       }
                       handleSendMessage(sp.prompt);
                     }}
-                    className="flex flex-col rounded-xl border border-border p-3 text-left transition-colors hover:border-emerald-500/60 hover:bg-emerald-500/5 group"
+                    className="flex flex-col rounded-xl border border-border p-3 text-left transition-colors hover:border-emerald-500/60 hover:bg-emerald-500/5 group cursor-pointer"
                   >
-                    <span className="text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
-                      {sp.title}
+                    <span className="flex items-center justify-between text-xs font-semibold text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
+                      <span>{sp.title}</span>
+                      {!user && <Lock className="h-3 w-3 text-muted-foreground/60 shrink-0" />}
                     </span>
                     <span className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
                       {sp.desc}
@@ -978,76 +1018,90 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         )}
 
         {/* Input Bar */}
-        <div className="p-3 sm:p-4 border-t border-border bg-card/60">
-          {!user ? (
-            <div className="max-w-3xl mx-auto flex items-center justify-between gap-3 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Lock className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span>Please sign in or create an account to chat with ExamForge AI.</span>
-              </div>
-              <Button
-                size="sm"
-                onClick={onSignIn}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shrink-0 h-8 text-xs shadow-xs"
-              >
-                Sign In
-              </Button>
-            </div>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
+        <div className="shrink-0 p-3 sm:p-4 border-t border-border bg-card/60">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!user) {
+                toast.info("Please sign in or create an account to chat with ExamForge AI.");
+                onSignIn?.();
+                return;
+              }
+              handleSendMessage();
+            }}
+            className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs outline-none focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-colors"
+          >
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
               }}
-              className="max-w-3xl mx-auto flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-xs outline-none focus-within:outline-none focus-within:ring-0 focus-within:border-border"
-            >
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
+              onFocus={() => {
+                if (!user) {
+                  toast.info("Please sign in to chat with ExamForge AI.");
+                  onSignIn?.();
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!user) {
+                    toast.info("Please sign in to chat with ExamForge AI.");
+                    onSignIn?.();
+                    return;
                   }
-                }}
-                placeholder="Ask ExamForge AI... (Enter to send, Shift+Enter for new line)"
-                rows={1}
-                className="chat-input-textarea min-h-[38px] max-h-[140px] flex-1 resize-none bg-transparent px-2 py-1.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-none"
-                style={{
-                  border: "none",
-                  outline: "none",
-                  boxShadow: "none",
-                }}
-              />
+                  handleSendMessage();
+                }
+              }}
+              placeholder={user ? "Ask ExamForge AI... (Enter to send, Shift+Enter for new line)" : "Ask ExamForge AI a question... (Sign in to chat)"}
+              rows={1}
+              aria-label="Chat message input"
+              className="chat-input-textarea min-h-[38px] max-h-[140px] flex-1 resize-none bg-transparent px-2.5 py-1.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 focus:border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-none"
+              style={{
+                border: "none",
+                outline: "none",
+                boxShadow: "none",
+              }}
+            />
 
-              {isGenerating ? (
-                <Button
-                  type="button"
-                  onClick={handleStop}
-                  variant="destructive"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 rounded-xl"
-                  title="Stop generating"
-                >
-                  <Square className="h-4 w-4 fill-current" />
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40"
-                  title="Send message"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              )}
-            </form>
-          )}
+            {isGenerating ? (
+              <Button
+                type="button"
+                onClick={handleStop}
+                variant="destructive"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-xl cursor-pointer"
+                aria-label="Stop generating"
+                title="Stop generating"
+              >
+                <Square className="h-4 w-4 fill-current" />
+              </Button>
+            ) : user ? (
+              <Button
+                type="submit"
+                disabled={!input.trim()}
+                className="h-9 w-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40 cursor-pointer"
+                aria-label="Send message"
+                title="Send message"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={onSignIn}
+                className="h-9 px-3 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs cursor-pointer shadow-xs gap-1.5"
+                aria-label="Sign in to chat"
+                title="Sign in to chat"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Sign In</span>
+              </Button>
+            )}
+          </form>
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
             ExamForge AI • Academic & Exam Preparation Assistant
           </p>

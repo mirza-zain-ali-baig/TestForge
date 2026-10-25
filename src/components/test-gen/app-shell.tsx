@@ -364,6 +364,12 @@ export function TestGeneratorApp() {
 
   return (
     <div className={cn("flex min-h-screen flex-col bg-background", view === "chat" && "h-screen overflow-hidden")}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:font-semibold focus:text-xs focus:rounded-lg focus:shadow-xl focus:outline-none"
+      >
+        Skip to content
+      </a>
       {/* Unified Persistent Header across all pages except print view */}
       {view !== "print" && (
         <header className="no-print sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-md shadow-xs">
@@ -403,6 +409,7 @@ export function TestGeneratorApp() {
                   <button
                     key={n.id}
                     type="button"
+                    aria-current={isActive ? "page" : undefined}
                     onClick={() => {
                       if (n.id === "generate") {
                         if (variants.length > 0) {
@@ -568,6 +575,7 @@ export function TestGeneratorApp() {
                       <button
                         key={n.id}
                         type="button"
+                        aria-current={isActive ? "page" : undefined}
                         onClick={() => {
                           if (n.id === "generate") {
                             if (variants.length > 0) {
@@ -660,10 +668,11 @@ export function TestGeneratorApp() {
 
       {/* Main Content with ErrorBoundary */}
       <main
+        id="main-content"
         className={cn(
           "flex-1",
           view === "chat"
-            ? "w-full h-[calc(100vh-4rem)] pb-14 md:pb-0 p-0 m-0 overflow-hidden"
+            ? "w-full h-[calc(100dvh-4rem)] pb-14 md:pb-0 p-0 m-0 overflow-hidden"
             : "mx-auto w-full max-w-7xl px-4 py-5 pb-24 md:pb-10 sm:px-6 lg:px-8"
         )}
       >
@@ -806,6 +815,7 @@ export function TestGeneratorApp() {
               <button
                 key={item.id}
                 type="button"
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => {
                   if (item.id === "bank") {
                     if (!user) {
