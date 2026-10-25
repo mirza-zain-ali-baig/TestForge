@@ -2,6 +2,7 @@
 
 :root {
   --radius: 0.625rem;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
   /* Paper and print tokens - tinted toward anchor hue */
   --paper-bg: oklch(0.996 0.006 245);
   --print-ink: oklch(0.12 0.02 250);
