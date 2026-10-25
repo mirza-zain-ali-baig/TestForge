@@ -938,19 +938,9 @@ export function GeneratorWizard({
               {/* Header with selected class & subject scope */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
                 <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight">Select Syllabus</h2>
-                    <Badge variant="outline" className="font-semibold text-xs">
-                      {currentClass?.class_name}
-                    </Badge>
-                    <span className="text-muted-foreground text-xs">›</span>
-                    <Badge className="bg-emerald-600 text-white font-semibold text-xs border-0">
-                      {currentSubject?.subject_name}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Select chapters and subtopics for your test.
-                  </p>
+                  <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-foreground">
+                    Select Syllabus
+                  </h2>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
