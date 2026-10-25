@@ -597,18 +597,26 @@ function renderPreviewHTML(test: GeneratedTest, opts: PrintExportOpts): string {
   const htmlTitle = test.title || `${test.subjectName} Examination`;
 
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${escape(htmlTitle)}</title>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escape(htmlTitle)}</title>
 ${GOOGLE_FONTS_LINK}
 <style>
   @page { size: ${paperSize.value}; margin: ${margins}mm; }
   ${pageNumberCss}
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   body {
     background: #e2e8f0;
     font-family: ${pf};
     padding: 16px;
+    min-width: 0;
   }
   .page {
     background: #fff;
@@ -619,7 +627,8 @@ ${GOOGLE_FONTS_LINK}
     padding: ${margins}mm;
     padding-top: ${tm}mm;
     position: relative;
-    overflow: hidden;
+    overflow-x: auto;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
     color: #111;
     line-height: 1.5;
     font-size: ${fs}pt;
@@ -884,11 +893,220 @@ ${GOOGLE_FONTS_LINK}
   .aki { display: inline-block; min-width: 50px; }
   .akc { color: #000; }
 
+  /* Responsive Screen Preview Adaptations (Phone / Tablet / Narrow Split-View) */
+  @media screen and (max-width: 768px) {
+    body {
+      padding: 8px 4px;
+    }
+    .page {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: auto !important;
+      padding: 14px 10px !important;
+      margin: 0 !important;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .wm-text {
+      font-size: 48pt !important;
+    }
+    .academy {
+      flex-direction: column !important;
+      text-align: center !important;
+      gap: 8px !important;
+    }
+    .academy-logo {
+      margin: 0 auto !important;
+    }
+    .academy-l2 {
+      flex-direction: column !important;
+      text-align: center !important;
+      gap: 6px !important;
+    }
+    .academy-text-l2 {
+      text-align: center !important;
+    }
+    .info-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 6px !important;
+    }
+    .bs-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      grid-auto-flow: row !important;
+      grid-template-rows: none !important;
+      gap: 0 !important;
+    }
+    .opts-2col {
+      grid-template-columns: 1fr !important;
+      margin-left: 10px !important;
+    }
+    .opts-1col {
+      margin-left: 10px !important;
+    }
+    .section-title .marks-formula,
+    .question-heading .marks-formula {
+      position: static !important;
+      display: block !important;
+      text-align: right !important;
+      margin-top: 2px !important;
+      font-size: 8.5pt !important;
+    }
+    .bubble-sheet {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table.qt, table.mcq-table {
+      width: 100% !important;
+      font-size: ${Math.max(fs - 1, 8.5)}pt !important;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    body {
+      padding: 4px 2px;
+    }
+    .page {
+      padding: 10px 6px !important;
+    }
+    .info-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 4px !important;
+    }
+    .fld {
+      padding: 2px 4px !important;
+    }
+    .fld legend {
+      font-size: 6.5pt !important;
+      padding: 0 2px !important;
+    }
+    .fld-val {
+      font-size: ${Math.max(fs - 1, 8)}pt !important;
+    }
+    .bs-cell {
+      padding: 3px 2px !important;
+      font-size: 8pt !important;
+      gap: 2px !important;
+    }
+    .bs-q {
+      min-width: 16px !important;
+    }
+    .bub {
+      width: 15px !important;
+      height: 15px !important;
+      line-height: 15px !important;
+      font-size: 7.5px !important;
+      margin-left: 1px !important;
+    }
+    .info-table {
+      font-size: ${Math.max(fs - 2, 7.5)}pt !important;
+    }
+    .info-table td {
+      padding: 2px 4px !important;
+    }
+    .it-val {
+      min-width: 40px !important;
+      padding: 2px 3px !important;
+    }
+  }
+
+  /* Pristine Print Styles (A4, Letter, Legal — pure high-resolution print standard) */
   @media print {
-    body { background: #fff; padding: 0; }
-    .page { box-shadow: none; width: auto; min-height: auto; margin: 0; padding: 0; }
-    thead { display: table-header-group; }
-    tr { page-break-inside: avoid; }
+    body {
+      background: #fff !important;
+      padding: 0 !important;
+    }
+    .page {
+      box-shadow: none !important;
+      width: auto !important;
+      max-width: none !important;
+      min-height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+    .academy {
+      display: flex !important;
+      flex-direction: row !important;
+      text-align: left !important;
+      gap: 16px !important;
+    }
+    .academy-text {
+      text-align: center !important;
+    }
+    .academy-l2 {
+      display: flex !important;
+      flex-direction: row !important;
+      text-align: left !important;
+      gap: 14px !important;
+    }
+    .academy-text-l2 {
+      text-align: left !important;
+    }
+    .info-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 8px !important;
+    }
+    .fld {
+      padding: 3px 6px 1px !important;
+    }
+    .fld legend {
+      font-size: ${Math.max(fs - 3, 7)}pt !important;
+      padding: 0 4px !important;
+    }
+    .fld-val {
+      font-size: ${fs}pt !important;
+    }
+    .bs-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      grid-auto-flow: column !important;
+      grid-template-rows: repeat(${bsRowsPerCol}, auto) !important;
+      gap: 0 !important;
+    }
+    .bs-cell {
+      padding: 4px 6px !important;
+      font-size: ${Math.max(fs - 1, 9)}pt !important;
+      gap: 4px !important;
+    }
+    .bs-q {
+      min-width: 20px !important;
+    }
+    .bub {
+      width: 18px !important;
+      height: 18px !important;
+      line-height: 18px !important;
+      font-size: 9px !important;
+      margin-left: 2px !important;
+    }
+    .opts-2col {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      margin-left: 20px !important;
+    }
+    .opts-1col {
+      margin-left: 20px !important;
+    }
+    .section-title .marks-formula,
+    .question-heading .marks-formula {
+      position: absolute !important;
+      right: 0 !important;
+      top: 0 !important;
+      display: inline !important;
+      font-size: ${Math.max(fs, 10)}pt !important;
+    }
+    .info-table {
+      font-size: ${fs}pt !important;
+    }
+    .info-table td {
+      padding: 4px 8px !important;
+    }
+    .it-val {
+      min-width: 80px !important;
+    }
+    thead { display: table-header-group !important; }
+    tr { page-break-inside: avoid !important; }
   }
 </style></head>
 <body>
@@ -1616,7 +1834,7 @@ export function PrintExportView({
         <button
           type="button"
           onClick={() => setMobileTab("settings")}
-          className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 flex items-center justify-center gap-1.5 transition-colors ${
+          className={`flex-1 py-2.5 text-center text-xs font-semibold border-b-2 flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
             mobileTab === "settings"
               ? "border-emerald-600 text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -2285,7 +2503,7 @@ export function PrintExportView({
             ref={iframeRef}
             title="Paper preview"
             srcDoc={effectiveSrcDoc}
-            className={`h-full w-full flex-1 rounded-lg border bg-white shadow-xl ${
+            className={`h-full w-full flex-1 min-h-0 rounded-lg border bg-white shadow-xl ${
               liveEdit
                 ? "border-amber-500 ring-2 ring-amber-400/50"
                 : "border-slate-300 dark:border-slate-700"
