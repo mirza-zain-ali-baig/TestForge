@@ -25,6 +25,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Play,
   Timer,
   Flag,
@@ -53,6 +54,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -166,13 +168,10 @@ export function TestPreview({
     new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
   );
   const defaultSyllabus = useMemo(() => {
-    if (test.chapters && test.chapters.length > 0) {
-      return test.chapters.join(", ");
-    }
     const chs = Array.from(
       new Set(
         test.sections
-          .flatMap((s) => s.questions.map((q) => q.chapter_title))
+          .flatMap((s) => s.questions.map((q) => q.chapter_name))
           .filter(Boolean)
       )
     );
@@ -750,10 +749,10 @@ export function TestPreview({
                   <DropdownMenuItem onClick={onRegenerate} className="cursor-pointer">
                     <RefreshCw className="mr-2 h-4 w-4 text-blue-600" /> Regenerate All Questions
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShareOpen(true)} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => setSharing(true)} className="cursor-pointer">
                     <Share2 className="mr-2 h-4 w-4 text-emerald-600" /> Share Test
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDedupeOpen(true)} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => setCheckingDupes(true)} className="cursor-pointer">
                     <CopyCheck className="mr-2 h-4 w-4 text-amber-600" /> Duplicate Detection
                   </DropdownMenuItem>
                   {onExit && (
@@ -2596,7 +2595,7 @@ function MCQStudyView({
                     <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300">
                       <KeyRound className="h-3.5 w-3.5" />
                       Correct Answer: Option {correctOpt}
-                      {q.options && (
+                      {q.options && correctOpt && (
                         <span className="font-medium text-foreground">
                           : {q.options[`option_${correctOpt.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"]}
                         </span>

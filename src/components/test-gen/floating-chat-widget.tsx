@@ -13,6 +13,7 @@ import {
   User,
   RotateCcw,
   Lock,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

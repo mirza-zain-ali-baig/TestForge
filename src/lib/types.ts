@@ -48,6 +48,8 @@ export type GeneratedQuestion = {
   tags: string | null;
   topic_name: string | null;
   chapter_name: string | null;
+  source_origin?: string | null;
+  explanation?: string | null;
   options: {
     option_a: string;
     option_b: string;

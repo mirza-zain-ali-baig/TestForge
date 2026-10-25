@@ -479,7 +479,7 @@ export function QuestionBank({
               </strong>{" "}
               of <strong className="text-foreground">{total}</strong> questions
             </div>
-            <Button size="sm" variant="ghost" onClick={load} disabled={loading}>
+            <Button size="sm" variant="ghost" onClick={() => load(true)} disabled={loading}>
               <RefreshCw className={`mr-1 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>

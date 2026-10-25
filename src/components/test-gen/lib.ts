@@ -1,9 +1,12 @@
 import type {
   GenerateTestRequest,
   GeneratedTest,
+  GeneratedQuestion,
   QuestionTypeName,
   DifficultyName,
 } from "@/lib/types";
+
+export type { GeneratedQuestion };
 
 /* --------------------------- API fetch helpers -------------------------- */
 

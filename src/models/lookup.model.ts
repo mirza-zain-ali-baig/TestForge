@@ -68,5 +68,5 @@ export async function getLookups(): Promise<Lookups> {
 
 /** Clears the lookup cache (useful in tests or after schema changes). */
 export function invalidateLookupCache(): void {
-  lookupsCache = null;
+  lookupsCache = DEFAULT_LOOKUPS;
 }

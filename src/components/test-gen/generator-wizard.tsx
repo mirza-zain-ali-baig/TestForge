@@ -99,7 +99,7 @@ type PresetDef = {
   marks: number;
   duration: number;
   questionCount: number;
-  emoji: string;
+  emoji?: string;
   blueprint: Blueprint;
 };
 

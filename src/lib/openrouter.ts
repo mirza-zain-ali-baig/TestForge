@@ -33,6 +33,7 @@ export interface ChatMessage {
   id?: string;
   role: ChatRole;
   content: string;
+  reasoning?: string;
   modelUsed?: string;
   fallbackFrom?: string;
   timestamp?: number;
