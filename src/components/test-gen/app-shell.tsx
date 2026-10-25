@@ -370,8 +370,8 @@ export function TestGeneratorApp() {
       >
         Skip to content
       </a>
-      {/* Unified Persistent Header across all pages except print view */}
-      {view !== "print" && (
+      {/* Unified Persistent Header across all pages except print view and chat view */}
+      {view !== "print" && view !== "chat" && (
         <header className="no-print sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-md shadow-xs">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
             {/* Logo & Brand */}
@@ -672,7 +672,7 @@ export function TestGeneratorApp() {
         className={cn(
           "flex-1",
           view === "chat"
-            ? "w-full h-[calc(100dvh-4rem)] pb-14 md:pb-0 p-0 m-0 overflow-hidden"
+            ? "w-full h-screen p-0 m-0 overflow-hidden"
             : "mx-auto w-full max-w-7xl px-4 py-5 pb-24 md:pb-10 sm:px-6 lg:px-8"
         )}
       >
@@ -803,7 +803,7 @@ export function TestGeneratorApp() {
       )}
 
       {/* Mobile Bottom Navigation Bar (Chapter 13 Rec 1: Native Thumb-Zone Navigation) */}
-      {view !== "print" && (
+      {view !== "print" && view !== "chat" && (
         <nav
           className="no-print md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md shadow-lg px-2 py-1 safe-area-bottom flex items-center justify-around"
           aria-label="Mobile Bottom Navigation"
