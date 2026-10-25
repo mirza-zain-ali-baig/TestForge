@@ -85,12 +85,12 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Set default sidebar open on desktop once mounted
+  // Default sidebar closed on mobile screens
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      setSidebarOpen(true);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
     }
   }, []);
 
@@ -768,8 +768,43 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         {/* Accessible screen reader heading */}
         <h1 className="sr-only">ExamForge AI: Academic and Exam Assistant</h1>
 
-        {/* Mobile Header (Exact layout from Mobile Image) */}
-        <div className="flex md:hidden items-center justify-between p-3 border-b border-border shrink-0 bg-background">
+        {/* Top Bar for Mobile & when Sidebar is collapsed on Desktop */}
+        <div className={`items-center justify-between p-3 border-b border-border shrink-0 bg-background ${sidebarOpen ? "hidden md:hidden" : "flex"}`}>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Dashboard</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Open chat history"
+              title="Open chat history"
+            >
+              <Clock className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNewChat}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              aria-label="New chat"
+              title="New chat"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile-only Header when Sidebar is open (overlay mode) */}
+        <div className={`md:hidden flex items-center justify-between p-3 border-b border-border shrink-0 bg-background ${sidebarOpen ? "flex" : "hidden"}`}>
           {onBack && (
             <button
               type="button"
@@ -806,32 +841,32 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         {/* Main Content Area */}
         {messages.length === 0 ? (
           /* Empty Hero State (Desktop Image 1 & Mobile Image 2) */
-          <div className="flex-1 overflow-y-auto px-4 py-8 sm:py-12 flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full custom-scrollbar">
-            {/* Centered Sparkle Icon */}
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 mb-5">
-              <Sparkles className="h-5 w-5" />
-            </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:py-6 flex flex-col items-center max-w-4xl mx-auto w-full custom-scrollbar">
+            <div className="my-auto flex flex-col items-center text-center w-full max-w-2xl py-2">
+              {/* Centered Sparkle Icon */}
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 mb-3.5 shrink-0 shadow-inner">
+                <Sparkles className="h-5 w-5" />
+              </div>
 
-            {/* Headline with Serif & Italic Emerald */}
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif tracking-tight text-foreground font-normal leading-tight max-w-xl">
-              What are we <span className="italic text-emerald-400 font-serif">studying</span> today{firstName ? `, ${firstName}` : ""}?
-            </h2>
+              {/* Headline with Serif & Italic Emerald */}
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-serif tracking-tight text-foreground font-normal leading-tight w-full max-w-3xl">
+                What are we <span className="italic text-emerald-400 font-serif">studying</span> today{firstName ? `, ${firstName}` : ""}?
+              </h2>
 
-            {/* Subtitle */}
-            <p className="mt-3 max-w-md sm:max-w-lg text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
-              Solve problems step by step, draft board-exam MCQs, or break a tough concept down until it clicks.
-            </p>
+              {/* Subtitle */}
+              <p className="mt-2 max-w-md sm:max-w-lg text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
+                Solve problems step by step, draft board-exam MCQs, or break a tough concept down until it clicks.
+              </p>
 
-            {/* Main Center Composer Box */}
-            <div className="w-full max-w-2xl mt-6 sm:mt-8 space-y-6">
-              <div className="w-full rounded-2xl border border-border bg-card p-3.5 sm:p-4 shadow-sm focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-colors text-left">
+              {/* Main Center Composer Box */}
+              <div className="w-full rounded-2xl border border-border bg-card p-3 sm:p-3.5 shadow-sm focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-colors text-left mt-5 sm:mt-6">
                 <textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => {
                     setInput(e.target.value);
                     e.target.style.height = "auto";
-                    e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -844,7 +879,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                   aria-label="Ask ExamForge AI anything"
                   className="w-full resize-none bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0 border-0"
                 />
-                <div className="mt-2 flex items-center justify-between pt-1">
+                <div className="mt-1.5 flex items-center justify-between pt-1">
                   <button
                     type="button"
                     onClick={() => toast.info("Attachments will be supported in upcoming release.")}
@@ -873,21 +908,21 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
               </div>
 
               {/* Try one of these */}
-              <div className="text-left">
-                <div className="text-xs font-semibold text-muted-foreground mb-2.5 px-0.5">
+              <div className="text-left w-full mt-4 sm:mt-5">
+                <div className="text-xs font-semibold text-muted-foreground mb-2 px-0.5">
                   Try one of these
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
                   {STARTER_PROMPTS.map((sp, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => handleSendMessage(sp.prompt)}
-                      className="group flex items-center justify-between rounded-2xl border border-border bg-card hover:bg-muted/30 p-3 sm:p-3.5 text-left transition-colors hover:border-emerald-500/50 cursor-pointer"
+                      className="group flex items-center justify-between rounded-2xl border border-border bg-card hover:bg-muted/30 p-2.5 sm:p-3 text-left transition-colors hover:border-emerald-500/50 cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
-                          <sp.icon className="h-4 w-4" />
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
+                          <sp.icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs sm:text-sm font-semibold text-foreground group-hover:text-emerald-400 transition-colors truncate">
@@ -898,17 +933,17 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                           </div>
                         </div>
                       </div>
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-400 transition-colors shrink-0 ml-2" />
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-emerald-400 transition-colors shrink-0 ml-2" />
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Bottom Tagline */}
-            <p className="mt-8 text-center text-[10px] text-muted-foreground/60">
-              ExamForge AI · Academic & Exam Preparation Assistant
-            </p>
+              {/* Bottom Tagline */}
+              <p className="mt-4 sm:mt-5 text-center text-[10px] text-muted-foreground/60">
+                ExamForge AI · Academic & Exam Preparation Assistant
+              </p>
+            </div>
           </div>
         ) : (
           /* Active Chat Messages Stream */
