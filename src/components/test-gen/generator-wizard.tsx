@@ -990,36 +990,6 @@ export function GeneratorWizard({
                 </div>
               </div>
 
-              {/* Status bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border bg-muted/40 p-3 text-xs">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="font-semibold">
-                    {chapterIds.length} of {chapters.length} Chapters Selected
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className={
-                      topicIds.length > 0
-                        ? "text-emerald-700 dark:text-emerald-300 border-emerald-400 font-semibold"
-                        : "text-muted-foreground"
-                    }
-                  >
-                    {topicIds.length} of {allTopicIds.length} Subtopics Included
-                  </Badge>
-                </div>
-                <Button
-                  size="sm"
-                  disabled={chapterIds.length === 0}
-                  onClick={() => {
-                    setStep("setup");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-4 w-full sm:w-auto shadow-xs cursor-pointer"
-                >
-                  Continue to Test Setup <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Button>
-              </div>
-
               {/* Chapters List with Subtopics Cards */}
               <div className="space-y-4">
                 {chapters.map((chap, idx) => {
