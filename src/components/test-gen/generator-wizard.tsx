@@ -1194,24 +1194,30 @@ export function GeneratorWizard({
                 })}
               </div>
 
-              {/* Bottom Continuation Footer Bar */}
-              <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs mt-6 mb-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="text-base font-bold flex items-center gap-2">
-                      <span>{chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected</span>
-                      {chapterIds.length > 0 && (
-                        <Badge className="bg-emerald-600 text-white text-xs font-semibold">Ready</Badge>
-                      )}
+              {/* Sticky Bottom Continuation Bar */}
+              <div className="sticky bottom-[4.25rem] md:bottom-5 z-30 rounded-2xl border border-border bg-card/95 p-3.5 sm:p-4 shadow-md backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))] mt-6 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <div className="text-sm sm:text-base font-bold flex items-center gap-2">
+                        <span>{chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected</span>
+                        {chapterIds.length > 0 ? (
+                          <Badge className="bg-emerald-600 text-white text-[11px] font-semibold">Ready</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[11px] text-muted-foreground">Select a chapter</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {topicIds.length > 0
+                          ? `${topicIds.length} specific subtopics selected`
+                          : chapterIds.length > 0
+                          ? "All subtopics included across selected chapters"
+                          : "Choose at least one chapter to continue"}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {topicIds.length > 0
-                        ? `${topicIds.length} specific subtopics selected`
-                        : "All subtopics included across selected chapters"}
-                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <Button
                       type="button"
                       variant="outline"
@@ -1219,7 +1225,7 @@ export function GeneratorWizard({
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="font-medium cursor-pointer min-h-[44px] h-10 px-4"
+                      className="font-medium cursor-pointer min-h-[44px] h-10 px-3.5 text-xs sm:text-sm"
                     >
                       <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
                     </Button>
@@ -1229,9 +1235,10 @@ export function GeneratorWizard({
                         setStep("setup");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs cursor-pointer min-h-[44px] h-10 px-6"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs cursor-pointer min-h-[44px] h-10 px-5 text-xs sm:text-sm"
                     >
-                      Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
+                      <span>Continue to Test Setup</span>
+                      <ArrowRight className="ml-1.5 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
