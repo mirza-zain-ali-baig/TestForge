@@ -143,7 +143,7 @@ function ReasoningDisclosure({
   }, [thought]);
 
   return (
-    <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-950/20 my-1 overflow-hidden transition-colors">
+    <div className="rounded-xl bg-emerald-500/10 dark:bg-emerald-950/30 my-1 overflow-hidden transition-colors">
       <button
         type="button"
         onClick={() => {
@@ -176,7 +176,7 @@ function ReasoningDisclosure({
       {isOpen && (
         <div
           ref={thoughtContainerRef}
-          className="border-t border-emerald-500/15 p-3.5 text-xs text-muted-foreground/90 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto custom-scrollbar select-text bg-background/50"
+          className="p-3.5 text-xs text-muted-foreground/90 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto custom-scrollbar select-text bg-background/50"
         >
           {thought}
         </div>

@@ -442,14 +442,14 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
                     <div
                       className={`group relative min-w-0 max-w-[88%] sm:max-w-[85%] break-words overflow-hidden rounded-xl px-3 py-2 text-xs ${
                         isUser
-                          ? "bg-emerald-600 text-white rounded-tr-none"
+                          ? "bg-emerald-600 text-white rounded-tr-none shadow-xs"
                           : m.isError
-                          ? "border border-destructive/30 bg-destructive/10 text-destructive rounded-tl-none"
-                          : "border border-border/80 bg-muted/40 text-foreground rounded-tl-none"
+                          ? "bg-destructive/10 text-destructive rounded-tl-none"
+                          : "bg-muted/60 text-foreground rounded-tl-none shadow-xs"
                       }`}
                     >
                       {!isUser && (
-                        <div className="mb-1 flex items-center justify-between border-b border-border/40 pb-0.5 text-[10px] text-muted-foreground">
+                        <div className="mb-1 flex items-center justify-between pb-0.5 text-[10px] text-muted-foreground">
                           <span className="font-semibold text-foreground">ExamForge AI</span>
                           <button
                             type="button"

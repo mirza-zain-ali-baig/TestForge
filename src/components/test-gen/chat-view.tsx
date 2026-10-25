@@ -1015,29 +1015,29 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold shadow-xs ${
                           isUser
                             ? "bg-emerald-600 text-white"
-                            : "bg-card border border-emerald-500/30 text-emerald-400"
+                            : "bg-emerald-500/10 text-emerald-400"
                         }`}
                       >
                         {isUser ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                       </div>
 
-                      {/* Bubble */}
+                      {/* Bubble (Borderless Modern Card) */}
                       <div
                         className={`group relative min-w-0 max-w-[88%] sm:max-w-[85%] break-words overflow-hidden rounded-2xl px-4 py-3 text-xs sm:text-sm ${
                           isUser
                             ? "bg-emerald-600 text-white rounded-tr-none shadow-xs"
                             : m.isError
-                            ? "border border-destructive/30 bg-destructive/10 text-destructive rounded-tl-none"
-                            : "border border-border bg-card text-foreground rounded-tl-none shadow-xs"
+                            ? "bg-destructive/10 text-destructive rounded-tl-none"
+                            : "bg-card text-foreground rounded-tl-none shadow-xs"
                         }`}
                       >
                         {!isUser && (
-                          <div className="mb-1.5 flex items-center justify-between border-b border-border/40 pb-1 text-[11px] text-muted-foreground">
+                          <div className="mb-1.5 flex items-center justify-between pb-1 text-[11px] text-muted-foreground">
                             <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
                               ExamForge AI
                               <Badge
                                 variant="secondary"
-                                className="text-[9px] px-1 py-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                className="text-[9px] px-1 py-0 bg-emerald-500/10 text-emerald-400 border-0"
                               >
                                 Free
                               </Badge>
@@ -1095,7 +1095,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                               isStreaming={isGenerating && m.id === messages[messages.length - 1]?.id}
                             />
                             {m.isError && (
-                              <div className="mt-2.5 pt-2 border-t border-destructive/20 flex flex-wrap items-center gap-2">
+                              <div className="mt-2.5 pt-2 flex flex-wrap items-center gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
