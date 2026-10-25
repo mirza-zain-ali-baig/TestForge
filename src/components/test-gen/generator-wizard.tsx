@@ -646,61 +646,6 @@ export function GeneratorWizard({
 
   return (
     <div className="space-y-4">
-      {/* Workflow Navigation & Step Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          {step === "class" ? (
-            onExit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onExit}
-                className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 font-medium cursor-pointer"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Back to Dashboard</span>
-                <span className="sm:hidden">Exit</span>
-              </Button>
-            )
-          ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevStep}
-                className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 font-medium cursor-pointer"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>
-                  Back to {step === "setup" ? "Syllabus" : step === "syllabus" ? "Subject" : "Class"}
-                </span>
-              </Button>
-              {onExit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onExit}
-                  className="hidden sm:inline-flex h-8 sm:h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  Exit to Dashboard
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Badge variant="outline" className="text-xs font-semibold py-1 px-2.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30">
-            Step {currentStepIdx + 1} of 4: {STEPS_CONFIG[currentStepIdx]?.label}
-          </Badge>
-          {step === "setup" && (
-            <Badge variant="secondary" className="text-xs font-bold py-1 px-2.5">
-              {totalQuestions} Qs · {totalMarks} Marks
-            </Badge>
-          )}
-        </div>
-      </div>
-
       {/* Mobile Stepper Progress Bar */}
       <div className="sm:hidden rounded-xl border bg-card p-3 shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs">

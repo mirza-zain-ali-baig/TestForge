@@ -402,38 +402,40 @@ export function TestGeneratorApp() {
             </div>
 
             {/* Desktop Navigation (Visible at md: 768px+) */}
-            <nav className="hidden items-center gap-1 md:flex" aria-label="Main Navigation">
-              {NAV.map((n) => {
-                const isActive = view === n.id;
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    aria-current={isActive ? "page" : undefined}
-                    onClick={() => {
-                      if (n.id === "generate") {
-                        if (variants.length > 0) {
-                          setViewWithUrl("generate");
+            {view !== "generate" && (
+              <nav className="hidden items-center gap-1 md:flex" aria-label="Main Navigation">
+                {NAV.map((n) => {
+                  const isActive = view === n.id;
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={() => {
+                        if (n.id === "generate") {
+                          if (variants.length > 0) {
+                            setViewWithUrl("generate");
+                          } else {
+                            goGenerate();
+                          }
                         } else {
-                          goGenerate();
+                          navigate(n.id);
                         }
-                      } else {
-                        navigate(n.id);
-                      }
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap min-h-[38px] cursor-pointer",
-                      isActive
-                        ? "bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
-                  >
-                    <n.icon className="h-4 w-4 shrink-0" />
-                    {n.label}
-                  </button>
-                );
-              })}
-            </nav>
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs lg:text-sm lg:px-3 font-medium transition-colors whitespace-nowrap min-h-[38px] cursor-pointer",
+                        isActive
+                          ? "bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950/60 dark:text-emerald-300"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      )}
+                    >
+                      <n.icon className="h-4 w-4 shrink-0" />
+                      {n.label}
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
 
             {/* Right Header Utilities */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
