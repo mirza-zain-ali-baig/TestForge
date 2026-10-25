@@ -868,7 +868,7 @@ export function TestGeneratorApp() {
       {!["chat", "print"].includes(view) && <ScrollToTop />}
 
       {/* Floating AI Chatbox Widget */}
-      {!["chat", "print"].includes(view) && (
+      {!["chat", "print", "generate"].includes(view) && (
         <FloatingChatWidget
           user={user}
           onExpandToFullPage={() => navigate("chat")}

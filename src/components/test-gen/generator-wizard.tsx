@@ -240,6 +240,7 @@ export function GeneratorWizard({
   const [subjectId, setSubjectId] = useState<string>("");
   const [chapterIds, setChapterIds] = useState<string[]>([]);
   const [topicIds, setTopicIds] = useState<string[]>([]);
+  const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
 
   // details
   const [durationMins, setDurationMins] = useState(60);
@@ -339,6 +340,7 @@ export function GeneratorWizard({
     if (prevSubjectIdRef.current && prevSubjectIdRef.current !== subjectId) {
       setChapterIds([]);
       setTopicIds([]);
+      setExpandedChapters({});
       setQuestionSources([]);
     }
     prevSubjectIdRef.current = subjectId;
@@ -534,6 +536,46 @@ export function GeneratorWizard({
       }
     } else {
       setTopicIds((prev) => [...prev, topicId]);
+      setChapterIds((prev) => (prev.includes(chapId) ? prev : [...prev, chapId]));
+    }
+  };
+
+  const areAllChaptersExpanded = useMemo(
+    () => chapters.length > 0 && chapters.every((c) => !!expandedChapters[c.id]),
+    [chapters, expandedChapters]
+  );
+
+  const toggleExpandAllChapters = () => {
+    if (areAllChaptersExpanded) {
+      setExpandedChapters({});
+    } else {
+      const allOpen: Record<string, boolean> = {};
+      chapters.forEach((c) => {
+        allOpen[c.id] = true;
+      });
+      setExpandedChapters(allOpen);
+    }
+  };
+
+  const toggleExpandChapter = (chapId: string) => {
+    setExpandedChapters((prev) => ({
+      ...prev,
+      [chapId]: !prev[chapId],
+    }));
+  };
+
+  const toggleAllTopicsInChap = (chapId: string) => {
+    const chap = chapters.find((c) => c.id === chapId);
+    if (!chap || !chap.topics) return;
+    const chapTopicIds = chap.topics.map((t) => t.id);
+    const allSelected = chapTopicIds.length > 0 && chapTopicIds.every((id) => topicIds.includes(id));
+
+    if (allSelected) {
+      const remainingTopicIds = topicIds.filter((id) => !chapTopicIds.includes(id));
+      setTopicIds(remainingTopicIds);
+      setChapterIds((prev) => prev.filter((id) => id !== chapId));
+    } else {
+      setTopicIds((prev) => Array.from(new Set([...prev, ...chapTopicIds])));
       setChapterIds((prev) => (prev.includes(chapId) ? prev : [...prev, chapId]));
     }
   };
@@ -943,7 +985,21 @@ export function GeneratorWizard({
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleExpandAllChapters}
+                    className="h-9 px-3 text-xs font-semibold cursor-pointer rounded-xl border-border bg-card hover:bg-accent/40"
+                  >
+                    <ChevronDown
+                      className={`mr-1.5 h-3.5 w-3.5 transition-transform duration-200 ${
+                        areAllChaptersExpanded ? "rotate-180 text-emerald-600" : ""
+                      }`}
+                    />
+                    <span>{areAllChaptersExpanded ? "Collapse All" : "Expand All"}</span>
+                  </Button>
                   <button
                     type="button"
                     onClick={toggleSelectAllChapters}
@@ -980,10 +1036,11 @@ export function GeneratorWizard({
                 </div>
               </div>
 
-              {/* Chapters List with Subtopics Cards */}
-              <div className="space-y-4">
+              {/* Chapters List with Collapsible Subtopics Cards */}
+              <div className="space-y-3.5">
                 {chapters.map((chap, idx) => {
                   const isChecked = chapterIds.includes(chap.id);
+                  const isExpanded = !!expandedChapters[chap.id];
                   const topics = chap.topics ?? [];
                   const chapNo = chap.chapter_number || idx + 1;
                   const formattedChapNo = String(chapNo).padStart(2, "0");
@@ -992,84 +1049,105 @@ export function GeneratorWizard({
                   return (
                     <Card
                       key={chap.id}
-                      className={`overflow-hidden transition-colors border-2 ${
+                      className={`overflow-hidden transition-colors border ${
                         isChecked
-                          ? "border-emerald-500/80 bg-card shadow-sm ring-1 ring-emerald-500/20"
-                          : "border-border bg-card/60 hover:border-slate-300 dark:hover:border-slate-700"
+                          ? "border-emerald-600/70 bg-card shadow-xs ring-1 ring-emerald-500/20"
+                          : "border-border bg-card hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >
                       {/* Chapter Card Header */}
                       <div
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 cursor-pointer transition-colors ${
+                        className={`flex items-center justify-between gap-3 p-3.5 sm:p-4 cursor-pointer transition-colors ${
                           isChecked
-                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-b border-emerald-200/50 dark:border-emerald-900/50"
-                            : "border-b border-border/40 hover:bg-accent/40"
-                        }`}
+                            ? "bg-emerald-50/50 dark:bg-emerald-950/20"
+                            : "hover:bg-accent/40"
+                        } ${isExpanded ? "border-b border-border/50" : ""}`}
                         onClick={() => toggleChapter(chap.id)}
                       >
-                        <div className="flex items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <Checkbox
                             checked={isChecked}
                             onCheckedChange={() => toggleChapter(chap.id)}
-                            className="mt-1 sm:mt-0 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
+                            className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
                           />
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
                               <span
-                                className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${
+                                className={`px-2 py-0.5 rounded text-xs font-semibold shrink-0 ${
                                   isChecked
                                     ? "bg-emerald-600 text-white"
-                                    : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                                    : "bg-muted text-muted-foreground"
                                 }`}
                               >
-                                Chapter {formattedChapNo}
+                                {chapNo}
                               </span>
-                              <h3 className="text-base sm:text-lg font-bold text-foreground">
-                                {chap.chapter_name}
-                              </h3>
+                              <div className="text-sm sm:text-base font-semibold text-foreground truncate">
+                                Chapter {chapNo}: {chap.chapter_name}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground font-medium mt-1">
-                              {topics.length} Subtopics · {chap.questionCount ?? 0} Questions Available
+                            <div className="text-xs text-muted-foreground font-medium mt-0.5 flex items-center gap-2">
+                              <span>{topics.length} Subtopics</span>
+                              <span>·</span>
+                              <span>{chap.questionCount ?? 0} Questions Available</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 self-end sm:self-auto">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={isChecked ? "outline" : "secondary"}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleChapter(chap.id);
-                            }}
-                            className={`h-7 text-xs font-semibold ${
-                              isChecked
-                                ? "border-emerald-300 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
-                                : "hover:bg-accent"
-                            }`}
-                          >
-                            {isChecked ? "Deselect Chapter" : "Select Chapter"}
-                          </Button>
+                        {/* Right side: Subtopics accordion trigger */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {topics.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpandChapter(chap.id);
+                              }}
+                              className="h-8 px-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5 rounded-lg border border-border/70 hover:border-border hover:bg-background"
+                            >
+                              <span>{isExpanded ? "Hide Subtopics" : "View Subtopics"}</span>
+                              {selectedTopicsInChap.length > 0 && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-0 font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                >
+                                  {selectedTopicsInChap.length}/{topics.length}
+                                </Badge>
+                              )}
+                              <ChevronDown
+                                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                                  isExpanded ? "rotate-180 text-emerald-600" : ""
+                                }`}
+                              />
+                            </Button>
+                          )}
                         </div>
                       </div>
 
-                      {/* Subtopics Section inside Chapter Card (always visible by default) */}
-                      <div className="p-4 bg-background/50">
-                        <div className="mb-2.5 flex items-center justify-between">
-                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                            <ListTree className="h-3.5 w-3.5 text-emerald-600" />
-                            Subtopics ({selectedTopicsInChap.length}/{topics.length} selected)
-                          </span>
-                          {topics.length > 0 && (
-                            <span className="text-[11px] text-muted-foreground">
-                              Click any subtopic to select chapter & topic
+                      {/* Subtopics Section inside Chapter Card (collapsible) */}
+                      {isExpanded && topics.length > 0 && (
+                        <div className="p-3.5 sm:p-4 bg-muted/20">
+                          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="font-semibold flex items-center gap-1.5">
+                              <ListTree className="h-3.5 w-3.5 text-emerald-600" />
+                              Subtopics in Chapter {chapNo} ({selectedTopicsInChap.length}/{topics.length} selected)
                             </span>
-                          )}
-                        </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAllTopicsInChap(chap.id);
+                              }}
+                              className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                            >
+                              {selectedTopicsInChap.length === topics.length
+                                ? "Deselect All Subtopics"
+                                : "Select All Subtopics"}
+                            </button>
+                          </div>
 
-                        {topics.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {topics.map((t, topicIdx) => {
                               const isTopicSelected = topicIds.includes(t.id);
                               const articleNo = t.topic_article_no || `${chapNo}.${topicIdx + 1}`;
@@ -1078,10 +1156,10 @@ export function GeneratorWizard({
                                 <div
                                   key={t.id}
                                   onClick={() => toggleTopic(chap.id, t.id)}
-                                  className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-colors cursor-pointer ${
+                                  className={`flex items-center justify-between gap-2.5 rounded-lg border p-2.5 text-xs transition-colors cursor-pointer ${
                                     isTopicSelected
-                                      ? "border-emerald-600 bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
-                                      : "border-border bg-card hover:border-emerald-400 hover:bg-accent/50 text-foreground"
+                                      ? "border-emerald-600 bg-emerald-50/80 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
+                                      : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40 text-foreground"
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
@@ -1090,20 +1168,17 @@ export function GeneratorWizard({
                                       onCheckedChange={() => toggleTopic(chap.id, t.id)}
                                       className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 shrink-0"
                                     />
-                                    <Badge
-                                      variant="outline"
-                                      className="font-mono text-[10px] px-1.5 py-0 shrink-0 font-bold bg-muted/60"
-                                    >
+                                    <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground font-semibold shrink-0">
                                       {articleNo}
-                                    </Badge>
-                                    <span className="truncate font-medium" title={t.topic_name}>
+                                    </span>
+                                    <span className="truncate" title={t.topic_name}>
                                       {t.topic_name}
                                     </span>
                                   </div>
                                   {t.questionCount != null && t.questionCount > 0 && (
                                     <Badge
                                       variant="secondary"
-                                      className="text-[10px] shrink-0 font-semibold"
+                                      className="text-[10px] shrink-0 font-semibold h-5 px-1.5"
                                     >
                                       {t.questionCount} Qs
                                     </Badge>
@@ -1112,55 +1187,49 @@ export function GeneratorWizard({
                               );
                             })}
                           </div>
-                        ) : (
-                          <div className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground">
-                            All questions in this chapter are included in the test pool.
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </Card>
                   );
                 })}
               </div>
 
-              {/* Sticky / Prominent Bottom Continuation Bar */}
-              <div className="sticky bottom-[4.5rem] sm:bottom-4 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-md pb-[max(0.85rem,env(safe-area-inset-bottom))]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Bottom Continuation Footer Bar */}
+              <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs mt-6 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <div className="text-sm font-bold flex items-center gap-2">
+                    <div className="text-base font-bold flex items-center gap-2">
                       <span>{chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected</span>
                       {chapterIds.length > 0 && (
-                        <Badge className="bg-emerald-600 text-white text-[10px] font-bold">Ready</Badge>
+                        <Badge className="bg-emerald-600 text-white text-xs font-semibold">Ready</Badge>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {topicIds.length > 0
                         ? `${topicIds.length} specific subtopics selected`
                         : "All subtopics included across selected chapters"}
-                    </div>
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
                       onClick={() => {
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="font-medium cursor-pointer flex-1 sm:flex-none min-h-[44px] h-11 sm:h-10"
+                      className="font-medium cursor-pointer min-h-[44px] h-10 px-4"
                     >
                       <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
                     </Button>
                     <Button
-                      size="sm"
                       disabled={chapterIds.length === 0}
                       onClick={() => {
                         setStep("setup");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md cursor-pointer flex-1 sm:flex-none min-h-[44px] h-11 sm:h-10 px-5"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs cursor-pointer min-h-[44px] h-10 px-6"
                     >
                       Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
