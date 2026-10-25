@@ -621,8 +621,8 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
       {/* Left Sidebar (Exact layout from Desktop Image) */}
       <aside
         className={`${
-          sidebarOpen ? "translate-x-0 w-72 md:w-64" : "-translate-x-full w-0 md:w-0"
-        } fixed md:relative inset-y-0 left-0 z-50 md:z-auto flex flex-col shrink-0 border-r border-border bg-card transition-transform duration-200 ease-in-out overflow-hidden shadow-2xl md:shadow-none`}
+          sidebarOpen ? "translate-x-0 w-72 md:w-64 border-r border-border" : "-translate-x-full w-0 md:w-0 border-r-0 border-transparent pointer-events-none"
+        } fixed md:relative inset-y-0 left-0 z-50 md:z-auto flex flex-col shrink-0 bg-card transition-transform duration-200 ease-in-out overflow-hidden shadow-2xl md:shadow-none`}
       >
         {/* Top Branding */}
         <div className="p-4 pb-2">
@@ -639,8 +639,9 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-muted-foreground hover:text-foreground p-1 rounded-lg cursor-pointer"
-              aria-label="Close sidebar"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+              aria-label="Close history"
+              title="Close history"
             >
               <X className="h-4 w-4" />
             </button>
@@ -785,20 +786,22 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
               aria-label="Open chat history"
               title="Open chat history"
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3.5 w-3.5" />
+              <span>History</span>
             </button>
             <button
               type="button"
               onClick={handleNewChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
               aria-label="New chat"
               title="New chat"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
+              <span>New chat</span>
             </button>
           </div>
         </div>
@@ -820,20 +823,22 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
               aria-label="Open chat history"
               title="Open chat history"
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3.5 w-3.5" />
+              <span>History</span>
             </button>
             <button
               type="button"
               onClick={handleNewChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
               aria-label="New chat"
               title="New chat"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
+              <span>New chat</span>
             </button>
           </div>
         </div>
@@ -859,7 +864,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
               </p>
 
               {/* Main Center Composer Box */}
-              <div className="w-full rounded-2xl border border-border bg-card p-3 sm:p-3.5 shadow-sm focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-colors text-left mt-5 sm:mt-6">
+              <div className="chat-composer w-full rounded-2xl border border-border bg-card p-3 sm:p-3.5 shadow-xs focus-within:border-muted-foreground/30 transition-colors text-left mt-5 sm:mt-6">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -877,7 +882,8 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                   placeholder="Ask ExamForge AI anything…"
                   rows={2}
                   aria-label="Ask ExamForge AI anything"
-                  className="w-full resize-none bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0 border-0"
+                  className="chat-input w-full resize-none bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 border-0 shadow-none"
+                  style={{ outline: "none", boxShadow: "none", border: "none" }}
                 />
                 <div className="mt-1.5 flex items-center justify-between pt-1">
                   <button
@@ -951,6 +957,18 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             {/* In-chat Desktop Top Action Bar */}
             <div className="hidden md:flex items-center justify-between px-4 py-2.5 border-b border-border bg-card">
               <div className="flex items-center gap-2">
+                {!sidebarOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-2 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer mr-1"
+                    aria-label="Open chat history"
+                    title="Open chat history"
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>History</span>
+                  </button>
+                )}
                 <span className="text-xs font-semibold text-foreground truncate max-w-md">
                   {activeSession?.title || "Conversation"}
                 </span>
@@ -1119,7 +1137,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
 
             {/* Bottom Fixed Composer Bar in Active Chat */}
             <div className="shrink-0 p-3 sm:p-4 border-t border-border bg-background">
-              <div className="w-full max-w-3xl mx-auto rounded-2xl border border-border bg-card p-3 shadow-sm focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/30 transition-colors text-left">
+              <div className="chat-composer w-full max-w-3xl mx-auto rounded-2xl border border-border bg-card p-3 shadow-xs focus-within:border-muted-foreground/30 transition-colors text-left">
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -1137,7 +1155,8 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                   placeholder="Ask ExamForge AI anything…"
                   rows={1}
                   aria-label="Ask ExamForge AI anything"
-                  className="w-full resize-none bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0 border-0 max-h-[140px]"
+                  className="chat-input w-full resize-none bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 border-0 shadow-none max-h-[140px]"
+                  style={{ outline: "none", boxShadow: "none", border: "none" }}
                 />
                 <div className="mt-1 flex items-center justify-between pt-1">
                   <button

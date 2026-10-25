@@ -102,6 +102,16 @@
   background-color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
 }
 
+/* Ensure chat textarea has zero outlines, borders, or rings */
+textarea.chat-input,
+.chat-composer textarea,
+.chat-composer textarea:focus,
+.chat-composer textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* Ambient background pattern */
 .bg-grid {
   background-image: radial-gradient(circle at 50% 0%, color-mix(in oklch, var(--primary) 12%, transparent) 0%, transparent 75%);
