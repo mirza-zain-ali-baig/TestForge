@@ -525,22 +525,30 @@ export function TestPreview({
       {/* Toolbar */}
       <Card className="no-print sticky top-0 sm:top-2 z-30 bg-card/95 backdrop-blur-md shadow-sm sm:shadow-xs rounded-none sm:rounded-xl border-x-0 sm:border">
         <CardContent className="p-2.5 sm:p-4">
-          {/* Mobile view (< sm): Clean 2-row layout with 0 horizontal scroll */}
-          <div className="flex flex-col gap-2.5 sm:hidden">
-            {/* Mobile Row 1: Back, Stats, Save, and More Options */}
+          {/* Mobile & Tablet Compact View (< xl): Clean, balanced 2-row layout with zero collision or horizontal clipping */}
+          <div className="flex flex-col gap-2.5 xl:hidden">
+            {/* Row 1: Back Navigation, Assessment Metadata, Save, and Actions */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={onBack}
-                  className="h-8 px-2.5 text-xs gap-1 font-medium cursor-pointer shrink-0"
+                  className="h-8 px-2.5 text-xs gap-1 sm:gap-1.5 font-medium cursor-pointer shrink-0"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Back<span className="hidden sm:inline"> to Setup</span></span>
                 </Button>
-                <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5 shrink-0">
+                <Badge variant="secondary" className="text-[10px] sm:text-[11px] font-bold py-0.5 px-1.5 sm:px-2 shrink-0">
                   {test.totalQuestions} Q · {test.totalMarks} m
                 </Badge>
+                <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground shrink-0">
+                  <Badge variant="outline" className="border-0 p-0 text-[11px] font-medium text-muted-foreground">
+                    {test.source === "bank" ? "Question Bank" : test.source === "ai" ? "AI Generated" : "Hybrid Mode"}
+                  </Badge>
+                  <span className="text-border">·</span>
+                  <span>{formatDuration(test.durationMins)}</span>
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
@@ -557,65 +565,122 @@ export function TestPreview({
                     </>
                   ) : (
                     <>
-                      <Save className="mr-1 h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
+                      <Save className="mr-1 h-3.5 w-3.5 text-muted-foreground" /> {saving ? "Saving…" : "Save"}
                     </>
                   )}
                 </Button>
 
-                {/* Mobile More Options Dropdown */}
+                {/* More Options Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" aria-label="More actions">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground" aria-label="More actions">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
-                      <Download className="mr-2 h-4 w-4" /> Download PDF
+                      <Download className="mr-2 h-4 w-4 text-emerald-600" /> Download PDF
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
                       <FileText className="mr-2 h-4 w-4 text-blue-600" /> Download Word (.docx)
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
-                      <Printer className="mr-2 h-4 w-4" /> Browser Print
+                      <Printer className="mr-2 h-4 w-4 text-emerald-600" /> Browser Print
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onRegenerate} className="cursor-pointer">
-                      <RefreshCw className="mr-2 h-4 w-4" /> Regenerate Test
+                      <RefreshCw className="mr-2 h-4 w-4 text-blue-600" /> Regenerate Test
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSharing(true)} className="cursor-pointer">
+                      <Share2 className="mr-2 h-4 w-4 text-emerald-600" /> Share Test
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCheckingDupes(true)} className="cursor-pointer">
+                      <CopyCheck className="mr-2 h-4 w-4 text-emerald-600" /> Duplicate Detection
                     </DropdownMenuItem>
                     {onExit && (
-                      <DropdownMenuItem onClick={onExit} className="cursor-pointer text-muted-foreground">
-                        <X className="mr-2 h-4 w-4" /> Exit to Dashboard
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={onExit} className="cursor-pointer text-muted-foreground">
+                          <X className="mr-2 h-4 w-4" /> Exit to Dashboard
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
 
-            {/* Mobile Row 2: Practice Online, Print/Export, and Answer Key */}
+            {/* Row 2: Practice Online, Print/Export Suite, and Answer Key Toggle */}
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 onClick={() => setPracticing(true)}
-                className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+                className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5"
               >
-                <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Practice
+                <Play className="h-3.5 w-3.5 fill-current shrink-0" />
+                <span>Practice<span className="hidden sm:inline"> Online</span></span>
               </Button>
-              {onPrintExport && (
+              {onPrintExport ? (
+                <div className="flex flex-1 items-center rounded-lg shadow-xs overflow-hidden">
+                  <Button
+                    size="sm"
+                    onClick={onPrintExport}
+                    className="flex-1 h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-2 sm:px-3"
+                  >
+                    <FileDown className="h-3.5 w-3.5 shrink-0" />
+                    <span>Print & Export</span>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
+                        aria-label="Direct export options"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                        Instant Export
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
+                        <Printer className="mr-2 h-4 w-4 text-emerald-600" />
+                        <span>Browser Print</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                        <Download className="mr-2 h-4 w-4 text-emerald-600" />
+                        <span>Download PDF</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                        <span>Word Document (.docx)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onPrintExport} className="cursor-pointer font-semibold text-emerald-700 dark:text-emerald-300">
+                        <FileDown className="mr-2 h-4 w-4" />
+                        <span>Open Print & Export Studio</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
                 <Button
                   size="sm"
-                  onClick={onPrintExport}
-                  className="flex-1 h-8 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold cursor-pointer"
+                  onClick={handlePrint}
+                  className="flex-1 h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
                 >
-                  <FileDown className="mr-1.5 h-3.5 w-3.5" /> Print & Export
+                  <Printer className="h-3.5 w-3.5" /> Print
                 </Button>
               )}
-              <div className="flex shrink-0 items-center gap-1.5 rounded-lg border bg-background px-2 py-1 text-xs h-8">
-                <KeyRound className="h-3 w-3 text-emerald-600" />
-                <span className="text-[10px] font-medium">Key</span>
+              <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2 sm:px-2.5 py-1 text-xs h-8">
+                <KeyRound className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600" />
+                <Label htmlFor="ans-compact" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap">
+                  <span className="hidden sm:inline">Answer key</span>
+                  <span className="sm:hidden">Key</span>
+                </Label>
                 <Switch
-                  id="ans-mobile"
+                  id="ans-compact"
                   checked={showAnswers}
                   onCheckedChange={setShowAnswers}
                   className="scale-75"
@@ -624,14 +689,14 @@ export function TestPreview({
             </div>
           </div>
 
-          {/* Desktop view (sm:flex): High-productivity single-row SaaS toolbar */}
-          <div className="hidden sm:flex items-center justify-between gap-3">
+          {/* Desktop view (xl:flex): High-productivity single-row SaaS toolbar with natural wrapping */}
+          <div className="hidden xl:flex flex-wrap items-center justify-between gap-3">
             {/* Left: Back button + Unified metadata pill */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <Button variant="outline" size="sm" onClick={onBack} className="h-8 gap-1.5 font-medium cursor-pointer shrink-0">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back to Setup
               </Button>
-              <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground shrink-0">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground shrink-0">
                 <Badge variant="outline" className="border-0 p-0 text-[11px] font-medium text-muted-foreground">
                   {test.source === "bank" ? "Question Bank" : test.source === "ai" ? "AI Generated" : "Hybrid Mode"}
                 </Badge>
@@ -644,12 +709,12 @@ export function TestPreview({
               </div>
             </div>
 
-            {/* Right: Consolidated Action Suite (No duplicate Export dropdown, no awkward wrapping) */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Right: Consolidated Action Suite (Zero overlapping, shrink-0 protected) */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               {/* Answer Key Toggle */}
-              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs h-8 bg-card">
+              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs h-8 bg-card shrink-0">
                 <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
-                <Label htmlFor="ans" className="cursor-pointer text-xs font-medium text-foreground">
+                <Label htmlFor="ans" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap">
                   Answer key
                 </Label>
                 <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} className="scale-75" />
@@ -659,14 +724,14 @@ export function TestPreview({
               <Button
                 size="sm"
                 onClick={() => setPracticing(true)}
-                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5"
+                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5 shrink-0"
               >
                 <Play className="h-3.5 w-3.5 fill-current" /> Practice Online
               </Button>
 
               {/* Primary Print & Export Suite */}
               {onPrintExport ? (
-                <div className="flex items-center rounded-lg shadow-xs overflow-hidden">
+                <div className="flex items-center rounded-lg shadow-xs overflow-hidden shrink-0">
                   <Button
                     size="sm"
                     onClick={onPrintExport}
@@ -713,7 +778,7 @@ export function TestPreview({
                 <Button
                   size="sm"
                   onClick={handlePrint}
-                  className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
+                  className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
                 >
                   <Printer className="h-3.5 w-3.5" /> Print
                 </Button>
@@ -725,7 +790,7 @@ export function TestPreview({
                 variant="outline"
                 onClick={handleSave}
                 disabled={saving || saved}
-                className="h-8 text-xs font-medium cursor-pointer"
+                className="h-8 text-xs font-medium cursor-pointer shrink-0"
               >
                 {saved ? (
                   <>
@@ -741,7 +806,7 @@ export function TestPreview({
               {/* More Options Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground" aria-label="More options">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground shrink-0" aria-label="More options">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -753,7 +818,7 @@ export function TestPreview({
                     <Share2 className="mr-2 h-4 w-4 text-emerald-600" /> Share Test
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setCheckingDupes(true)} className="cursor-pointer">
-                    <CopyCheck className="mr-2 h-4 w-4 text-amber-600" /> Duplicate Detection
+                    <CopyCheck className="mr-2 h-4 w-4 text-emerald-600" /> Duplicate Detection
                   </DropdownMenuItem>
                   {onExit && (
                     <>
