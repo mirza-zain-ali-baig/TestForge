@@ -852,30 +852,35 @@ export function GeneratorWizard({
           {/* STEP 2: SUBJECT SELECTION WINDOW                                          */}
           {/* ========================================================================= */}
           {step === "subject" && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight">Select Subject</h2>
-                    <Badge variant="secondary" className="font-semibold text-xs">
-                      {currentClass?.class_name}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Choose a subject for {currentClass?.class_name} to continue.
-                  </p>
-                </div>
+            <div className="space-y-6 max-w-4xl">
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-foreground leading-tight">
+                  Choose a Subject
+                </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground font-sans mt-2">
+                  Pick the subject to build your paper from. Chapters come next.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                className={`grid gap-4 sm:gap-5 ${
+                  (currentClass?.subjects?.length ?? 0) <= 1
+                    ? "grid-cols-1 max-w-md"
+                    : (currentClass?.subjects?.length ?? 0) === 2
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
                 {(currentClass?.subjects ?? []).map((sub) => {
                   const isSelected = subjectId === sub.id;
-                  const chapCount = sub.chapters?.length ?? 0;
-                  const qCount = sub.questionCount ?? 0;
 
                   return (
                     <div
                       key={sub.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Select ${sub.subject_name}`}
+                      aria-pressed={isSelected}
                       onClick={() => {
                         setSubjectId(sub.id);
                         setChapterIds([]);
@@ -883,43 +888,40 @@ export function GeneratorWizard({
                         setStep("syllabus");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-[colors,box-shadow,transform] duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSubjectId(sub.id);
+                          setChapterIds([]);
+                          setTopicIds([]);
+                          setStep("syllabus");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }
+                      }}
+                      className={`group relative flex flex-col justify-between rounded-2xl border p-6 sm:p-7 min-h-[140px] sm:min-h-[160px] text-left transition-[colors,box-shadow] duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
-                          ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
-                          : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
+                          ? "border-emerald-500/60 bg-card ring-1 ring-emerald-500/30"
+                          : "border-border/80 bg-card hover:border-emerald-500/40 hover:bg-muted/20"
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
-                            <BookOpen className="h-6 w-6" />
-                          </div>
-                          {isSelected && (
-                            <Badge className="bg-emerald-600 text-white border-0 text-xs">
-                              Selected
-                            </Badge>
-                          )}
-                        </div>
-
-                        <h3 className="text-lg font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                          {sub.subject_name}
-                        </h3>
-
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium text-slate-700 dark:text-slate-200">
-                            <Layers className="h-3.5 w-3.5 text-emerald-600" />
-                            {chapCount} {chapCount === 1 ? "Chapter" : "Chapters"}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 font-medium text-slate-700 dark:text-slate-200">
-                            <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
-                            {qCount.toLocaleString()} Questions
-                          </span>
+                      {/* Top right circular arrow */}
+                      <div className="flex justify-end w-full">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                            isSelected
+                              ? "bg-emerald-400 text-slate-950 font-bold shadow-xs"
+                              : "border border-border/80 bg-background/50 text-muted-foreground group-hover:border-emerald-500/40 group-hover:bg-emerald-950/30 group-hover:text-emerald-400"
+                          }`}
+                        >
+                          <ArrowRight className="h-4 w-4" />
                         </div>
                       </div>
 
-                      <div className="mt-5 flex items-center justify-between border-t border-border/70 pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span>Select Subject</span>
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      {/* Bottom left subject title */}
+                      <div>
+                        <h3 className="font-serif text-2xl sm:text-3xl lg:text-[34px] font-normal tracking-tight text-foreground group-hover:text-emerald-400 transition-colors">
+                          {sub.subject_name}
+                        </h3>
                       </div>
                     </div>
                   );
