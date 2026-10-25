@@ -50,6 +50,10 @@ import {
   ArrowLeft,
   MoreHorizontal,
   SlidersHorizontal,
+  Bold,
+  Italic,
+  Underline,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +137,24 @@ const DATE_FORMATS = [
   { value: "DMY", label: "DD/MM/YYYY" },
   { value: "MDY", label: "MM/DD/YYYY" },
   { value: "ISO", label: "YYYY-MM-DD" },
+] as const;
+
+const LIVE_EDIT_FONT_SIZES = [
+  { value: "1", label: "8 pt (Smallest)" },
+  { value: "2", label: "10 pt (Small)" },
+  { value: "3", label: "12 pt (Body)" },
+  { value: "4", label: "14 pt (Subheading)" },
+  { value: "5", label: "18 pt (Heading)" },
+  { value: "6", label: "24 pt (Title)" },
+] as const;
+
+const LIVE_EDIT_COLORS = [
+  { label: "Dark (Default)", value: "#111827", previewClass: "bg-slate-900 border-slate-700" },
+  { label: "Emerald Green", value: "#059669", previewClass: "bg-emerald-600 border-emerald-700" },
+  { label: "Deep Blue", value: "#2563eb", previewClass: "bg-blue-600 border-blue-700" },
+  { label: "Crimson Red", value: "#dc2626", previewClass: "bg-red-600 border-red-700" },
+  { label: "Muted Slate", value: "#64748b", previewClass: "bg-slate-500 border-slate-600" },
+  { label: "Violet Accent", value: "#7c3aed", previewClass: "bg-violet-600 border-violet-700" },
 ] as const;
 
 const GOOGLE_FONTS_LINK =
@@ -1376,6 +1398,34 @@ export function PrintExportView({
     setEditedHtml(null); // clear stale edits when controls change
   }
 
+  /* ---- Selection preservation for live-edit formatting controls ---- */
+  const savedSelectionRef = useRef<Range | null>(null);
+
+  const saveSelection = () => {
+    const iframe = iframeRef.current;
+    try {
+      const sel = iframe?.contentWindow?.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        savedSelectionRef.current = sel.getRangeAt(0).cloneRange();
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const restoreSelection = () => {
+    const iframe = iframeRef.current;
+    try {
+      const sel = iframe?.contentWindow?.getSelection();
+      if (sel && savedSelectionRef.current) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelectionRef.current);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   /* ---- Toggle contentEditable on iframe body + preserve scroll position ----
    * Re-applied after every srcDoc change (iframe reloads) and on liveEdit toggle.
    * Saves scroll position before reload and restores it after. */
@@ -1396,6 +1446,10 @@ export function PrintExportView({
           if (savedScroll > 0) {
             iframe.contentWindow?.scrollTo(0, savedScroll);
           }
+          // Listen for selection changes inside iframe
+          doc.addEventListener("selectionchange", saveSelection);
+          doc.addEventListener("mouseup", saveSelection);
+          doc.addEventListener("keyup", saveSelection);
         }
       } catch {
         /* ignore cross-origin or not-yet-ready iframe */
@@ -1403,7 +1457,19 @@ export function PrintExportView({
     };
     iframe.addEventListener("load", apply);
     apply();
-    return () => iframe.removeEventListener("load", apply);
+    return () => {
+      iframe.removeEventListener("load", apply);
+      try {
+        const doc = iframe.contentWindow?.document;
+        if (doc) {
+          doc.removeEventListener("selectionchange", saveSelection);
+          doc.removeEventListener("mouseup", saveSelection);
+          doc.removeEventListener("keyup", saveSelection);
+        }
+      } catch {
+        // ignore
+      }
+    };
   }, [liveEdit, previewHtml, editedHtml]);
 
   /* ---- The srcDoc for the iframe: always use fresh previewHtml so controls work.
@@ -1437,7 +1503,9 @@ export function PrintExportView({
     if (!iframe?.contentWindow) return;
     try {
       iframe.contentWindow.focus();
+      restoreSelection();
       iframe.contentWindow.document.execCommand(cmd, false, value);
+      saveSelection();
     } catch {
       // ignore
     }
@@ -1721,7 +1789,7 @@ export function PrintExportView({
               }}
               className={`h-8 text-xs gap-1.5 font-medium transition-colors cursor-pointer ${
                 liveEdit
-                  ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs"
                   : "text-foreground hover:bg-accent border-border"
               }`}
             >
@@ -2397,12 +2465,14 @@ export function PrintExportView({
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${
-                  liveEdit ? "bg-amber-500 motion-safe:animate-pulse" : "bg-emerald-500"
+                  liveEdit
+                    ? "bg-emerald-600 motion-safe:animate-pulse ring-2 ring-emerald-500/30"
+                    : "bg-emerald-500"
                 }`}
               />
               <span className="text-[11px] font-medium text-muted-foreground truncate">
                 {liveEdit
-                  ? "Live edit active: click text in preview to edit, then click Apply."
+                  ? "Live edit active: click text in preview to format or edit, then click Done."
                   : "Live paper preview updates in real-time"}
               </span>
             </div>
@@ -2411,90 +2481,129 @@ export function PrintExportView({
             </span>
           </div>
 
-          {/* Contextual Live Edit Formatting Toolbar */}
+          {/* Contextual Live Edit Formatting Toolbar (Project Scheme: Emerald / Slate / Shadcn) */}
           {liveEdit && (
-            <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50/95 dark:bg-amber-950/40 dark:border-amber-900/60 p-2 shadow-xs shrink-0">
-              <span className="text-xs font-semibold text-amber-800 dark:text-amber-200 px-1 flex items-center gap-1.5">
-                <PencilLine className="h-3.5 w-3.5" /> Text Formatting:
-              </span>
-              <select
-                className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none"
-                onChange={(e) => execCmd("fontName", e.target.value)}
-                defaultValue=""
-                title="Font family"
-              >
-                <option value="" disabled>Font Family</option>
-                <option value="Arial, sans-serif">Arial</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="Calibri, sans-serif">Calibri</option>
-                <option value="'Courier New', monospace">Courier</option>
-              </select>
-              <select
-                className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none"
-                onChange={(e) => execCmd("fontSize", e.target.value)}
-                defaultValue=""
-                title="Font size"
-              >
-                <option value="" disabled>Font Size</option>
-                <option value="1">8pt</option>
-                <option value="2">10pt</option>
-                <option value="3">12pt</option>
-                <option value="4">14pt</option>
-                <option value="5">18pt</option>
-                <option value="6">24pt</option>
-              </select>
-              <div className="flex items-center gap-0.5 border-x px-1">
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted font-bold text-xs cursor-pointer"
-                  onClick={() => execCmd("bold")}
-                  title="Bold"
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted italic text-xs cursor-pointer"
-                  onClick={() => execCmd("italic")}
-                  title="Italic"
-                >
-                  I
-                </button>
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted underline text-xs cursor-pointer"
-                  onClick={() => execCmd("underline")}
-                  title="Underline"
-                >
-                  U
-                </button>
+            <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card/95 backdrop-blur-md p-1.5 sm:p-2 shadow-xs shrink-0 text-foreground">
+              {/* Badge Label */}
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-semibold shrink-0">
+                <PencilLine className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden sm:inline">Format Text</span>
               </div>
-              <button
-                type="button"
-                className="flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-emerald-600 font-bold text-xs hover:bg-muted cursor-pointer"
-                onClick={() => execCmd("foreColor", "#047857")}
-                title="Emerald text"
-              >
-                Green
-              </button>
-              <button
-                type="button"
-                className="flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-foreground font-bold text-xs hover:bg-muted cursor-pointer"
-                onClick={() => execCmd("foreColor", "#000000")}
-                title="Black text"
-              >
-                Black
-              </button>
+
+              {/* Font Family Dropdown */}
+              <Select onValueChange={(val) => execCmd("fontName", val)}>
+                <SelectTrigger className="h-7 w-[130px] text-xs bg-background border-border text-foreground hover:bg-muted/50 cursor-pointer">
+                  <Type className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="Font Family" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAPER_FONT_FAMILIES.map((f) => (
+                    <SelectItem key={f.value} value={f.value} className="text-xs cursor-pointer">
+                      <span style={{ fontFamily: f.value }}>{f.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Font Size Dropdown */}
+              <Select onValueChange={(val) => execCmd("fontSize", val)}>
+                <SelectTrigger className="h-7 w-[95px] text-xs bg-background border-border text-foreground hover:bg-muted/50 cursor-pointer">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LIVE_EDIT_FONT_SIZES.map((s) => (
+                    <SelectItem key={s.value} value={s.value} className="text-xs cursor-pointer">
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Format Buttons: Bold, Italic, Underline */}
+              <div className="flex items-center gap-0.5 border-x border-border px-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => execCmd("bold")}
+                  className="h-7 w-7 rounded-md text-foreground hover:bg-muted hover:text-foreground cursor-pointer font-bold"
+                  title="Bold (Ctrl+B)"
+                  aria-label="Bold"
+                >
+                  <Bold className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => execCmd("italic")}
+                  className="h-7 w-7 rounded-md text-foreground hover:bg-muted hover:text-foreground cursor-pointer italic"
+                  title="Italic (Ctrl+I)"
+                  aria-label="Italic"
+                >
+                  <Italic className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => execCmd("underline")}
+                  className="h-7 w-7 rounded-md text-foreground hover:bg-muted hover:text-foreground cursor-pointer underline"
+                  title="Underline (Ctrl+U)"
+                  aria-label="Underline"
+                >
+                  <Underline className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Color Picker Dropdown */}
+              <DropdownMenu onOpenChange={(open) => { if (open) saveSelection(); }}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 px-2 bg-background border-border text-foreground hover:bg-muted cursor-pointer"
+                    title="Text Color"
+                  >
+                    <Palette className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Color</span>
+                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44 p-1.5 space-y-1">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-medium px-2 py-0.5">
+                    Text color
+                  </DropdownMenuLabel>
+                  {LIVE_EDIT_COLORS.map((c) => (
+                    <DropdownMenuItem
+                      key={c.value}
+                      onClick={() => execCmd("foreColor", c.value)}
+                      className="cursor-pointer flex items-center gap-2 text-xs py-1.5 px-2"
+                    >
+                      <span className={`h-3.5 w-3.5 rounded-full border shadow-xs ${c.previewClass}`} />
+                      <span>{c.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Done Button */}
               <Button
+                type="button"
                 size="sm"
                 onClick={() => {
                   handleApplyEdits();
                   setLiveEdit(false);
                 }}
-                className="ml-auto h-7 bg-amber-600 hover:bg-amber-700 text-white text-xs px-2.5 font-medium cursor-pointer"
+                className="ml-auto h-7 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 font-semibold gap-1.5 shadow-xs cursor-pointer transition-colors"
+                title="Save edits and finish"
               >
-                <Check className="h-3.5 w-3.5 mr-1" /> Done
+                <Check className="h-3.5 w-3.5" />
+                <span>Done</span>
               </Button>
             </div>
           )}
@@ -2503,9 +2612,9 @@ export function PrintExportView({
             ref={iframeRef}
             title="Paper preview"
             srcDoc={effectiveSrcDoc}
-            className={`h-full w-full flex-1 min-h-0 rounded-lg border bg-white shadow-xl ${
+            className={`h-full w-full flex-1 min-h-0 rounded-lg border bg-white shadow-xl transition-colors ${
               liveEdit
-                ? "border-amber-500 ring-2 ring-amber-400/50"
+                ? "border-emerald-500/80 ring-2 ring-emerald-500/30"
                 : "border-slate-300 dark:border-slate-700"
             }`}
           />
@@ -2526,7 +2635,7 @@ export function PrintExportView({
               variant={liveEdit ? "default" : "outline"}
               size="sm"
               className={`h-10 text-xs gap-1.5 font-medium cursor-pointer flex-1 transition-colors ${
-                liveEdit ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600" : ""
+                liveEdit ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs" : ""
               }`}
             >
               {liveEdit ? (
