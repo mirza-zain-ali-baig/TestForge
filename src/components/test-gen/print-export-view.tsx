@@ -47,6 +47,9 @@ import {
   Save,
   Eye,
   Sliders,
+  ArrowLeft,
+  MoreHorizontal,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +57,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -1338,196 +1355,242 @@ export function PrintExportView({
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* ===== Top toolbar ===== */}
-      <header className="flex shrink-0 flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 border-b bg-gradient-to-r from-emerald-600 to-teal-600 px-3 sm:px-4 py-2 text-white shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
-              <Printer className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold leading-tight truncate">Print &amp; Export</h1>
-              <p className="text-[10px] text-white/80 truncate">
-                {test.title || `${test.subjectName} Examination`} ·{" "}
-                {test.totalQuestions} Q · {test.totalMarks} marks
-              </p>
-            </div>
-          </div>
-          {/* Close button on mobile right */}
+      {/* ===== Top toolbar (Notion-style clean header with merged action button) ===== */}
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 sm:px-4 py-2.5 text-foreground shadow-xs backdrop-blur-md">
+        {/* Left: Close / Back + Document Title */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 text-white hover:bg-white/15 sm:hidden shrink-0"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 cursor-pointer"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="Back to Studio"
+            title="Back to Studio"
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-        </div>
-
-        {/* Quick toggles */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full">
-          <QuickToggle
-            active={headerLayout === 2}
-            onClick={() => setHeaderLayout((v) => (v === 1 ? 2 : 1))}
-            icon={<LayoutTemplate className="h-3.5 w-3.5" />}
-            label={headerLayout === 2 ? "Header L2" : "Header L1"}
-          />
-          <QuickToggle
-            active={mcqLayout === 2}
-            onClick={() => setMcqLayout((v) => (v === 1 ? 2 : 1))}
-            icon={<LayoutTemplate className="h-3.5 w-3.5" />}
-            label={mcqLayout === 2 ? "MCQ L2" : "MCQ L1"}
-          />
-          <QuickToggle
-            active={showBubbleSheet}
-            onClick={() => setShowBubbleSheet((v) => !v)}
-            icon={<ListChecks className="h-3.5 w-3.5" />}
-            label="Bubble sheet"
-          />
-          <QuickToggle
-            active={printAnswerKey}
-            onClick={() => setPrintAnswerKey((v) => !v)}
-            icon={<KeyRound className="h-3.5 w-3.5" />}
-            label="Answer key"
-          />
-          <QuickToggle
-            active={liveEdit}
-            onClick={() => {
-              if (liveEdit) {
-                // Currently editing → apply changes and turn off
-                handleApplyEdits();
-                setLiveEdit(false);
-              } else {
-                // Turn on live edit (clear any previous edits)
-                setEditedHtml(null);
-                setLiveEdit(true);
-              }
-            }}
-            icon={liveEdit ? <Check className="h-3.5 w-3.5" /> : <PencilLine className="h-3.5 w-3.5" />}
-            label={liveEdit ? "Apply changes" : "Live edit"}
-          />
-          {/* Rich text formatting toolbar — only visible during live edit */}
-          {liveEdit && (
-            <div className="flex items-center gap-1 border-l border-white/20 pl-2 shrink-0">
-              <select
-                className="h-7 rounded border border-white/20 bg-white/10 px-1 text-[10px] text-white"
-                onChange={(e) => execCmd("fontName", e.target.value)}
-                defaultValue=""
-                title="Font family"
-              >
-                <option value="" disabled className="text-black">Font</option>
-                <option value="Arial, sans-serif" className="text-black">Arial</option>
-                <option value="'Times New Roman', serif" className="text-black">Times New Roman</option>
-                <option value="Georgia, serif" className="text-black">Georgia</option>
-                <option value="Calibri, sans-serif" className="text-black">Calibri</option>
-                <option value="'Courier New', monospace" className="text-black">Courier</option>
-              </select>
-              <select
-                className="h-7 rounded border border-white/20 bg-white/10 px-1 text-[10px] text-white"
-                onChange={(e) => execCmd("fontSize", e.target.value)}
-                defaultValue=""
-                title="Font size"
-              >
-                <option value="" disabled className="text-black">Size</option>
-                <option value="1" className="text-black">8pt</option>
-                <option value="2" className="text-black">10pt</option>
-                <option value="3" className="text-black">12pt</option>
-                <option value="4" className="text-black">14pt</option>
-                <option value="5" className="text-black">18pt</option>
-                <option value="6" className="text-black">24pt</option>
-              </select>
-              <button
-                className="flex h-7 w-7 items-center justify-center rounded border border-white/20 bg-white/10 text-white hover:bg-white/20"
-                onClick={() => execCmd("bold")}
-                title="Bold"
-              >
-                <b className="text-xs">B</b>
-              </button>
-              <button
-                className="flex h-7 w-7 items-center justify-center rounded border border-white/20 bg-white/10 text-white hover:bg-white/20"
-                onClick={() => execCmd("italic")}
-                title="Italic"
-              >
-                <i className="text-xs">I</i>
-              </button>
-              <button
-                className="flex h-7 w-7 items-center justify-center rounded border border-white/20 bg-white/10 text-white hover:bg-white/20"
-                onClick={() => execCmd("underline")}
-                title="Underline"
-              >
-                <u className="text-xs">U</u>
-              </button>
-              <button
-                className="flex h-7 items-center justify-center rounded border border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20"
-                onClick={() => execCmd("foreColor", "#047857")}
-                title="Green text"
-              >
-                <span className="text-xs" style={{ color: "#4ade80" }}>A</span>
-              </button>
-              <button
-                className="flex h-7 items-center justify-center rounded border border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20"
-                onClick={() => execCmd("foreColor", "#000000")}
-                title="Black text"
-              >
-                <span className="text-xs">A</span>
-              </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold leading-tight truncate text-foreground">
+                {test.title || `${test.subjectName} Examination`}
+              </h1>
+              <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-medium hidden sm:inline-flex">
+                {test.totalQuestions} Q · {test.totalMarks} m
+              </Badge>
             </div>
-          )}
+            <p className="text-[11px] text-muted-foreground truncate">
+              {test.className || "Class"} · {test.subjectName || "Subject"} · {paperSize} {marginPreset}
+            </p>
+          </div>
         </div>
 
-        {/* Export buttons + close */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+        {/* Right: Consolidated Controls & Merged Print/Export Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Document Layout & Options Popover */}
+          {/* Layout Options (Desktop only; on mobile, customization lives in the dedicated tab) */}
+          <div className="hidden lg:block">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 font-medium text-foreground hover:bg-accent border-border cursor-pointer"
+                  aria-label="Layout and Document Options"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Layout Options</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-3 space-y-3">
+                <div className="font-semibold text-xs text-foreground pb-1 border-b">
+                  Document Layout & Content
+                </div>
+
+                {/* Header Style Segmented Toggle */}
+                <div className="space-y-1">
+                  <div className="text-[11px] font-medium text-muted-foreground">Header Layout:</div>
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setHeaderLayout(1)}
+                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
+                        headerLayout === 1
+                          ? "bg-background text-foreground shadow-xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Centered
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHeaderLayout(2)}
+                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
+                        headerLayout === 2
+                          ? "bg-background text-foreground shadow-xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      2-Column
+                    </button>
+                  </div>
+                </div>
+
+                {/* MCQ Style Segmented Toggle */}
+                <div className="space-y-1">
+                  <div className="text-[11px] font-medium text-muted-foreground">MCQ Layout:</div>
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setMcqLayout(1)}
+                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
+                        mcqLayout === 1
+                          ? "bg-background text-foreground shadow-xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Standard
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMcqLayout(2)}
+                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
+                        mcqLayout === 2
+                          ? "bg-background text-foreground shadow-xs font-semibold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Compact (2-Col)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bubble Sheet Switch */}
+                <div className="flex items-center justify-between pt-1 border-t">
+                  <span className="text-xs font-medium text-foreground">Bubble Sheet</span>
+                  <Switch
+                    checked={showBubbleSheet}
+                    onCheckedChange={setShowBubbleSheet}
+                    className="scale-90"
+                  />
+                </div>
+
+                {/* Answer Key Switch */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground">Answer Key</span>
+                  <Switch
+                    checked={printAnswerKey}
+                    onCheckedChange={setPrintAnswerKey}
+                    className="scale-90"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Live Edit Toggle Button (Desktop header) */}
+          <div className="hidden lg:block">
+            <Button
+              size="sm"
+              variant={liveEdit ? "default" : "outline"}
+              onClick={() => {
+                if (liveEdit) {
+                  handleApplyEdits();
+                  setLiveEdit(false);
+                } else {
+                  setEditedHtml(null);
+                  setLiveEdit(true);
+                }
+              }}
+              className={`h-8 text-xs gap-1.5 font-medium transition-colors cursor-pointer ${
+                liveEdit
+                  ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
+                  : "text-foreground hover:bg-accent border-border"
+              }`}
+            >
+              {liveEdit ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Apply</span>
+                </>
+              ) : (
+                <>
+                  <PencilLine className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="hidden sm:inline">Edit Text</span>
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Save Button */}
           <Button
             size="sm"
-            onClick={handleExportPDF}
-            className="h-8 shrink-0 bg-white text-xs text-emerald-700 hover:bg-white/90"
-          >
-            <Download className="mr-1 h-3.5 w-3.5" /> PDF
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleExportWord}
-            className="h-8 shrink-0 bg-white/15 text-xs text-white hover:bg-white/25"
-          >
-            <FileText className="mr-1 h-3.5 w-3.5" /> Word
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleExportExcel}
-            className="h-8 shrink-0 bg-white/15 text-xs text-white hover:bg-white/25"
-          >
-            <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handlePrint}
-            className="h-8 shrink-0 bg-emerald-700 text-xs text-white hover:bg-emerald-800"
-          >
-            <Printer className="mr-1 h-3.5 w-3.5" /> Print
-          </Button>
-          <Button
-            size="sm"
+            variant="outline"
             onClick={handleSave}
             disabled={saving || saved}
-            className="h-8 shrink-0 bg-amber-600 text-xs text-white hover:bg-amber-700"
+            className="h-8 text-xs gap-1.5 font-medium text-foreground border-border hover:bg-accent cursor-pointer"
           >
             {saved ? (
               <>
-                <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Saved
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">Saved</span>
               </>
             ) : (
               <>
-                <Save className="mr-1 h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
+                <Save className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="hidden sm:inline">{saving ? "Saving…" : "Save"}</span>
               </>
             )}
           </Button>
+
+          {/* Merged Print & Export Button Suite (Desktop header) */}
+          <div className="hidden lg:flex items-center rounded-lg shadow-xs overflow-hidden">
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-emerald-700 transition-colors cursor-pointer px-3"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
+                  aria-label="Export options"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                  Export Assessment
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
+                  <Printer className="mr-2 h-4 w-4 text-emerald-600" />
+                  <span>Browser Print (A4)</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                  <Download className="mr-2 h-4 w-4 text-emerald-600" />
+                  <span>Download PDF</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                  <span>Word Document (.docx)</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer">
+                  <FileSpreadsheet className="mr-2 h-4 w-4 text-teal-600" />
+                  <span>Excel Sheet (.xlsx)</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Close Button */}
           <Button
             size="icon"
             variant="ghost"
-            className="hidden sm:flex h-8 w-8 shrink-0 text-white hover:bg-white/15"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
             onClick={onClose}
             aria-label="Close"
           >
@@ -2116,19 +2179,108 @@ export function PrintExportView({
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${
-                  liveEdit ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                  liveEdit ? "bg-amber-500 motion-safe:animate-pulse" : "bg-emerald-500"
                 }`}
               />
               <span className="text-[11px] font-medium text-muted-foreground truncate">
                 {liveEdit
-                  ? "Live edit ON — click text in preview to edit, then click “Apply edits”."
-                  : "Live preview · updates as you type"}
+                  ? "Live edit active: click text in preview to edit, then click Apply."
+                  : "Live paper preview updates in real-time"}
               </span>
             </div>
             <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
-              {paperSize} · {marginPreset} · {fontSize}pt · {topMargin}mm top
+              {paperSize}, {marginPreset}, {fontSize}pt, {topMargin}mm top
             </span>
           </div>
+
+          {/* Contextual Live Edit Formatting Toolbar */}
+          {liveEdit && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50/95 dark:bg-amber-950/40 dark:border-amber-900/60 p-2 shadow-xs shrink-0">
+              <span className="text-xs font-semibold text-amber-800 dark:text-amber-200 px-1 flex items-center gap-1.5">
+                <PencilLine className="h-3.5 w-3.5" /> Text Formatting:
+              </span>
+              <select
+                className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none"
+                onChange={(e) => execCmd("fontName", e.target.value)}
+                defaultValue=""
+                title="Font family"
+              >
+                <option value="" disabled>Font Family</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Calibri, sans-serif">Calibri</option>
+                <option value="'Courier New', monospace">Courier</option>
+              </select>
+              <select
+                className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none"
+                onChange={(e) => execCmd("fontSize", e.target.value)}
+                defaultValue=""
+                title="Font size"
+              >
+                <option value="" disabled>Font Size</option>
+                <option value="1">8pt</option>
+                <option value="2">10pt</option>
+                <option value="3">12pt</option>
+                <option value="4">14pt</option>
+                <option value="5">18pt</option>
+                <option value="6">24pt</option>
+              </select>
+              <div className="flex items-center gap-0.5 border-x px-1">
+                <button
+                  type="button"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted font-bold text-xs cursor-pointer"
+                  onClick={() => execCmd("bold")}
+                  title="Bold"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted italic text-xs cursor-pointer"
+                  onClick={() => execCmd("italic")}
+                  title="Italic"
+                >
+                  I
+                </button>
+                <button
+                  type="button"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground hover:bg-muted underline text-xs cursor-pointer"
+                  onClick={() => execCmd("underline")}
+                  title="Underline"
+                >
+                  U
+                </button>
+              </div>
+              <button
+                type="button"
+                className="flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-emerald-600 font-bold text-xs hover:bg-muted cursor-pointer"
+                onClick={() => execCmd("foreColor", "#047857")}
+                title="Emerald text"
+              >
+                Green
+              </button>
+              <button
+                type="button"
+                className="flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-foreground font-bold text-xs hover:bg-muted cursor-pointer"
+                onClick={() => execCmd("foreColor", "#000000")}
+                title="Black text"
+              >
+                Black
+              </button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  handleApplyEdits();
+                  setLiveEdit(false);
+                }}
+                className="ml-auto h-7 bg-amber-600 hover:bg-amber-700 text-white text-xs px-2.5 font-medium cursor-pointer"
+              >
+                <Check className="h-3.5 w-3.5 mr-1" /> Done
+              </Button>
+            </div>
+          )}
+
           <iframe
             ref={iframeRef}
             title="Paper preview"
@@ -2139,15 +2291,74 @@ export function PrintExportView({
                 : "border-slate-300 dark:border-slate-700"
             }`}
           />
-          {/* Floating settings button on mobile in preview mode */}
-          <div className="absolute bottom-4 right-4 lg:hidden z-20">
+
+          {/* Mobile Bottom Action Bar in Preview Mode (Clean: Edit Mode + Print/Export, no duplicate Settings) */}
+          <div className="lg:hidden sticky bottom-2 z-20 mx-auto w-full max-w-sm rounded-2xl border border-border bg-card/95 p-2 shadow-md backdrop-blur-md flex items-center justify-between gap-2 mt-2">
             <Button
               type="button"
-              onClick={() => setMobileTab("settings")}
-              className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-4 shadow-xl border border-white/20 gap-1.5 cursor-pointer"
+              onClick={() => {
+                if (liveEdit) {
+                  handleApplyEdits();
+                  setLiveEdit(false);
+                } else {
+                  setEditedHtml(null);
+                  setLiveEdit(true);
+                }
+              }}
+              variant={liveEdit ? "default" : "outline"}
+              size="sm"
+              className={`h-10 text-xs gap-1.5 font-medium cursor-pointer flex-1 transition-colors ${
+                liveEdit ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600" : ""
+              }`}
             >
-              <Sliders className="h-4 w-4" /> Edit Settings
+              {liveEdit ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  <span>Done Edit</span>
+                </>
+              ) : (
+                <>
+                  <PencilLine className="h-4 w-4 text-muted-foreground" />
+                  <span>Edit Text</span>
+                </>
+              )}
             </Button>
+            <div className="flex flex-1 items-center rounded-lg shadow-xs overflow-hidden">
+              <Button
+                type="button"
+                onClick={handlePrint}
+                size="sm"
+                className="h-10 text-xs gap-1.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer flex-1 rounded-r-none border-r border-emerald-700 transition-colors"
+              >
+                <Printer className="h-4 w-4" />
+                <span>Print A4</span>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-10 px-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-l-none cursor-pointer transition-colors"
+                    aria-label="Export options"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                    <Download className="mr-2 h-4 w-4 text-emerald-600" />
+                    <span>Download PDF</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                    <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                    <span>Word Document</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer">
+                    <FileSpreadsheet className="mr-2 h-4 w-4 text-teal-600" />
+                    <span>Excel Sheet</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </main>
       </div>
@@ -2205,14 +2416,14 @@ function CollapsibleSection({
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex w-full items-center gap-2 border-b bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-2 text-left transition hover:bg-emerald-100/60 dark:from-emerald-950/30 dark:to-teal-950/30"
+            className="flex w-full items-center gap-2 border-b bg-muted/40 px-3 py-2.5 text-left transition-colors hover:bg-muted/70 cursor-pointer"
           >
-            <span className="text-emerald-600">{icon}</span>
-            <h3 className="flex-1 text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
+            <span className="text-emerald-600 dark:text-emerald-400">{icon}</span>
+            <h3 className="flex-1 text-xs font-semibold text-foreground">
               {title}
             </h3>
             <ChevronDown
-              className={`h-4 w-4 text-emerald-700 transition-transform ${open ? "rotate-180" : ""}`}
+              className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
             />
           </button>
         </CollapsibleTrigger>

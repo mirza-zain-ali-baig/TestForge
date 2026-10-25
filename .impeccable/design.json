@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T13:55:00Z",
+  "title": "Design System: ExamForge AI",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Emerald Authority", "canonical": "#059669", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#ecfdf5"] },
+      "primary-dark": { "role": "primary", "displayName": "Emerald Bright", "canonical": "#10b981", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#ecfdf5"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Slate Light Canvas", "canonical": "#f8fafc", "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc"] },
+      "neutral-dark": { "role": "neutral", "displayName": "Zinc Dark Canvas", "canonical": "#09090b", "tonalRamp": ["#09090b", "#121217", "#18181f", "#26262f", "#3f3f46", "#71717a", "#a1a1aa", "#e4e4e7", "#fafafa"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero and major feature headings" },
+      "headline": { "displayName": "Headline", "purpose": "Wizard step titles and section headings" },
+      "title": { "displayName": "Title", "purpose": "Question headers, dialog titles, card titles" },
+      "body": { "displayName": "Body", "purpose": "Question text, instructions, and descriptions" },
+      "label": { "displayName": "Label", "purpose": "Badges, marks tags, navigation labels" },
+      "caption": { "displayName": "Caption", "purpose": "Micro-labels and card secondary indicators" },
+      "micro": { "displayName": "Micro", "purpose": "Status pills and badge counts" },
+      "nano": { "displayName": "Nano", "purpose": "Compact badges and indicators" },
+      "print-serif": { "displayName": "Print Serif", "purpose": "Academic print and Word document export" },
+      "print-sans": { "displayName": "Print Sans", "purpose": "Modern technical exam paper export" }
+    },
+    "shadows": [
+      { "name": "surface", "value": "0 1px 2px 0 rgba(0, 0, 0, 0.05)", "purpose": "Resting cards and containers" },
+      { "name": "elevated", "value": "0 8px 24px -12px rgba(0, 0, 0, 0.15)", "purpose": "Hover and elevated action states" }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default state transition easing" }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button with 44px min touch target on mobile.",
+      "html": "<button class=\"ds-btn-primary\">Create Exam Paper</button>",
+      "css": ".ds-btn-primary { background: #059669; color: #ffffff; padding: 10px 20px; font-weight: 700; font-size: 14px; border: none; border-radius: 10px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.15s; } .ds-btn-primary:hover { background: #047857; } .ds-btn-primary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Mobile Bottom Nav Tab",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Thumb-friendly mobile bottom navigation bar item.",
+      "html": "<button class=\"ds-nav-item ds-nav-active\"><span class=\"ds-nav-icon\">★</span><span class=\"ds-nav-label\">Generate</span></button>",
+      "css": ".ds-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 48px; padding: 4px; border: none; background: transparent; color: #64748b; font-size: 10px; cursor: pointer; } .ds-nav-active { color: #059669; font-weight: 700; } .ds-nav-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(5, 150, 105, 0.12); margin-bottom: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Academic Printmaster",
+    "overview": "ExamForge AI is an authoritative, clean, and highly functional assessment studio designed for modern educators. Interfaces prioritize high scanability, tactile feedback, and seamless transitions between mobile handheld devices and desktop A4 print workflows.",
+    "keyCharacteristics": [
+      "Authoritative Emerald brand identity with calm Slate neutral foundations",
+      "Mobile-first thumb ergonomics with fixed bottom navigation and adaptive sticky action drawers",
+      "High information density without visual crowding",
+      "True WYSIWYG paper representation with pagination parity for DOCX and PDF export"
+    ],
+    "rules": [
+      { "name": "The Emerald Restraint Rule", "body": "Emerald is reserved for active selection, completion, and primary confirmation. No more than 10% of any viewport may be tinted green.", "section": "colors" },
+      { "name": "The No-Gradient Text Rule", "body": "Gradient text is forbidden. Headings and metrics derive emphasis from typographic scale and weight, not decorative color washes.", "section": "colors" },
+      { "name": "The 16px Mobile Form Rule", "body": "All text inputs, textareas, and select triggers on mobile must render with a base font size of 16px to prevent iOS Safari auto-zoom.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "All cards and containers rest flat against their canvas with 1px border definition; shadows only appear to indicate active elevation or drag states.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do provide at least 44x44px touch targets on all interactive mobile buttons and links.",
+      "Do offset mobile sticky action bars (bottom-[4.5rem]) so they never hide behind the bottom navigation bar.",
+      "Do use responsive typography (text-base sm:text-sm) on form inputs to prevent mobile browser viewport jumping.",
+      "Do preserve 100% feature parity between mobile and desktop experiences.",
+      "Do handle safe areas on modern mobile devices using safe-area-bottom."
+    ],
+    "donts": [
+      "Don't use decorative gradient text or linear-gradient font fills.",
+      "Don't add artificial background grid overlays that mimic wireframes or blueprint paper.",
+      "Don't allow horizontal scroll on the viewport at any mobile screen width down to 320px.",
+      "Don't place floating widgets where they obstruct primary submit buttons or sticky action bars.",
+      "Don't rely on hover tooltips for essential functionality on touch devices."
+    ]
+  }
+}

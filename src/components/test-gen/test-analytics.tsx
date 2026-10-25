@@ -164,15 +164,15 @@ export function TestAnalytics({
       {/* Header */}
       <Card className="overflow-hidden border-none bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md">
         <CardContent className="relative p-5 sm:p-6">
-          <div className="absolute inset-0 bg-grid opacity-15" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/80">
-                <BarChart3 className="h-3.5 w-3.5" /> Test Analytics
-              </div>
-              <h2 className="mt-1 text-xl font-bold sm:text-2xl">{test.title}</h2>
-              <p className="text-sm text-white/85">
-                {test.className} · {test.subjectName} · {a.total} questions · {a.marksTotal} marks
+              <h2 className="text-xl font-bold sm:text-2xl flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>{test.title}</span>
+              </h2>
+              <p className="mt-1 text-sm text-white/85">
+                {test.className} · {test.subjectName} ({a.total} questions, {a.marksTotal} marks)
               </p>
             </div>
             <div className="flex gap-3">
@@ -302,7 +302,7 @@ export function TestAnalytics({
                     <span className="w-28 shrink-0 text-sm font-medium">{b.name}</span>
                     <div className="h-6 flex-1 overflow-hidden rounded-md bg-muted">
                       <div
-                        className="flex h-full items-center justify-end rounded-md px-2 text-[11px] font-semibold text-white transition-all"
+                        className="flex h-full items-center justify-end rounded-md px-2 text-[11px] font-semibold text-white transition-opacity duration-300"
                         style={{
                           width: `${Math.max(pct, 8)}%`,
                           background: PIE_COLORS[i % PIE_COLORS.length],
@@ -468,7 +468,7 @@ function CompetencyMap({ test }: { test: GeneratedTest }) {
         {/* Coverage summary */}
         <div className="mb-4 flex items-center gap-4">
           <div className="relative h-16 w-16 shrink-0">
-            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
               <circle
                 cx="18"
                 cy="18"
@@ -550,7 +550,7 @@ function CompetencyMap({ test }: { test: GeneratedTest }) {
                   {hasQuestions && (
                     <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded-full transition-opacity duration-300"
                         style={{
                           width: `${widthPct}%`,
                           background: `var(--chart-${(i % 5) + 1})`,
@@ -594,7 +594,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase text-white/80">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/80">
         <Icon className="h-3 w-3" /> {label}
       </div>
       <div className="text-xl font-bold tabular-nums">{value}</div>
@@ -619,7 +619,7 @@ function KpiCard({
     <Card>
       <CardContent className="flex flex-col gap-1.5 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             {label}
           </span>
           <Icon className="h-4 w-4 text-emerald-600" />
@@ -628,7 +628,7 @@ function KpiCard({
         {progress !== undefined && (
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all"
+              className="h-full rounded-full bg-emerald-500 transition-opacity duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

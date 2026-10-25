@@ -179,49 +179,62 @@ export function SavedTests({
             {overlap && overlap.totalTests > 1 && (
               <OverlapPanel pairs={overlap.pairs} />
             )}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
             {tests.map((t) => (
               <div
                 key={t.id}
-                className="group flex flex-col gap-2 rounded-xl border bg-card p-4 transition-all hover:border-emerald-400 hover:shadow-sm"
+                className="group flex flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs transition-[colors,box-shadow] duration-200 hover:border-emerald-500/50 hover:shadow-md"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm font-semibold" title={t.title}>
-                      {t.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {t.className} · {t.subjectName}
-                    </p>
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm sm:text-base font-bold text-foreground" title={t.title}>
+                        {t.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                        {t.className} · {t.subjectName}
+                      </p>
+                    </div>
+                    <SourceBadge source={t.source} />
                   </div>
-                  <SourceBadge source={t.source} />
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <Badge variant="secondary" className="text-[11px] font-semibold py-0.5 px-2">
+                      <FileText className="mr-1 h-3 w-3 text-muted-foreground" /> {t.totalMarks} marks
+                    </Badge>
+                    <Badge variant="secondary" className="text-[11px] font-semibold py-0.5 px-2">
+                      <Clock className="mr-1 h-3 w-3 text-muted-foreground" /> {t.durationMins} min
+                    </Badge>
+                    <Badge variant="outline" className="text-[11px] font-medium py-0.5 px-2">
+                      <Calendar className="mr-1 h-3 w-3 text-muted-foreground" /> {fmtDate(t.createdAt)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge variant="secondary" className="text-[10px]">
-                    <FileText className="mr-1 h-3 w-3" /> {t.totalMarks} marks
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px]">
-                    <Clock className="mr-1 h-3 w-3" /> {t.durationMins} min
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    <Calendar className="mr-1 h-3 w-3" /> {fmtDate(t.createdAt)}
-                  </Badge>
-                </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleOpen(t)}>
-                    <Eye className="mr-1 h-3.5 w-3.5" /> Open
+                <div className="flex items-center justify-between pt-2 border-t border-border/80">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleOpen(t)}
+                    className="h-8 px-3 text-xs font-semibold hover:border-emerald-500 hover:text-emerald-600 cursor-pointer"
+                  >
+                    <Eye className="mr-1.5 h-3.5 w-3.5" /> Open Paper
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                        aria-label="Delete test paper"
+                        title="Delete test paper"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete this test?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          “{t.title}” will be permanently removed. This cannot be undone.
+                          “{t.title}” will be permanently removed. This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -282,7 +295,7 @@ function OverlapPanel({
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
         <CheckCircle2 className="h-4 w-4 shrink-0" />
         <span>
-          <strong>No question overlap</strong> — every saved test uses unique questions. Great for avoiding duplication across exams.
+          <strong>No question overlap</strong>: every saved test uses unique questions. Great for avoiding duplication across exams.
         </span>
       </div>
     );

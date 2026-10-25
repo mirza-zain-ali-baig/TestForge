@@ -111,7 +111,6 @@ const PRESETS: PresetDef[] = [
     marks: 16,
     duration: 20,
     questionCount: 13,
-    emoji: "⚡",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 4, Medium: 4, Hard: 2 } },
       Short: { marksPerQuestion: 2, difficulties: { Easy: 1, Medium: 1, Hard: 1 } },
@@ -125,7 +124,6 @@ const PRESETS: PresetDef[] = [
     marks: 31,
     duration: 45,
     questionCount: 20,
-    emoji: "📘",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 5, Medium: 7, Hard: 3 } },
       Short: { marksPerQuestion: 2, difficulties: { Easy: 2, Medium: 1, Hard: 1 } },
@@ -139,7 +137,6 @@ const PRESETS: PresetDef[] = [
     marks: 48,
     duration: 90,
     questionCount: 28,
-    emoji: "🎓",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 8, Medium: 8, Hard: 4 } },
       Short: { marksPerQuestion: 2, difficulties: { Easy: 2, Medium: 3, Hard: 1 } },
@@ -153,7 +150,6 @@ const PRESETS: PresetDef[] = [
     marks: 20,
     duration: 30,
     questionCount: 20,
-    emoji: "✅",
     blueprint: {
       MCQ: { marksPerQuestion: 1, difficulties: { Easy: 7, Medium: 8, Hard: 5 } },
       Short: { marksPerQuestion: 2, difficulties: { Easy: 0, Medium: 0, Hard: 0 } },
@@ -650,16 +646,16 @@ export function GeneratorWizard({
 
   return (
     <div className="space-y-4">
-      {/* Top Focus Navigation Bar (Distraction-free workflow) */}
-      <div className="sticky top-0 sm:top-2 z-30 flex items-center justify-between gap-2 rounded-none sm:rounded-2xl border-x-0 sm:border -mx-3 px-3 sm:mx-0 py-2 sm:p-3 bg-card/95 backdrop-blur-md shadow-xs">
-        <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* Workflow Navigation & Step Breadcrumb */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
+        <div className="flex items-center gap-2">
           {step === "class" ? (
             onExit && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onExit}
-                className="gap-1 sm:gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 font-medium cursor-pointer"
+                className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 font-medium cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Back to Dashboard</span>
@@ -667,25 +663,24 @@ export function GeneratorWizard({
               </Button>
             )
           ) : (
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrevStep}
-                className="gap-1 sm:gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 font-medium cursor-pointer"
+                className="gap-1.5 h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 font-medium cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">
+                <span>
                   Back to {step === "setup" ? "Syllabus" : step === "syllabus" ? "Subject" : "Class"}
                 </span>
-                <span className="sm:hidden">Back</span>
               </Button>
               {onExit && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onExit}
-                  className="hidden sm:inline-flex h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="hidden sm:inline-flex h-8 sm:h-9 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Exit to Dashboard
                 </Button>
@@ -694,35 +689,50 @@ export function GeneratorWizard({
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold min-w-0">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <span className="hidden md:inline truncate">ExamForge Paper Generator</span>
-          <Badge variant="secondary" className="text-[10px] sm:text-[11px] font-medium py-0.5 truncate">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Badge variant="outline" className="text-xs font-semibold py-1 px-2.5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30">
             Step {currentStepIdx + 1} of 4: {STEPS_CONFIG[currentStepIdx]?.label}
           </Badge>
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {onExit && step !== "class" && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onExit}
-              className="sm:hidden h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-              title="Exit to Dashboard"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          {step === "setup" && (
+            <Badge variant="secondary" className="text-xs font-bold py-1 px-2.5">
+              {totalQuestions} Qs · {totalMarks} Marks
+            </Badge>
           )}
-          <ThemeToggle />
         </div>
       </div>
 
-      {/* Stepper Navigation Bar with Filled Progress Connectors */}
-      <div className="overflow-x-auto pb-1">
-        <div className="flex items-center justify-between rounded-2xl border bg-card p-3 shadow-xs min-w-[620px]">
+      {/* Mobile Stepper Progress Bar */}
+      <div className="sm:hidden rounded-xl border bg-card p-3 shadow-xs space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-foreground flex items-center gap-1.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+              {currentStepIdx + 1}
+            </span>
+            {STEPS_CONFIG[currentStepIdx]?.label}
+          </span>
+          <span className="text-[11px] text-muted-foreground font-medium">
+            {STEPS_CONFIG[currentStepIdx]?.subtitle}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5 h-1.5">
+          {STEPS_CONFIG.map((s, idx) => (
+            <div
+              key={s.id}
+              className={`rounded-full transition-colors duration-300 ${
+                idx < currentStepIdx
+                  ? "bg-emerald-600"
+                  : idx === currentStepIdx
+                  ? "bg-emerald-500"
+                  : "bg-muted"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop Stepper Navigation Bar */}
+      <div className="hidden sm:block">
+        <div className="flex items-center justify-between rounded-xl border bg-card p-2.5 shadow-xs">
           {STEPS_CONFIG.map((s, idx) => {
             const isCurrent = step === s.id;
             const thisIndex = stepOrder.indexOf(s.id);
@@ -745,34 +755,34 @@ export function GeneratorWizard({
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }
                   }}
-                  className={`group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all ${
+                  className={`group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors ${
                     isCurrent
                       ? "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-100 font-semibold ring-1 ring-emerald-500/20"
                       : isCompleted
-                      ? "text-slate-700 dark:text-slate-200 hover:bg-muted/60 cursor-pointer"
-                      : "text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                      ? "text-foreground hover:bg-muted/60 cursor-pointer"
+                      : "text-muted-foreground/60 cursor-not-allowed"
                   }`}
                 >
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                       isCurrent
-                        ? "bg-emerald-600 text-white shadow-sm ring-4 ring-emerald-600/20"
+                        ? "bg-emerald-600 text-white shadow-xs"
                         : isCompleted
                         ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {isCompleted ? <Check className="h-4 w-4" /> : s.num}
+                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : s.num}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold leading-tight">{s.label}</div>
                     <div
-                      className={`truncate text-[11px] ${
+                      className={`truncate text-[10px] ${
                         isCurrent
                           ? "text-emerald-700 dark:text-emerald-300 font-medium"
                           : isCompleted
-                          ? "text-slate-600 dark:text-slate-300 font-medium"
-                          : "text-slate-400 dark:text-slate-500"
+                          ? "text-muted-foreground font-medium"
+                          : "text-muted-foreground/60"
                       }`}
                     >
                       {s.subtitle}
@@ -780,9 +790,9 @@ export function GeneratorWizard({
                   </div>
                 </button>
                 {idx < STEPS_CONFIG.length - 1 && (
-                  <div className="flex-1 mx-2 sm:mx-3 h-1 min-w-[20px] rounded-full bg-muted overflow-hidden shrink-0">
+                  <div className="flex-1 mx-2 h-0.5 min-w-[12px] rounded-full bg-muted overflow-hidden shrink-0">
                     <div
-                      className={`h-full transition-all duration-300 ${
+                      className={`h-full transition-colors duration-300 ${
                         thisIndex < currentStepIdx ? "bg-emerald-600 w-full" : "w-0"
                       }`}
                     />
@@ -812,11 +822,6 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "class" && (
             <div className="space-y-6">
-              <WizardBreadcrumbs
-                step="class"
-                onNavigate={handleStepNavigate}
-                chapterCount={chapterIds.length}
-              />
               <div className="text-center sm:text-left">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Select Class</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -852,7 +857,7 @@ export function GeneratorWizard({
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md ${
+                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-[colors,box-shadow] duration-200 cursor-pointer shadow-xs hover:shadow-md ${
                         isSelected
                           ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
                           : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
@@ -964,12 +969,6 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "subject" && (
             <div className="space-y-6">
-              <WizardBreadcrumbs
-                step="subject"
-                currentClass={currentClass}
-                onNavigate={handleStepNavigate}
-                chapterCount={chapterIds.length}
-              />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -979,7 +978,7 @@ export function GeneratorWizard({
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Choose a subject for {currentClass?.class_name} to view its syllabus.
+                    Choose a subject for {currentClass?.class_name} to continue.
                   </p>
                 </div>
               </div>
@@ -1000,7 +999,7 @@ export function GeneratorWizard({
                         setStep("syllabus");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                      className={`group relative flex flex-col justify-between rounded-2xl border-2 p-5 text-left transition-[colors,box-shadow,transform] duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
                         isSelected
                           ? "border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-600/20"
                           : "border-border bg-card hover:border-emerald-400 hover:bg-accent/40"
@@ -1032,36 +1031,10 @@ export function GeneratorWizard({
                             {qCount.toLocaleString()} Questions
                           </span>
                         </div>
-
-                        {sub.chapters && sub.chapters.length > 0 && (
-                          <div className="mt-4 space-y-1">
-                            <div className="text-[11px] font-medium text-muted-foreground">
-                              Syllabus:
-                            </div>
-                            <div className="space-y-1">
-                              {sub.chapters.slice(0, 3).map((ch, idx) => (
-                                <div
-                                  key={ch.id}
-                                  className="truncate text-xs text-muted-foreground/90"
-                                >
-                                  <span className="font-mono text-[10px] text-muted-foreground mr-1">
-                                    Ch {ch.chapter_number || idx + 1}:
-                                  </span>
-                                  {ch.chapter_name}
-                                </div>
-                              ))}
-                              {sub.chapters.length > 3 && (
-                                <div className="text-[11px] text-muted-foreground font-medium">
-                                  +{sub.chapters.length - 3} more chapters…
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
-                      <div className="mt-6 flex items-center justify-between border-t pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span>Select Syllabus</span>
+                      <div className="mt-5 flex items-center justify-between border-t border-border/70 pt-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span>Select Subject</span>
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </div>
                     </div>
@@ -1076,14 +1049,7 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "syllabus" && (
             <div className="space-y-6">
-              <WizardBreadcrumbs
-                step="syllabus"
-                currentClass={currentClass}
-                currentSubject={currentSubject}
-                onNavigate={handleStepNavigate}
-                chapterCount={chapterIds.length}
-              />
-              {/* Header with back button and breadcrumb */}
+              {/* Header with selected class & subject scope */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1105,7 +1071,7 @@ export function GeneratorWizard({
                   <button
                     type="button"
                     onClick={toggleSelectAllChapters}
-                    className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                    className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
                       areAllChaptersSelected
                         ? "border-emerald-600 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
                         : "border-border bg-card hover:bg-accent/40 text-foreground"
@@ -1180,7 +1146,7 @@ export function GeneratorWizard({
                   return (
                     <Card
                       key={chap.id}
-                      className={`overflow-hidden transition-all border-2 ${
+                      className={`overflow-hidden transition-colors border-2 ${
                         isChecked
                           ? "border-emerald-500/80 bg-card shadow-sm ring-1 ring-emerald-500/20"
                           : "border-border bg-card/60 hover:border-slate-300 dark:hover:border-slate-700"
@@ -1204,13 +1170,13 @@ export function GeneratorWizard({
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <span
-                                className={`px-2.5 py-0.5 rounded-md text-xs font-black tracking-wider uppercase ${
+                                className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${
                                   isChecked
                                     ? "bg-emerald-600 text-white"
                                     : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
                                 }`}
                               >
-                                CH {formattedChapNo}
+                                Chapter {formattedChapNo}
                               </span>
                               <h3 className="text-base sm:text-lg font-bold text-foreground">
                                 {chap.chapter_name}
@@ -1245,7 +1211,7 @@ export function GeneratorWizard({
                       {/* Subtopics Section inside Chapter Card (always visible by default) */}
                       <div className="p-4 bg-background/50">
                         <div className="mb-2.5 flex items-center justify-between">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                             <ListTree className="h-3.5 w-3.5 text-emerald-600" />
                             Subtopics ({selectedTopicsInChap.length}/{topics.length} selected)
                           </span>
@@ -1266,7 +1232,7 @@ export function GeneratorWizard({
                                 <div
                                   key={t.id}
                                   onClick={() => toggleTopic(chap.id, t.id)}
-                                  className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-all cursor-pointer ${
+                                  className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs transition-colors cursor-pointer ${
                                     isTopicSelected
                                       ? "border-emerald-600 bg-emerald-50 font-medium text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
                                       : "border-border bg-card hover:border-emerald-400 hover:bg-accent/50 text-foreground"
@@ -1312,7 +1278,7 @@ export function GeneratorWizard({
               </div>
 
               {/* Sticky / Prominent Bottom Continuation Bar */}
-              <div className="sticky bottom-3 sm:bottom-4 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-md pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+              <div className="sticky bottom-[4.5rem] sm:bottom-4 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-md pb-[max(0.85rem,env(safe-area-inset-bottom))]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold flex items-center gap-2">
@@ -1337,7 +1303,7 @@ export function GeneratorWizard({
                         setStep("subject");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="font-medium cursor-pointer flex-1 sm:flex-none h-10"
+                      className="font-medium cursor-pointer flex-1 sm:flex-none min-h-[44px] h-11 sm:h-10"
                     >
                       <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
                     </Button>
@@ -1348,7 +1314,7 @@ export function GeneratorWizard({
                         setStep("setup");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md cursor-pointer flex-1 sm:flex-none h-10 px-5"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md cursor-pointer flex-1 sm:flex-none min-h-[44px] h-11 sm:h-10 px-5"
                     >
                       Continue to Test Setup <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -1363,13 +1329,6 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "setup" && (
             <div className="space-y-6">
-              <WizardBreadcrumbs
-                step="setup"
-                currentClass={currentClass}
-                currentSubject={currentSubject}
-                chapterCount={chapterIds.length}
-                onNavigate={handleStepNavigate}
-              />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight">Test Setup</h2>
@@ -1459,11 +1418,11 @@ export function GeneratorWizard({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="custom" className="text-xs font-medium">
-                              ⚙️ Custom
+                              Custom Setup
                             </SelectItem>
                             {PRESETS.map((p) => (
                               <SelectItem key={p.id} value={p.id} className="text-xs font-medium">
-                                {p.emoji} {p.name} ({p.marks}m)
+                                {p.name} ({p.marks}m)
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1512,10 +1471,10 @@ export function GeneratorWizard({
                         return (
                           <div
                             key={t}
-                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
+                            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3 sm:p-3.5 transition-colors ${
                               count > 0
-                                ? "border-emerald-500/30 bg-background shadow-xs"
-                                : "border-border/60 bg-muted/15 opacity-70"
+                                ? "border-emerald-500/40 bg-emerald-500/5"
+                                : "border-border/60 bg-muted/20 opacity-80"
                             }`}
                           >
                             {/* Left: Icon, Name & Marks Per Question */}
@@ -1530,7 +1489,7 @@ export function GeneratorWizard({
                                 <div className="text-sm font-bold truncate text-foreground">
                                   {meta.label}
                                 </div>
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                                   <span>Marks each:</span>
                                   <input
                                     type="number"
@@ -1551,29 +1510,33 @@ export function GeneratorWizard({
                                       if (cfg.marksPerQuestion < 1) setMarks(t, 1);
                                     }}
                                     onFocus={(e) => e.target.select()}
-                                    className="h-6 w-12 rounded border bg-background px-1 text-center font-bold text-xs"
+                                    className="h-7 w-12 rounded border border-input bg-background px-1 text-center font-bold text-xs"
                                     title={`${meta.label} marks per question`}
                                     aria-label={`${meta.label} marks per question`}
                                   />
-                                  <span>· Subtotal: <strong className="text-foreground">{subtotalMarks} marks</strong></span>
+                                  <span className="hidden sm:inline">·</span>
+                                  <span className="text-[11px] font-medium text-foreground">Subtotal: {subtotalMarks} marks</span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Right: Interactive Stepper */}
-                            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                              <div className="flex items-center rounded-xl border bg-muted/40 p-1">
+                            {/* Right: Interactive Stepper with touch-friendly 40px buttons */}
+                            <div className="flex items-center justify-between sm:justify-end gap-2 border-t border-border/50 pt-2 sm:border-0 sm:pt-0 shrink-0">
+                              <span className="text-xs font-semibold text-muted-foreground sm:hidden">
+                                Question count:
+                              </span>
+                              <div className="flex items-center rounded-xl border border-input bg-muted/30 p-0.5">
                                 <Button
                                   type="button"
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => incrementTypeCount(t, -1)}
                                   disabled={count <= 0}
-                                  className="h-8 w-8 rounded-lg hover:bg-background"
+                                  className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
                                   aria-label={`Decrease ${meta.label} count`}
                                   title={`Decrease ${meta.label} count`}
                                 >
-                                  <Minus className="h-3.5 w-3.5" />
+                                  <Minus className="h-4 w-4" />
                                 </Button>
                                 <input
                                   type="number"
@@ -1591,7 +1554,7 @@ export function GeneratorWizard({
                                     if (!isNaN(n)) setTypeCount(t, Math.max(0, n));
                                   }}
                                   onFocus={(e) => e.target.select()}
-                                  className="h-8 w-14 bg-transparent text-center font-bold text-sm focus:outline-none"
+                                  className="h-9 w-14 sm:h-8 bg-transparent text-center font-bold text-sm focus:outline-none"
                                   title={`${meta.label} question count`}
                                   aria-label={`${meta.label} question count`}
                                 />
@@ -1600,11 +1563,11 @@ export function GeneratorWizard({
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => incrementTypeCount(t, 1)}
-                                  className="h-8 w-8 rounded-lg hover:bg-background"
+                                  className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg hover:bg-background transition-colors cursor-pointer"
                                   aria-label={`Increase ${meta.label} count`}
                                   title={`Increase ${meta.label} count`}
                                 >
-                                  <Plus className="h-3.5 w-3.5" />
+                                  <Plus className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
@@ -1703,7 +1666,7 @@ export function GeneratorWizard({
                                 Difficulty Distribution & Analytics
                               </div>
                               <p className="text-[11px] text-muted-foreground mt-0.5">
-                                Default is <strong>Balanced</strong> (35% Easy · 45% Medium · 20% Hard) for standard exam difficulty.
+                                Default is <strong>Balanced</strong> (35% Easy, 45% Medium, 20% Hard) for standard exam difficulty.
                               </p>
                             </div>
                             <Badge variant="outline" className={`font-bold text-xs shrink-0 self-start sm:self-auto ${difficultyIndexColor}`}>
@@ -1718,17 +1681,17 @@ export function GeneratorWizard({
                                 <>
                                   <div
                                     style={{ width: `${(difficultyStats.easy / difficultyStats.total) * 100}%` }}
-                                    className="bg-emerald-500 h-full transition-all"
+                                    className="bg-emerald-500 h-full transition-opacity duration-300"
                                     title={`Easy: ${difficultyStats.easy} questions`}
                                   />
                                   <div
                                     style={{ width: `${(difficultyStats.medium / difficultyStats.total) * 100}%` }}
-                                    className="bg-amber-500 h-full transition-all"
+                                    className="bg-amber-500 h-full transition-opacity duration-300"
                                     title={`Medium: ${difficultyStats.medium} questions`}
                                   />
                                   <div
                                     style={{ width: `${(difficultyStats.hard / difficultyStats.total) * 100}%` }}
-                                    className="bg-rose-500 h-full transition-all"
+                                    className="bg-rose-500 h-full transition-opacity duration-300"
                                     title={`Hard: ${difficultyStats.hard} questions`}
                                   />
                                 </>
@@ -1782,33 +1745,36 @@ export function GeneratorWizard({
                                 {difficultyOpen ? "Hide Cell-by-Cell" : "Fine-Tune Cell-by-Cell"}
                               </Button>
                             </div>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => applyDifficultyRatio(50, 35, 15)}
-                                className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-emerald-500 hover:bg-accent transition-colors cursor-pointer"
                               >
-                                🌱 Easy (50/35/15)
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                                <span>Easy (50/35/15)</span>
                               </Button>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => applyDifficultyRatio(35, 45, 20)}
-                                className="text-xs h-8 font-semibold border-emerald-600/40 bg-emerald-50/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                                className="text-xs h-9 justify-center gap-1.5 font-semibold border-emerald-600/50 bg-emerald-50/40 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500 hover:bg-accent transition-colors cursor-pointer"
                               >
-                                ⚖️ Balanced (35/45/20)
+                                <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                                <span>Balanced (35/45/20)</span>
                               </Button>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => applyDifficultyRatio(20, 40, 40)}
-                                className="text-xs h-8 font-semibold hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                className="text-xs h-9 justify-center gap-1.5 font-medium hover:border-rose-500 hover:bg-accent transition-colors cursor-pointer"
                               >
-                                🔥 Hard (20/40/40)
+                                <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+                                <span>Hard (20/40/40)</span>
                               </Button>
                             </div>
                           </div>
@@ -1888,22 +1854,6 @@ export function GeneratorWizard({
                             currentTotalMarks={totalMarks}
                           />
                         </div>
-
-                        {/* Back to Syllabus navigation */}
-                        <div className="flex items-center justify-between pt-3 border-t">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setStep("syllabus");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="gap-1.5 cursor-pointer font-medium"
-                          >
-                            <ArrowLeft className="h-4 w-4" /> Back to Syllabus
-                          </Button>
-                        </div>
                       </CollapsibleContent>
                     </Collapsible>
                   </div>
@@ -1911,33 +1861,35 @@ export function GeneratorWizard({
 
                 {/* ================= RIGHT / STICKY SUMMARY & ACTION COLUMN ================= */}
                 <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-4">
-                  {/* Live Blueprint Summary Box */}
+                  {/* Unified Assessment Blueprint & Action Studio */}
                   <div className="rounded-2xl border-2 border-emerald-500/30 bg-card p-5 shadow-sm space-y-4">
-                    <div className="border-b pb-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                        Exam Blueprint Summary
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h3 className="text-base font-bold text-foreground">
+                          Assessment Blueprint
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {currentClass?.class_name} · {currentSubject?.subject_name}
+                        </p>
                       </div>
-                      <h3 className="text-lg font-bold text-foreground mt-0.5">
-                        {currentClass?.class_name} · {currentSubject?.subject_name}
-                      </h3>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Included
-                      </div>
+                      <Badge variant="secondary" className="text-xs font-semibold">
+                        {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"}
+                      </Badge>
                     </div>
 
                     {/* Big Key Stats */}
                     <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 p-3 text-center">
                       <div>
                         <div className="text-2xl font-black text-foreground">{totalQuestions}</div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground">Questions</div>
+                        <div className="text-[11px] font-medium text-muted-foreground">Questions</div>
                       </div>
                       <div className="border-x">
                         <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{totalMarks}</div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground">Marks</div>
+                        <div className="text-[11px] font-medium text-muted-foreground">Marks</div>
                       </div>
                       <div>
                         <div className="text-xl sm:text-2xl font-black text-foreground">{formatDuration(durationMins)}</div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground">Duration</div>
+                        <div className="text-[11px] font-medium text-muted-foreground">Duration</div>
                       </div>
                     </div>
 
@@ -1962,76 +1914,18 @@ export function GeneratorWizard({
                         })}
                       </div>
                     </div>
-                  </div>
 
-                  {/* PRIMARY GENERATION ACTION CARDS */}
-                  <div className="space-y-3">
-                    {/* Action 1: Practice Online */}
-                    <div className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-background to-card p-4 shadow-sm hover:border-emerald-500 transition-all dark:from-emerald-950/30">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                            <Play className="h-4 w-4 fill-current" />
-                            Practice Online
-                          </div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            Interactive in-browser test with live timer and instant scoring.
-                          </div>
-                        </div>
-                        <Badge className="bg-emerald-600 text-white border-0 text-[10px] shrink-0 font-semibold">
-                          Online
-                        </Badge>
-                      </div>
-
-                      <Button
-                        size="lg"
-                        disabled={generating || (!!user && !canGenerate)}
-                        onClick={() => handleGenerate("practice")}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 shadow-sm mt-2"
-                      >
-                        {!user ? (
-                          <>
-                            <Lock className="mr-1.5 h-4 w-4" /> Sign In to Practice Online
-                          </>
-                        ) : generating ? (
-                          <>
-                            <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                            Preparing Test…
-                          </>
-                        ) : (
-                          <>
-                            <Play className="mr-1.5 h-4 w-4 fill-current" /> Start Online Practice
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Action 2: Generate & Print */}
-                    <div className="rounded-2xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-50/70 via-background to-card p-4 shadow-sm hover:border-teal-500 transition-all dark:from-teal-950/30">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <div className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 font-bold text-sm">
-                            <Printer className="h-4 w-4" />
-                            Generate & Print Paper
-                          </div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">
-                            Official exam paper with school logo, header, 2-column layout & PDF export.
-                          </div>
-                        </div>
-                        <Badge className="bg-teal-600 text-white border-0 text-[10px] shrink-0 font-semibold">
-                          Print / PDF
-                        </Badge>
-                      </div>
-
+                    {/* Action Buttons Integrated Directly */}
+                    <div className="pt-2 border-t border-border/70 space-y-2">
                       <Button
                         size="lg"
                         disabled={generating || (!!user && !canGenerate)}
                         onClick={() => handleGenerate("preview")}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold h-11 shadow-sm mt-2"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-11 shadow-xs transition-colors cursor-pointer"
                       >
                         {!user ? (
                           <>
-                            <Lock className="mr-1.5 h-4 w-4" /> Sign In to Generate Paper
+                            <Lock className="mr-2 h-4 w-4" /> Sign In to Generate Paper
                           </>
                         ) : generating ? (
                           <>
@@ -2040,57 +1934,87 @@ export function GeneratorWizard({
                           </>
                         ) : (
                           <>
-                            <Printer className="mr-1.5 h-4 w-4" />{" "}
+                            <Printer className="mr-2 h-4 w-4" />
                             {variantCount > 1
                               ? `Generate ${variantCount} Paper Variants (Batch)`
                               : "Generate Printable Paper"}
                           </>
                         )}
                       </Button>
-                    </div>
 
-                    {!canGenerate && (
-                      <p className="text-center text-[11px] text-muted-foreground">
-                        {chapterIds.length === 0
-                          ? "Select at least 1 chapter in syllabus."
-                          : "Add at least 1 question using + or pick a preset."}
-                      </p>
-                    )}
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        disabled={generating || (!!user && !canGenerate)}
+                        onClick={() => handleGenerate("practice")}
+                        className="w-full border-border hover:bg-accent font-semibold h-10 transition-colors cursor-pointer"
+                      >
+                        {!user ? (
+                          <>
+                            <Lock className="mr-2 h-4 w-4 text-muted-foreground" /> Sign In to Practice Online
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-4 w-4 text-emerald-600 fill-emerald-600" /> Start Online Practice
+                          </>
+                        )}
+                      </Button>
+
+                      {!canGenerate && (
+                        <p className="text-center text-xs text-muted-foreground pt-1">
+                          {chapterIds.length === 0
+                            ? "Select at least 1 chapter in syllabus."
+                            : "Add at least 1 question using + or pick a preset."}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Mobile sticky action bar for Step 4 (<lg screens) */}
-              <div className="lg:hidden sticky bottom-3 z-30 rounded-xl border-2 border-emerald-500/80 bg-card/95 p-3 shadow-2xl backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
+              <div className="lg:hidden sticky bottom-[4.25rem] z-30 rounded-xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur-md flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
                     <span>{totalQuestions} Qs</span>
-                    <span>·</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">{totalMarks} Marks</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{totalMarks} Marks</span>
                   </div>
-                  <div className="text-[10px] text-muted-foreground truncate">{formatDuration(durationMins)}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">{formatDuration(durationMins)}</div>
                 </div>
-                <Button
-                  size="sm"
-                  disabled={generating || (!!user && !canGenerate)}
-                  onClick={() => handleGenerate("preview")}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 px-4 text-xs shadow-sm shrink-0 cursor-pointer"
-                >
-                  {!user ? (
-                    <>
-                      <Lock className="mr-1 h-3.5 w-3.5" /> Sign In
-                    </>
-                  ) : generating ? (
-                    <>
-                      <span className="mr-1.5 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      Generating…
-                    </>
-                  ) : (
-                    <>
-                      <Printer className="mr-1 h-3.5 w-3.5" /> Generate Paper
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={generating || (!!user && !canGenerate)}
+                    onClick={() => handleGenerate("practice")}
+                    className="h-10 px-3 text-xs font-semibold cursor-pointer"
+                    title="Practice Online"
+                  >
+                    <Play className="h-3.5 w-3.5 fill-current text-emerald-600" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={generating || (!!user && !canGenerate)}
+                    onClick={() => handleGenerate("preview")}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-10 px-4 text-xs shadow-xs shrink-0 cursor-pointer"
+                  >
+                    {!user ? (
+                      <>
+                        <Lock className="mr-1.5 h-3.5 w-3.5" /> Sign In
+                      </>
+                    ) : generating ? (
+                      <>
+                        <span className="mr-1.5 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="mr-1.5 h-3.5 w-3.5" /> Generate Paper
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -2338,109 +2262,6 @@ function DifficultyEditor(props: {
 }
 
 /* ========================================================================= */
-/*                          Wizard Breadcrumbs                               */
-/* ========================================================================= */
-
-function WizardBreadcrumbs({
-  step,
-  currentClass,
-  currentSubject,
-  chapterCount,
-  onNavigate,
-}: {
-  step: WizardStep;
-  currentClass?: CurriculumNode;
-  currentSubject?: CurriculumNode;
-  chapterCount: number;
-  onNavigate: (step: WizardStep) => void;
-}) {
-  return (
-    <nav
-      aria-label="Breadcrumb"
-      className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground"
-    >
-      {step === "class" && (
-        <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
-          Class
-        </span>
-      )}
-
-      {step === "subject" && (
-        <>
-          <button
-            type="button"
-            onClick={() => onNavigate("class")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            {currentClass?.class_name || "Class"}
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
-            Subject
-          </span>
-        </>
-      )}
-
-      {step === "syllabus" && (
-        <>
-          <button
-            type="button"
-            onClick={() => onNavigate("class")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            {currentClass?.class_name || "Class"}
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <button
-            type="button"
-            onClick={() => onNavigate("subject")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            {currentSubject?.subject_name || "Subject"}
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
-            Syllabus
-          </span>
-        </>
-      )}
-
-      {step === "setup" && (
-        <>
-          <button
-            type="button"
-            onClick={() => onNavigate("class")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            {currentClass?.class_name || "Class"}
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <button
-            type="button"
-            onClick={() => onNavigate("subject")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            {currentSubject?.subject_name || "Subject"}
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <button
-            type="button"
-            onClick={() => onNavigate("syllabus")}
-            className="hover:text-emerald-600 transition-colors cursor-pointer hover:underline text-xs"
-          >
-            Syllabus ({chapterCount} Ch)
-          </button>
-          <span className="text-muted-foreground/60 select-none text-xs">›</span>
-          <span className="font-bold text-foreground bg-muted/70 px-2.5 py-1 rounded-md text-xs">
-            Test Setup
-          </span>
-        </>
-      )}
-    </nav>
-  );
-}
-
-/* ========================================================================= */
 /*                   Difficulty Distribution & Analytics Dropdown            */
 /* ========================================================================= */
 
@@ -2565,17 +2386,17 @@ function DifficultyDistributionDropdown(props: {
               <>
                 <div
                   style={{ width: `${(stats.easy / stats.total) * 100}%` }}
-                  className="bg-emerald-500 h-full transition-all"
+                  className="bg-emerald-500 h-full transition-opacity duration-300"
                   title={`Easy: ${stats.easy}`}
                 />
                 <div
                   style={{ width: `${(stats.medium / stats.total) * 100}%` }}
-                  className="bg-amber-500 h-full transition-all"
+                  className="bg-amber-500 h-full transition-opacity duration-300"
                   title={`Medium: ${stats.medium}`}
                 />
                 <div
                   style={{ width: `${(stats.hard / stats.total) * 100}%` }}
-                  className="bg-rose-500 h-full transition-all"
+                  className="bg-rose-500 h-full transition-opacity duration-300"
                   title={`Hard: ${stats.hard}`}
                 />
               </>
@@ -2723,7 +2544,7 @@ function DurationDropdown(props: {
                 setDurationMins(m);
                 setOpen(false);
               }}
-              className={`rounded-md border py-1.5 text-xs font-semibold transition-all ${
+              className={`rounded-md border py-1.5 text-xs font-semibold transition-colors ${
                 durationMins === m
                   ? "border-emerald-600 bg-emerald-600 text-white"
                   : "border-border bg-background hover:bg-accent text-foreground"
@@ -2867,7 +2688,7 @@ function SourceFilterDropdown(props: {
               return (
                 <label
                   key={s.name}
-                  className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border p-2 text-xs transition-all ${
+                  className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border p-2 text-xs transition-colors ${
                     checked
                       ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 font-medium"
                       : "border-border hover:bg-accent/40"
@@ -3025,8 +2846,8 @@ function SourceFilterEditor(props: {
               <code className="rounded bg-muted px-1 py-0.5 text-[11px]">
                 question_from
               </code>{" "}
-              categories. This is optional — if no sources are selected, all matching
-              questions are used. Only applies when the source is{" "}
+              categories. This is optional (if no sources are selected, all matching
+              questions are used). Only applies when the source is{" "}
               <strong>Bank</strong> or <strong>Hybrid</strong>.
             </p>
             {sourcesLoading ? (
@@ -3047,7 +2868,7 @@ function SourceFilterEditor(props: {
                       <label
                         key={s.name}
                         className={[
-                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all",
+                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
                           checked
                             ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40"
                             : "border-border hover:border-emerald-400 hover:bg-accent",
@@ -3174,7 +2995,7 @@ function DifficultyPreview({
     <div className="grid gap-3 rounded-lg border bg-gradient-to-br from-muted/40 to-muted/10 p-3 sm:grid-cols-[1fr_auto]">
       {/* Distribution bars */}
       <div className="space-y-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="text-xs font-semibold text-muted-foreground">
           Difficulty distribution
         </div>
         {[
@@ -3186,7 +3007,7 @@ function DifficultyPreview({
             <span className="w-12 shrink-0 text-xs font-medium">{d.label}</span>
             <div className="h-5 flex-1 overflow-hidden rounded bg-muted">
               <div
-                className="flex h-full items-center justify-end rounded px-1.5 text-[10px] font-semibold text-white transition-all duration-300"
+                className="flex h-full items-center justify-end rounded px-1.5 text-[10px] font-semibold text-white transition-opacity duration-300"
                 style={{ width: barWidth(d.count), background: d.color }}
               >
                 {d.count > 0 && d.count}
@@ -3202,7 +3023,7 @@ function DifficultyPreview({
       {/* Difficulty index gauge */}
       <div className="flex items-center gap-3 border-t pt-2 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
         <div className="text-center">
-          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="text-[11px] font-medium text-muted-foreground">
             Difficulty index
           </div>
           <div className={`text-2xl font-bold tabular-nums ${indexColor}`}>
@@ -3212,7 +3033,7 @@ function DifficultyPreview({
         </div>
         <div className="h-12 w-px bg-border" />
         <div className="text-center">
-          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="text-[11px] font-medium text-muted-foreground">
             Higher-order
           </div>
           <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -3444,12 +3265,11 @@ function AIBlueprintSuggester({
     id: "easy" | "balanced" | "hard" | "exam";
     label: string;
     desc: string;
-    emoji: string;
   }[] = [
-    { id: "easy", label: "Easy-leaning", desc: "Practice / revision", emoji: "🌱" },
-    { id: "balanced", label: "Balanced", desc: "Even mix", emoji: "⚖️" },
-    { id: "hard", label: "Rigorous", desc: "Challenge exam", emoji: "🔥" },
-    { id: "exam", label: "Board Exam", desc: "Standard style", emoji: "📋" },
+    { id: "easy", label: "Easy-leaning", desc: "Practice / revision" },
+    { id: "balanced", label: "Balanced", desc: "Even mix" },
+    { id: "hard", label: "Rigorous", desc: "Challenge exam" },
+    { id: "exam", label: "Board Exam", desc: "Standard style" },
   ];
 
   const calcTotal = (bp: Blueprint) =>
@@ -3533,14 +3353,24 @@ function AIBlueprintSuggester({
                     key={p.id}
                     onClick={() => setDifficulty(p.id)}
                     className={[
-                      "flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-all",
+                      "flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors",
                       difficulty === p.id
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-border hover:border-emerald-400",
+                        ? "border-emerald-600 bg-emerald-600 text-white font-semibold"
+                        : "border-border hover:border-emerald-400 font-medium",
                     ].join(" ")}
                     title={p.desc}
                   >
-                    <span>{p.emoji}</span>
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        p.id === "easy"
+                          ? "bg-emerald-400"
+                          : p.id === "balanced"
+                          ? "bg-amber-400"
+                          : p.id === "hard"
+                          ? "bg-rose-400"
+                          : "bg-blue-400"
+                      }`}
+                    />
                     {p.label}
                   </button>
                 ))}
@@ -3570,7 +3400,7 @@ function AIBlueprintSuggester({
           {result && (
             <div className="animate-fade-in rounded-lg border border-emerald-300 bg-card p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                   Suggested distribution
                 </span>
                 <Badge variant="secondary" className="text-[10px]">
@@ -3594,8 +3424,8 @@ function AIBlueprintSuggester({
                         {cfg.marksPerQuestion}m each:
                       </span>
                       <span className="text-emerald-700 dark:text-emerald-300">
-                        {cfg.difficulties.Easy}E · {cfg.difficulties.Medium}M ·{" "}
-                        {cfg.difficulties.Hard}H
+                        {cfg.difficulties.Easy} Easy, {cfg.difficulties.Medium} Med,{" "}
+                        {cfg.difficulties.Hard} Hard
                       </span>
                       <Badge variant="outline" className="ml-auto text-[10px]">
                         {count} Q · {count * cfg.marksPerQuestion}m

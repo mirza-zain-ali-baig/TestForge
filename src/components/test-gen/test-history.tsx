@@ -156,18 +156,17 @@ export function TestHistoryView({
       {/* Header */}
       <Card className="animate-fade-in overflow-hidden border-none bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md">
         <CardContent className="relative p-5 sm:p-6">
-          <div className="absolute inset-0 bg-grid opacity-15" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
           <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/80">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
                 <History className="h-3.5 w-3.5" /> Test History
               </div>
               <h2 className="mt-1 text-xl font-bold sm:text-2xl">
                 {h.totalTests} test{h.totalTests === 1 ? "" : "s"} created
               </h2>
               <p className="text-sm text-white/85">
-                {h.totalQuestions} total questions · {h.totalMarks} total marks ·{" "}
-                avg {h.avgMarks} marks per test
+                {h.totalQuestions} questions, {h.totalMarks} total marks (avg {h.avgMarks} marks per test)
               </p>
             </div>
             <div className="flex gap-3">
@@ -204,7 +203,7 @@ export function TestHistoryView({
             <ResponsiveContainer width="100%" height={240}>
               <AreaChart
                 data={h.trend}
-                margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -4, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
@@ -316,7 +315,7 @@ export function TestHistoryView({
             <ResponsiveContainer width="100%" height={200}>
               <BarChart
                 data={h.marksBuckets}
-                margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -4, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
                 <XAxis dataKey="range" tickLine={false} axisLine={false} fontSize={11} />
@@ -346,7 +345,7 @@ export function TestHistoryView({
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="mb-2 text-xs font-semibold text-muted-foreground">
                   Classes
                 </div>
                 <div className="max-h-44 space-y-1.5 overflow-y-auto scroll-fancy pr-1">
@@ -370,7 +369,7 @@ export function TestHistoryView({
                 </div>
               </div>
               <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="mb-2 text-xs font-semibold text-muted-foreground">
                   Subjects
                 </div>
                 <div className="max-h-44 space-y-1.5 overflow-y-auto scroll-fancy pr-1">
@@ -414,7 +413,7 @@ function HeaderStat({
 }) {
   return (
     <div className="rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm">
-      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase text-white/80">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/80">
         <Icon className="h-3 w-3" /> {label}
       </div>
       <div className="text-xl font-bold tabular-nums">
@@ -437,7 +436,7 @@ function KpiCard({
     <Card className="card-lift">
       <CardContent className="flex flex-col gap-1 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             {label}
           </span>
           <Icon className="h-4 w-4 text-emerald-600" />

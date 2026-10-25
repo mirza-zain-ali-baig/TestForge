@@ -143,7 +143,7 @@ function ReasoningDisclosure({
   }, [thought]);
 
   return (
-    <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-950/20 my-1 overflow-hidden transition-all">
+    <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-950/20 my-1 overflow-hidden transition-colors">
       <button
         type="button"
         onClick={() => {
@@ -200,7 +200,7 @@ function CodeBlockSnippet({ language, code }: { language: string; code: string }
   return (
     <div className="my-2.5 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950 shadow-xs">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-emerald-400">
+        <span className="font-mono text-[11px] text-emerald-400">
           {language}
         </span>
         <button
@@ -364,7 +364,7 @@ function TextFormatted({ text }: { text: string }) {
         // Headers: Check from deepest level (######) up to (#)
         if (trimmed.startsWith("###### ")) {
           return (
-            <h6 key={idx} className="pt-2 font-bold text-foreground text-xs uppercase tracking-wide">
+            <h6 key={idx} className="pt-2 font-bold text-foreground text-xs">
               {renderInlineStyles(trimmed.slice(7))}
             </h6>
           );

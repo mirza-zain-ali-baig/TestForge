@@ -15,6 +15,9 @@ import {
   Database,
   History,
   CopyPlus,
+  FolderOpen,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 import {
   BarChart,
@@ -66,64 +69,86 @@ export function Dashboard({
     { key: "subjects", label: "Subjects", icon: BookOpen, value: stats?.counts.subjects },
     { key: "chapters", label: "Chapters", icon: Layers, value: stats?.counts.chapters },
     { key: "topics", label: "Topics", icon: ListTree, value: stats?.counts.topics },
-    { key: "questions", label: "Questions", icon: FileQuestion, value: stats?.counts.questions, highlight: true },
+    { key: "questions", label: "Curriculum Questions", icon: FileQuestion, value: stats?.counts.questions, highlight: true },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero */}
-      <Card className="animate-fade-in relative overflow-hidden border-none bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-lg">
-        <div className="absolute inset-0 bg-grid opacity-20" />
-        <CardContent className="relative z-10 p-5 sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/25">
-                <Sparkles className="mr-1 h-3 w-3" /> AI-Powered
-              </Badge>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-snug">
-                Create custom exam papers & practice online
+    <div className="space-y-6 sm:space-y-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-xl">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
+        <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-10 md:py-12">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
+                <span>Next-Gen Examination Paper Studio</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
+                Create Custom Exam Papers & Blueprint Assessments
               </h1>
-              <p className="max-w-xl text-xs sm:text-sm text-white/85 leading-relaxed">
-                Select your class, choose your subject and syllabus chapters, and generate custom test papers instantly from curated questions or fresh AI generation. Practice online or export print-ready exam papers with full styling.
+              <p className="text-sm sm:text-base text-emerald-50/90 leading-relaxed max-w-xl">
+                Configure curriculum classes, syllabus chapters, and question distribution. Generate print-ready test papers with official school styling or practice interactively online.
               </p>
             </div>
-            <Button
-              size="lg"
-              onClick={onStart}
-              className="w-full sm:w-auto h-12 bg-white text-emerald-700 hover:bg-white/90 shadow-md font-semibold text-sm sm:text-base shrink-0 active:scale-95 min-h-[48px]"
-            >
-              <Sparkles className="mr-2 h-4 w-4" /> Generate a Test
-            </Button>
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+              <Button
+                size="lg"
+                onClick={onStart}
+                className="h-12 px-6 bg-white text-emerald-800 hover:bg-emerald-50 shadow-lg font-bold text-sm sm:text-base cursor-pointer press-effect transition-colors"
+              >
+                <Sparkles className="mr-2 h-4 w-4 text-emerald-600" /> Create Exam Paper
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => (onNavigate ? onNavigate("bank") : onStart())}
+                className="h-12 px-6 border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm font-semibold text-sm sm:text-base cursor-pointer transition-colors"
+              >
+                <Database className="mr-2 h-4 w-4" /> Browse Question Bank
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-        {cards.map((c, i) => (
-          <Card
-            key={c.key}
-            className={[
-              "card-lift animate-fade-in",
-              `stagger-${Math.min(i + 1, 5)}`,
-              c.highlight ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40" : "",
-            ].join(" ")}
-          >
-            <CardContent className="flex flex-col gap-1 p-4">
+        {cards.map((c, i) => {
+          const isFeatured = c.highlight;
+          return (
+            <div
+              key={c.key}
+              className={`rounded-xl border p-4 sm:p-5 transition-colors duration-200 ${
+                isFeatured
+                  ? "col-span-2 sm:col-span-1 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-xs"
+                  : "bg-card border-border shadow-xs hover:border-border/80"
+              }`}
+            >
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="text-[11px] sm:text-xs font-semibold text-muted-foreground">
                   {c.label}
-                </h3>
-                <c.icon className="h-4 w-4 text-emerald-600" />
+                </span>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                  isFeatured
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  <c.icon className="h-4 w-4" />
+                </span>
               </div>
-              {c.value === undefined ? (
-                <Skeleton className="mt-1 h-7 w-16" />
-              ) : (
-                <span className="text-2xl font-bold tabular-nums">{c.value.toLocaleString()}</span>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              <div className="mt-3">
+                {c.value === undefined ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <div className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight text-foreground">
+                    {c.value.toLocaleString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {error && (
@@ -134,61 +159,83 @@ export function Dashboard({
         </Card>
       )}
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="animate-fade-in stagger-2 card-lift lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-emerald-600" /> Questions by type
-            </CardTitle>
-            <CardDescription>Composition of the question bank across types and difficulties</CardDescription>
+      {/* Analytics Charts */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Bar Chart: Questions by Type */}
+        <Card className="lg:col-span-2 shadow-xs">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base font-bold">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" /> Questions by Type & Difficulty
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Distribution of curriculum questions across multiple choice, short, and long questions
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-2">
             {!stats ? (
               <Skeleton className="h-64 w-full" />
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart
-                    data={stats.byType}
-                    margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={11} />
-                    <Tooltip
-                      cursor={{ fill: "var(--accent)", opacity: 0.4 }}
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: "1px solid var(--border)",
-                        background: "var(--popover)",
-                        color: "var(--popover-foreground)",
-                      }}
-                    />
-                    <Bar dataKey="count" name="Questions" radius={[6, 6, 0, 0]}>
-                      {stats.byType.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="w-full h-56 sm:h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={stats.byType}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={11}
+                        tick={{ fill: "var(--muted-foreground)" }}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={11}
+                        tick={{ fill: "var(--muted-foreground)" }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "var(--accent)", opacity: 0.3 }}
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: "1px solid var(--border)",
+                          background: "var(--popover)",
+                          color: "var(--popover-foreground)",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                          fontSize: 12,
+                        }}
+                      />
+                      <Bar dataKey="count" name="Questions" radius={[6, 6, 0, 0]} maxBarSize={56}>
+                        {stats.byType.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t">
                   {stats.byDifficulty.map((d, i) => {
                     const total = stats.byDifficulty.reduce((s, x) => s + x.count, 0) || 1;
                     const pct = Math.round((d.count / total) * 100);
                     return (
-                      <div key={d.name} className="rounded-lg border bg-card p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">{d.name}</span>
-                          <span
-                            className="inline-block h-2.5 w-2.5 rounded-full"
-                            style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
-                          />
+                      <div key={d.name} className="rounded-xl border bg-card p-3 shadow-xs">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-muted-foreground">{d.name}</span>
+                          <span className="font-bold text-foreground tabular-nums">{pct}%</span>
                         </div>
-                        <div className="mt-1 text-lg font-bold tabular-nums">{d.count.toLocaleString()}</div>
-                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="mt-1.5 text-xl font-bold tabular-nums text-foreground">
+                          {d.count.toLocaleString()}
+                        </div>
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                           <div
-                            className="h-full rounded-full"
+                            className="h-full rounded-full transition-opacity duration-300"
                             style={{ width: `${pct}%`, background: PIE_COLORS[i % PIE_COLORS.length] }}
                           />
                         </div>
@@ -201,108 +248,142 @@ export function Dashboard({
           </CardContent>
         </Card>
 
-        <Card className="animate-fade-in stagger-3 card-lift">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Brain className="h-4 w-4 text-emerald-600" /> Bloom&apos;s taxonomy
-            </CardTitle>
-            <CardDescription>Cognitive levels covered</CardDescription>
+        {/* Pie Chart: Bloom's Taxonomy with Center Stat & Structured Breakdown */}
+        <Card className="shadow-xs">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base font-bold">
+                  <Brain className="h-4 w-4 text-emerald-600" /> Cognitive Levels
+                </CardTitle>
+                <CardDescription className="text-xs">Bloom&apos;s Taxonomy distribution</CardDescription>
+              </div>
+              {stats && (
+                <Badge variant="outline" className="text-xs font-semibold">
+                  {stats.byBloom.reduce((acc, b) => acc + (b.count || 0), 0).toLocaleString()} Total
+                </Badge>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-2 space-y-4">
             {!stats ? (
               <Skeleton className="h-64 w-full" />
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={stats.byBloom}
-                    dataKey="count"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    innerRadius={50}
-                    paddingAngle={2}
-                  >
-                    {stats.byBloom.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--border)",
-                      background: "var(--popover)",
-                      color: "var(--popover-foreground)",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="relative w-full h-52 sm:h-56 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stats.byBloom}
+                        dataKey="count"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={78}
+                        innerRadius={50}
+                        paddingAngle={3}
+                      >
+                        {stats.byBloom.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: "1px solid var(--border)",
+                          background: "var(--popover)",
+                          color: "var(--popover-foreground)",
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                          fontSize: 12,
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Centered Stat Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <span className="text-2xl font-black tabular-nums text-foreground leading-tight">
+                      {stats.byBloom.reduce((acc, b) => acc + (b.count || 0), 0).toLocaleString()}
+                    </span>
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Questions
+                    </span>
+                  </div>
+                </div>
+
+                {/* Structured Cognitive Breakdown Grid */}
+                {(() => {
+                  const totalBloom = stats.byBloom.reduce((acc, b) => acc + (b.count || 0), 0);
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-border/60">
+                      {stats.byBloom.map((b, i) => {
+                        const pct = totalBloom > 0 ? Math.round((b.count / totalBloom) * 100) : 0;
+                        return (
+                          <div
+                            key={b.name}
+                            className="flex items-center justify-between rounded-lg bg-muted/30 px-2.5 py-1.5 text-xs border border-border/40"
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
+                              />
+                              <span className="font-medium text-foreground truncate">{b.name}</span>
+                            </div>
+                            <span className="font-bold tabular-nums text-muted-foreground ml-1 shrink-0">
+                              {b.count} <span className="font-normal text-[10px] opacity-75">({pct}%)</span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </>
             )}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {stats?.byBloom.map((b, i) => (
-                <Badge key={b.name} variant="outline" className="text-[11px]">
-                  <span
-                    className="mr-1.5 inline-block h-2 w-2 rounded-full"
-                    style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
-                  />
-                  {b.name} · {b.count}
-                </Badge>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick actions */}
-      <Card className="animate-fade-in stagger-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Zap className="h-4 w-4 text-emerald-600" /> Quick actions
+      {/* Quick Actions */}
+      <Card className="shadow-xs">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base font-bold">
+            <Zap className="h-4 w-4 text-emerald-600" /> Quick Actions
           </CardTitle>
-          <CardDescription>Jump straight to common tasks</CardDescription>
+          <CardDescription className="text-xs">
+            Instant shortcuts for common teacher workflows
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <QuickAction
-              icon={Wand2}
-              title="Generate a test"
-              desc="Configure a blueprint & create a paper"
-              onClick={onStart}
+              icon={CopyPlus}
+              title="Batch Paper Sets"
+              desc="Generate up to 6 distinct variants with zero question overlap"
+              onClick={() => (onNavigate ? onNavigate("generate", { batch: true }) : onStart())}
             />
             <QuickAction
-              icon={Database}
-              title="Browse questions"
-              desc={`Search the ${stats?.counts.questions.toLocaleString() ?? "2,123"}-question bank`}
-              onClick={() => (onNavigate ? onNavigate("bank") : onStart())}
+              icon={FolderOpen}
+              title="My Saved Tests"
+              desc="Re-open, practice, print, or export previous papers"
+              onClick={() => (onNavigate ? onNavigate("saved") : onStart())}
             />
             <QuickAction
               icon={History}
-              title="Generation history"
-              desc="Track tests & past papers"
+              title="History & Analytics"
+              desc="Review test generation trends and marks distribution"
               onClick={() => (onNavigate ? onNavigate("history") : onStart())}
             />
             <QuickAction
-              icon={CopyPlus}
-              title="Batch variants"
-              desc="Create up to 6 disjoint versions"
-              onClick={() => (onNavigate ? onNavigate("generate", { batch: true }) : onStart())}
+              icon={MessageSquare}
+              title="AI Exam Assistant"
+              desc="Interactive AI chat to refine blueprints or craft questions"
+              onClick={() => (onNavigate ? onNavigate("chat") : onStart())}
             />
           </div>
         </CardContent>
       </Card>
-
-      {/* Sticky Mobile Generate Button (Chapter 13 Rec 3) */}
-      <div className="fixed bottom-16 right-4 z-30 sm:hidden">
-        <Button
-          size="sm"
-          onClick={onStart}
-          className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center gap-1.5 h-11 min-h-[44px] min-w-[44px] border border-emerald-400/30"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>Generate Test</span>
-        </Button>
-      </div>
     </div>
   );
 }
@@ -322,17 +403,18 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="card-lift group flex flex-col sm:flex-row items-start gap-2 sm:gap-3 rounded-xl border bg-card p-3 sm:p-4 text-left transition-all hover:border-emerald-400 active:scale-[0.98] active:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 min-h-[82px] sm:min-h-[90px]"
+      className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 text-left transition-[colors,box-shadow] duration-200 hover:border-emerald-500/60 hover:shadow-md active:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer min-h-[105px]"
     >
-      <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/40">
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <div className="text-xs sm:text-sm font-semibold truncate sm:whitespace-normal">{title}</div>
-        <div className="mt-0.5 text-[10px] sm:text-[11px] text-muted-foreground line-clamp-2">{desc}</div>
+      <div className="flex items-center justify-between w-full">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950/40 dark:text-emerald-300">
+          <Icon className="h-4 w-4" />
+        </span>
+        <ArrowRight className="h-4 w-4 text-muted-foreground/40 motion-safe:transition-transform motion-safe:group-hover:translate-x-1 group-hover:text-emerald-600" />
+      </div>
+      <div className="mt-3">
+        <div className="text-sm font-bold text-foreground leading-snug">{title}</div>
+        <div className="mt-0.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">{desc}</div>
       </div>
     </button>
   );
 }
-
-

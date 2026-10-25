@@ -1,0 +1,79 @@
+/* Hallmark · tokens.css · ExamForge AI */
+
+:root {
+  --radius: 0.625rem;
+  /* Paper and print tokens - tinted toward anchor hue */
+  --paper-bg: oklch(0.996 0.006 245);
+  --print-ink: oklch(0.12 0.02 250);
+  /* Modern bespoke OKLCH palette with authoritative Emerald/Teal brand anchor */
+  --background: oklch(0.985 0.006 245);
+  --foreground: oklch(0.18 0.02 250);
+  --card: oklch(0.998 0.006 245);
+  --card-foreground: oklch(0.18 0.02 250);
+  --popover: oklch(0.998 0.006 245);
+  --popover-foreground: oklch(0.18 0.02 250);
+  --primary: oklch(0.56 0.145 162);       /* Bespoke emerald-600 */
+  --primary-foreground: oklch(0.99 0.006 245);
+  --secondary: oklch(0.96 0.008 245);
+  --secondary-foreground: oklch(0.18 0.02 250);
+  --muted: oklch(0.96 0.008 245);
+  --muted-foreground: oklch(0.48 0.02 250);
+  --accent: oklch(0.97 0.025 160);        /* Gentle emerald tint */
+  --accent-foreground: oklch(0.32 0.09 160);
+  --destructive: oklch(0.62 0.22 25);
+  --border: oklch(0.91 0.008 245);
+  --input: oklch(0.91 0.008 245);
+  --ring: oklch(0.56 0.145 162);
+  /* Bespoke Chart Tokens */
+  --chart-1: oklch(0.56 0.145 162);
+  --chart-2: oklch(0.58 0.16 250);
+  --chart-3: oklch(0.68 0.15 75);
+  --chart-4: oklch(0.60 0.12 185);
+  --chart-5: oklch(0.55 0.18 300);
+  --sidebar: oklch(0.998 0.006 245);
+  --sidebar-foreground: oklch(0.18 0.02 250);
+  --sidebar-primary: oklch(0.56 0.145 162);
+  --sidebar-primary-foreground: oklch(0.99 0.006 245);
+  --sidebar-accent: oklch(0.96 0.008 245);
+  --sidebar-accent-foreground: oklch(0.18 0.02 250);
+  --sidebar-border: oklch(0.91 0.008 245);
+  --sidebar-ring: oklch(0.56 0.145 162);
+  --badge-sheen-bg: rgba(255, 255, 255, 0.15);
+}
+
+.dark,
+:root[data-theme="dark"] {
+  /* Bespoke dark mode in OKLCH with deep slate/obsidian depth */
+  --background: oklch(0.14 0.012 250);
+  --foreground: oklch(0.97 0.008 240);
+  --card: oklch(0.18 0.014 250);
+  --card-foreground: oklch(0.97 0.008 240);
+  --popover: oklch(0.18 0.014 250);
+  --popover-foreground: oklch(0.97 0.008 240);
+  --primary: oklch(0.70 0.16 160);         /* Luminous emerald */
+  --primary-foreground: oklch(0.12 0.04 160);
+  --secondary: oklch(0.22 0.012 250);
+  --secondary-foreground: oklch(0.97 0.008 240);
+  --muted: oklch(0.20 0.012 250);
+  --muted-foreground: oklch(0.65 0.02 245);
+  --accent: oklch(0.26 0.05 160);
+  --accent-foreground: oklch(0.94 0.04 160);
+  --destructive: oklch(0.68 0.20 25);
+  --border: oklch(0.26 0.012 250);
+  --input: oklch(0.26 0.012 250);
+  --ring: oklch(0.70 0.16 160);
+  --chart-1: oklch(0.70 0.16 160);
+  --chart-2: oklch(0.66 0.16 250);
+  --chart-3: oklch(0.74 0.15 75);
+  --chart-4: oklch(0.72 0.12 185);
+  --chart-5: oklch(0.70 0.18 300);
+  --sidebar: oklch(0.18 0.014 250);
+  --sidebar-foreground: oklch(0.97 0.008 240);
+  --sidebar-primary: oklch(0.70 0.16 160);
+  --sidebar-primary-foreground: oklch(0.12 0.04 160);
+  --sidebar-accent: oklch(0.22 0.012 250);
+  --sidebar-accent-foreground: oklch(0.97 0.008 240);
+  --sidebar-border: oklch(0.26 0.012 250);
+  --sidebar-ring: oklch(0.70 0.16 160);
+  --badge-sheen-bg: rgba(255, 255, 255, 0.08);
+}

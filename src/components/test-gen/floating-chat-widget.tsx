@@ -300,21 +300,21 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
 
   return (
     <>
-      {/* Floating Launcher Pill Button */}
+      {/* Floating Launcher Pill Button (Desktop & Tablet; on Mobile, Chat is accessible via Bottom Nav) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="no-print fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/35 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 active:scale-95"
+          className="no-print fixed hidden md:flex bottom-6 right-6 z-40 items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-emerald-600/25 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 active:scale-95 cursor-pointer border border-emerald-500/30"
           aria-label="Open AI Assistant"
         >
-          <Sparkles className="h-4 w-4 animate-pulse" />
+          <Sparkles className="h-4 w-4" />
           <span>Ask ExamForge AI</span>
         </button>
       )}
 
       {/* Floating Chat Modal Panel */}
       {isOpen && (
-        <div className="no-print fixed bottom-20 right-3 left-3 sm:left-auto sm:right-5 sm:bottom-5 z-50 flex h-[520px] sm:h-[580px] w-auto sm:w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-all">
+        <div className="no-print fixed bottom-20 right-3 left-3 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex h-[min(540px,calc(100vh-140px))] sm:h-[580px] w-auto sm:w-[390px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition-opacity">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3.5 py-2.5">
             <div className="flex items-center gap-2 min-w-0">
@@ -404,15 +404,17 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
                 <div className="mt-4 flex flex-col gap-1.5 w-full">
                   <button
                     onClick={() => handleSend("Explain Newton's second law with formula")}
-                    className="rounded-lg border border-border p-2 text-left text-[11px] text-muted-foreground hover:border-emerald-500 hover:text-foreground transition"
+                    className="flex items-center gap-2 rounded-lg border border-border p-2 text-left text-[11px] text-muted-foreground hover:border-emerald-500 hover:text-foreground transition-colors cursor-pointer"
                   >
-                    💡 Newton&apos;s second law with formula
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span>Explain Newton&apos;s second law with formula</span>
                   </button>
                   <button
                     onClick={() => handleSend("Give 3 MCQs on Computer Networks with answers")}
-                    className="rounded-lg border border-border p-2 text-left text-[11px] text-muted-foreground hover:border-emerald-500 hover:text-foreground transition"
+                    className="flex items-center gap-2 rounded-lg border border-border p-2 text-left text-[11px] text-muted-foreground hover:border-emerald-500 hover:text-foreground transition-colors cursor-pointer"
                   >
-                    📝 3 MCQs on Computer Networks
+                    <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                    <span>Generate 3 MCQs on Computer Networks</span>
                   </button>
                 </div>
               </div>
@@ -490,7 +492,7 @@ export function FloatingChatWidget({ user, onExpandToFullPage, onSignIn }: Float
             <button
               type="button"
               onClick={() => scrollToBottom(true)}
-              className="absolute bottom-16 right-4 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card shadow-md text-foreground hover:bg-muted transition-all"
+              className="absolute bottom-16 right-4 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background shadow-md text-foreground hover:bg-muted transition-colors cursor-pointer"
               title="Scroll to bottom"
             >
               <ArrowDown className="h-3.5 w-3.5" />

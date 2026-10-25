@@ -396,7 +396,7 @@ export function QuestionBank({
               aria-pressed={showFavOnly}
               onClick={() => setShowFavOnly((v) => !v)}
               className={[
-                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500",
+                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500",
                 showFavOnly
                   ? "border-amber-500 bg-amber-500 text-white shadow-sm ring-1 ring-amber-500 dark:bg-amber-600"
                   : "border-border hover:border-amber-400 hover:bg-accent text-foreground",
@@ -475,7 +475,7 @@ export function QuestionBank({
             <div className="text-sm text-muted-foreground">
               Showing{" "}
               <strong className="text-foreground">
-                {total === 0 ? 0 : page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}
+                {total === 0 ? 0 : page * PAGE_SIZE + 1} to {Math.min((page + 1) * PAGE_SIZE, total)}
               </strong>{" "}
               of <strong className="text-foreground">{total}</strong> questions
             </div>
@@ -638,7 +638,7 @@ function NoteDialog({
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="rounded-md border bg-muted/30 p-2.5 text-xs">
-            <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="mb-0.5 text-xs font-semibold text-muted-foreground">
               Question
             </div>
             <p className="leading-relaxed">{questionText}</p>
@@ -710,115 +710,125 @@ function BankQuestionCard({
   onEditNote: () => void;
 }) {
   return (
-    <li className="rounded-lg border bg-card p-3 transition-colors hover:border-emerald-300 min-w-0 max-w-full overflow-hidden">
-      <div className="flex gap-2 sm:gap-3 min-w-0">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-          {number}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className={cn("text-[10px] font-medium border", typeBadgeStyles[q.type_name] ?? "")}
-            >
-              {q.type_name}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={cn("text-[10px] font-medium border", diffBadgeStyles[q.difficulty_name] ?? "")}
-            >
-              {q.difficulty_name}
-            </Badge>
-            <Badge variant="outline" className="text-[10px]">{q.marks} mark{q.marks > 1 ? "s" : ""}</Badge>
-            {q.blooms_taxonomy && (
-              <Badge variant="outline" className="text-[10px]">{q.blooms_taxonomy}</Badge>
-            )}
-            {q.chapter_name && (
-              <span className="text-[10px] text-muted-foreground">· {q.chapter_name}</span>
-            )}
-            {q.topic_name && (
-              <span className="text-[10px] text-muted-foreground">· {q.topic_name}</span>
-            )}
-            <button
-              onClick={onEditNote}
-              className={[
-                "ml-auto rounded-md p-1 transition-colors",
-                note
-                  ? "text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-                  : "text-muted-foreground/40 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30",
-              ].join(" ")}
-              title={note ? "Edit note" : "Add note"}
-              aria-label="Edit note"
-            >
-              <StickyNote className={`h-3.5 w-3.5 ${note ? "fill-emerald-100 dark:fill-emerald-950/40" : ""}`} />
-            </button>
-            <button
-              onClick={onToggleFavorite}
-              className={[
-                "rounded-md p-1 transition-colors",
-                isFavorite
-                  ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                  : "text-muted-foreground/40 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30",
-              ].join(" ")}
-              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              aria-label="Toggle favorite"
-            >
-              <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-amber-500" : ""}`} />
-            </button>
-          </div>
-          <div className="mt-1.5 text-sm leading-relaxed break-words">{renderInlineStyles(q.question_text)}</div>
-
-          {q.options && (
-            <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
-              {(["A", "B", "C", "D"] as const).map((l) => {
-                const text = q.options![`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"];
-                const correct = l === q.options!.correct_option;
-                return (
-                  <div
-                    key={l}
-                    className={[
-                      "flex items-start gap-2 rounded-md border px-2 py-1 text-xs",
-                      showAnswers && correct
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
-                        : "border-border",
-                    ].join(" ")}
-                  >
-                    <span className="font-semibold text-muted-foreground">{l}.</span>
-                    <span className="flex-1 break-words">{renderInlineStyles(text)}</span>
-                    {showAnswers && correct && (
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {q.tags && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {q.tags.split(",").map((tag, i) => (
-                <Badge key={i} variant="secondary" className="text-[10px]">
-                  #{tag.trim()}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {note && (
-            <div className="mt-2 flex items-start gap-1.5 rounded-md border border-emerald-200/80 bg-emerald-50/50 p-2 text-xs dark:border-emerald-900/60 dark:bg-emerald-950/20">
-              <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <p className="flex-1 leading-relaxed text-emerald-950 dark:text-emerald-200">{note}</p>
-              <button
-                onClick={onEditNote}
-                className="shrink-0 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-                aria-label="Edit note"
-              >
-                <Pencil className="h-3 w-3" />
-              </button>
-            </div>
+    <li className="rounded-xl border border-border bg-card p-3.5 sm:p-4 transition-colors hover:border-emerald-400/60 shadow-xs space-y-2.5 min-w-0 max-w-full overflow-hidden">
+      {/* Question Header: Number, Badges, and Action Icons */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+            {number}
+          </span>
+          <Badge
+            variant="outline"
+            className={cn("text-[10px] font-semibold border", typeBadgeStyles[q.type_name] ?? "")}
+          >
+            {q.type_name}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn("text-[10px] font-semibold border", diffBadgeStyles[q.difficulty_name] ?? "")}
+          >
+            {q.difficulty_name}
+          </Badge>
+          <Badge variant="outline" className="text-[10px] font-medium">{q.marks} mark{q.marks > 1 ? "s" : ""}</Badge>
+          {q.blooms_taxonomy && (
+            <Badge variant="secondary" className="text-[10px] font-medium hidden sm:inline-flex">{q.blooms_taxonomy}</Badge>
           )}
         </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={onEditNote}
+            className={cn(
+              "rounded-lg p-2 sm:p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center transition-colors cursor-pointer",
+              note
+                ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40"
+                : "text-muted-foreground hover:text-emerald-600 hover:bg-muted"
+            )}
+            title={note ? "Edit note" : "Add note"}
+            aria-label="Edit note"
+          >
+            <StickyNote className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            className={cn(
+              "rounded-lg p-2 sm:p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center transition-colors cursor-pointer",
+              isFavorite
+                ? "text-amber-500 bg-amber-50 dark:bg-amber-950/40"
+                : "text-muted-foreground hover:text-amber-500 hover:bg-muted"
+            )}
+            title={isFavorite ? "Remove favorite" : "Add to favorites"}
+            aria-label="Toggle favorite"
+          >
+            <Star className={cn("h-4 w-4", isFavorite && "fill-amber-500")} />
+          </button>
+        </div>
       </div>
+
+      {/* Chapter & Topic metadata */}
+      {(q.chapter_name || q.topic_name) && (
+        <div className="text-[11px] text-muted-foreground">
+          {q.chapter_name && <span>{q.chapter_name}</span>}
+          {q.chapter_name && q.topic_name && <span> · </span>}
+          {q.topic_name && <span>{q.topic_name}</span>}
+        </div>
+      )}
+
+      {/* Question Text */}
+      <div className="text-sm leading-relaxed text-foreground break-words">
+        {renderInlineStyles(q.question_text)}
+      </div>
+
+      {q.options && (
+        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {(["A", "B", "C", "D"] as const).map((l) => {
+            const text = q.options![`option_${l.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"];
+            const correct = l === q.options!.correct_option;
+            return (
+              <div
+                key={l}
+                className={[
+                  "flex items-start gap-2 rounded-lg border px-2.5 py-1.5 text-xs",
+                  showAnswers && correct
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 font-medium"
+                    : "border-border text-foreground",
+                ].join(" ")}
+              >
+                <span className="font-bold text-muted-foreground">{l}.</span>
+                <span className="flex-1 break-words">{renderInlineStyles(text)}</span>
+                {showAnswers && correct && (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {q.tags && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {q.tags.split(",").map((tag, i) => (
+            <Badge key={i} variant="secondary" className="text-[10px] font-normal">
+              #{tag.trim()}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {note && (
+        <div className="mt-2 flex items-start gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50/50 p-2.5 text-xs dark:border-emerald-900/60 dark:bg-emerald-950/20">
+          <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <p className="flex-1 leading-relaxed text-emerald-950 dark:text-emerald-200">{note}</p>
+          <button
+            onClick={onEditNote}
+            className="shrink-0 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 cursor-pointer"
+            aria-label="Edit note"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </li>
   );
 }

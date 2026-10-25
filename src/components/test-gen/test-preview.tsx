@@ -47,7 +47,15 @@ import {
   EyeOff,
   BookOpen,
   GraduationCap,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -517,49 +525,96 @@ export function TestPreview({
     <div className="space-y-4">
       {/* Toolbar */}
       <Card className="no-print sticky top-0 sm:top-2 z-30 bg-card/95 backdrop-blur-md shadow-sm sm:shadow-xs rounded-none sm:rounded-xl border-x-0 sm:border">
-        <CardContent className="p-2 sm:p-4">
-          {/* Mobile view (< sm): Compact 2-row layout */}
-          <div className="flex flex-col gap-2 sm:hidden">
-            {/* Mobile Row 1: Back, Stats, Primary CTA, Theme */}
-            <div className="flex items-center justify-between gap-1.5">
+        <CardContent className="p-2.5 sm:p-4">
+          {/* Mobile view (< sm): Clean 2-row layout with 0 horizontal scroll */}
+          <div className="flex flex-col gap-2.5 sm:hidden">
+            {/* Mobile Row 1: Back, Stats, Save, and More Options */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={onBack}
-                  className="h-8 px-2 text-xs gap-1 font-medium cursor-pointer shrink-0"
+                  className="h-8 px-2.5 text-xs gap-1 font-medium cursor-pointer shrink-0"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </Button>
-                <div className="flex items-center gap-1">
-                  <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5">
-                    {test.totalQuestions} Q
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5">
-                    {test.totalMarks} m
-                  </Badge>
-                </div>
+                <Badge variant="secondary" className="text-[10px] font-bold py-0.5 px-1.5 shrink-0">
+                  {test.totalQuestions} Q · {test.totalMarks} m
+                </Badge>
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
-                {onPrintExport && (
-                  <Button
-                    size="sm"
-                    onClick={onPrintExport}
-                    className="h-8 px-2.5 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-xs cursor-pointer"
-                  >
-                    <FileDown className="mr-1 h-3.5 w-3.5" /> Print & Export
-                  </Button>
-                )}
-                <ThemeToggle />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSave}
+                  disabled={saving || saved}
+                  className="h-8 text-xs px-2.5 font-medium cursor-pointer"
+                >
+                  {saved ? (
+                    <>
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-600" /> Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-1 h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
+                    </>
+                  )}
+                </Button>
+
+                {/* Mobile More Options Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" aria-label="More actions">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                      <Download className="mr-2 h-4 w-4" /> Download PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                      <FileText className="mr-2 h-4 w-4 text-blue-600" /> Download Word (.docx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
+                      <Printer className="mr-2 h-4 w-4" /> Browser Print
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onRegenerate} className="cursor-pointer">
+                      <RefreshCw className="mr-2 h-4 w-4" /> Regenerate Test
+                    </DropdownMenuItem>
+                    {onExit && (
+                      <DropdownMenuItem onClick={onExit} className="cursor-pointer text-muted-foreground">
+                        <X className="mr-2 h-4 w-4" /> Exit to Dashboard
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
-            {/* Mobile Row 2: Horizontally scrollable quick-action pill strip */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              <div className="flex shrink-0 items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs">
-                <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="text-[11px] font-medium">Answers</span>
+            {/* Mobile Row 2: Practice Online, Print/Export, and Answer Key */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setPracticing(true)}
+                className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+              >
+                <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Practice
+              </Button>
+              {onPrintExport && (
+                <Button
+                  size="sm"
+                  onClick={onPrintExport}
+                  className="flex-1 h-8 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold cursor-pointer"
+                >
+                  <FileDown className="mr-1.5 h-3.5 w-3.5" /> Print & Export
+                </Button>
+              )}
+              <div className="flex shrink-0 items-center gap-1.5 rounded-lg border bg-background px-2 py-1 text-xs h-8">
+                <KeyRound className="h-3 w-3 text-emerald-600" />
+                <span className="text-[10px] font-medium">Key</span>
                 <Switch
                   id="ans-mobile"
                   checked={showAnswers}
@@ -567,191 +622,150 @@ export function TestPreview({
                   className="scale-75"
                 />
               </div>
+            </div>
+          </div>
 
+          {/* Desktop view (sm:flex): High-productivity single-row SaaS toolbar */}
+          <div className="hidden sm:flex items-center justify-between gap-3">
+            {/* Left: Back button + Unified metadata pill */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Button variant="outline" size="sm" onClick={onBack} className="h-8 gap-1.5 font-medium cursor-pointer shrink-0">
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to Setup
+              </Button>
+              <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground shrink-0">
+                <Badge variant="outline" className="border-0 p-0 text-[11px] font-medium text-muted-foreground">
+                  {test.source === "bank" ? "Question Bank" : test.source === "ai" ? "AI Generated" : "Hybrid Mode"}
+                </Badge>
+                <span className="text-border">·</span>
+                <span className="font-semibold text-foreground">{test.totalQuestions} Q</span>
+                <span className="text-border">·</span>
+                <span className="font-semibold text-foreground">{test.totalMarks} marks</span>
+                <span className="text-border">·</span>
+                <span>{formatDuration(test.durationMins)}</span>
+              </div>
+            </div>
+
+            {/* Right: Consolidated Action Suite (No duplicate Export dropdown, no awkward wrapping) */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Answer Key Toggle */}
+              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs h-8 bg-card">
+                <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
+                <Label htmlFor="ans" className="cursor-pointer text-xs font-medium text-foreground">
+                  Answer key
+                </Label>
+                <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} className="scale-75" />
+              </div>
+
+              {/* Practice Online */}
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => setPracticing(true)}
-                className="h-7 shrink-0 text-xs px-2.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-300 font-medium cursor-pointer"
+                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5"
               >
-                <Play className="mr-1 h-3 w-3 fill-current" /> Practice
+                <Play className="h-3.5 w-3.5 fill-current" /> Practice Online
               </Button>
 
+              {/* Primary Print & Export Suite */}
+              {onPrintExport ? (
+                <div className="flex items-center rounded-lg shadow-xs overflow-hidden">
+                  <Button
+                    size="sm"
+                    onClick={onPrintExport}
+                    className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-3"
+                  >
+                    <FileDown className="h-3.5 w-3.5" />
+                    <span>Print & Export</span>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
+                        aria-label="Direct export options"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                        Instant Export
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
+                        <Printer className="mr-2 h-4 w-4 text-emerald-600" />
+                        <span>Browser Print</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
+                        <Download className="mr-2 h-4 w-4 text-emerald-600" />
+                        <span>Download PDF</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportWord} className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                        <span>Word Document (.docx)</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onPrintExport} className="cursor-pointer font-semibold text-emerald-700 dark:text-emerald-300">
+                        <FileDown className="mr-2 h-4 w-4" />
+                        <span>Open Print & Export Studio</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={handlePrint}
+                  className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
+                >
+                  <Printer className="h-3.5 w-3.5" /> Print
+                </Button>
+              )}
+
+              {/* Save Button */}
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSave}
                 disabled={saving || saved}
-                className="h-7 shrink-0 text-xs px-2.5 font-medium cursor-pointer"
+                className="h-8 text-xs font-medium cursor-pointer"
               >
                 {saved ? (
                   <>
-                    <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-600" /> Saved
+                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> Saved
                   </>
                 ) : (
                   <>
-                    <Save className="mr-1 h-3 w-3" /> {saving ? "Saving…" : "Save"}
+                    <Save className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" /> {saving ? "Saving…" : "Save"}
                   </>
                 )}
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportPDF}
-                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
-              >
-                <Download className="mr-1 h-3 w-3" /> PDF
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportWord}
-                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
-              >
-                <FileText className="mr-1 h-3 w-3 text-blue-600" /> Word
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrint}
-                className="h-7 shrink-0 text-xs px-2 font-medium cursor-pointer"
-              >
-                <Printer className="mr-1 h-3 w-3" /> Print
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRegenerate}
-                className="h-7 shrink-0 text-xs px-2 text-muted-foreground cursor-pointer"
-              >
-                <RefreshCw className="mr-1 h-3 w-3" /> Regenerate
-              </Button>
-
-              {onExit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onExit}
-                  className="h-7 shrink-0 text-xs px-2 text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  Exit
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Desktop view (sm:flex): Full toolbar */}
-          <div className="hidden sm:flex flex-col gap-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" onClick={onBack} className="gap-1.5 font-medium cursor-pointer">
-                  <ArrowLeft className="h-4 w-4" /> Back to Setup
-                </Button>
-                {onExit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onExit}
-                    className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    Exit to Dashboard
+              {/* More Options Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground" aria-label="More options">
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
-                )}
-                <Badge variant="outline" className="gap-1">
-                  {test.source === "bank" ? (
-                    <Database className="h-3 w-3" />
-                  ) : test.source === "ai" ? (
-                    <Bot className="h-3 w-3" />
-                  ) : (
-                    <Sparkles className="h-3 w-3" />
-                  )}
-                  {test.source === "bank"
-                    ? "Question Bank"
-                    : test.source === "ai"
-                    ? "AI Generated"
-                    : "Hybrid Mode"}
-                </Badge>
-                <Badge variant="secondary">{test.totalQuestions} Q</Badge>
-                <Badge variant="secondary">{test.totalMarks} marks</Badge>
-                <Badge variant="secondary">{formatDuration(test.durationMins)}</Badge>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 rounded-lg border px-3 py-1.5">
-                  <KeyRound className="h-4 w-4 text-emerald-600" />
-                  <Label htmlFor="ans" className="cursor-pointer text-sm">
-                    Answer key
-                  </Label>
-                  <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} />
-                </div>
-                {onPrintExport && (
-                  <Button
-                    size="sm"
-                    onClick={onPrintExport}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-sm cursor-pointer"
-                  >
-                    <FileDown className="mr-1.5 h-4 w-4" /> Print & Export
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                  className="cursor-pointer"
-                >
-                  <Printer className="mr-1 h-4 w-4" /> Print
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportPDF}
-                  className="cursor-pointer"
-                >
-                  <Download className="mr-1 h-4 w-4" /> PDF
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportWord}
-                  title="Download as Microsoft Word document (.docx)"
-                  className="cursor-pointer"
-                >
-                  <FileText className="mr-1 h-4 w-4 text-blue-600" /> Word (.docx)
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setPracticing(true)}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold cursor-pointer"
-                >
-                  <Play className="mr-1 h-4 w-4 fill-current" /> Practice Online
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSave}
-                  disabled={saving || saved}
-                  className="cursor-pointer"
-                >
-                  {saved ? (
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={onRegenerate} className="cursor-pointer">
+                    <RefreshCw className="mr-2 h-4 w-4 text-blue-600" /> Regenerate All Questions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShareOpen(true)} className="cursor-pointer">
+                    <Share2 className="mr-2 h-4 w-4 text-emerald-600" /> Share Test
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDedupeOpen(true)} className="cursor-pointer">
+                    <CopyCheck className="mr-2 h-4 w-4 text-amber-600" /> Duplicate Detection
+                  </DropdownMenuItem>
+                  {onExit && (
                     <>
-                      <CheckCircle2 className="mr-1 h-4 w-4 text-emerald-600" /> Saved
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-1 h-4 w-4" /> {saving ? "Saving…" : "Save"}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onExit} className="cursor-pointer text-muted-foreground">
+                        <X className="mr-2 h-4 w-4" /> Exit to Dashboard
+                      </DropdownMenuItem>
                     </>
                   )}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={onRegenerate} className="cursor-pointer">
-                  <RefreshCw className="mr-1 h-4 w-4" /> Regenerate
-                </Button>
-                <div className="pl-1 border-l">
-                  <ThemeToggle />
-                </div>
-              </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardContent>
@@ -766,12 +780,12 @@ export function TestPreview({
         <CardContent className="p-4 sm:p-8 md:p-10">
           {/* Header */}
           <div className="border-b-2 border-emerald-600 pb-4 text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">
-              {test.className} · {test.subjectName}
-            </div>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
               {test.title}
             </h1>
+            <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              {test.className} · {test.subjectName}
+            </p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>
                 Time: <strong className="text-foreground">{formatDuration(test.durationMins)}</strong>
@@ -810,7 +824,7 @@ export function TestPreview({
           {/* Instructions */}
           {test.instructions && (
             <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="mb-1 text-xs font-semibold text-muted-foreground">
                 General Instructions
               </div>
               <p className="whitespace-pre-line leading-relaxed">{test.instructions}</p>
@@ -953,19 +967,18 @@ function SortableSection({
   return (
     <section>
       <div className="mb-3 flex items-center justify-between border-b border-dashed pb-1">
-        <h2 className="text-sm font-bold uppercase tracking-wide">
-          Section {String.fromCharCode(65 + sectionIndex)} —{" "}
+        <h2 className="text-sm font-bold text-foreground">
+          Section {String.fromCharCode(65 + sectionIndex)}:{" "}
           {section.type_name === "Short"
-            ? "SHORT ANSWER QUESTIONS"
+            ? "Short Answer Questions"
             : section.type_name === "Long"
-            ? "LONG ANSWER QUESTIONS"
+            ? "Long Answer Questions"
             : section.type_name === "MCQ"
-            ? "MULTIPLE CHOICE QUESTIONS (MCQs)"
-            : section.type_name.toUpperCase()}
+            ? "Multiple Choice Questions (MCQs)"
+            : section.type_name}
         </h2>
         <span className="text-xs text-muted-foreground">
-          {section.questions.length} questions · {section.sectionMarks} marks ·{" "}
-          {section.marksPerQuestion} each
+          {section.questions.length} questions ({section.sectionMarks} marks, {section.marksPerQuestion} each)
         </span>
       </div>
       <DndContext
@@ -1061,14 +1074,14 @@ function SortableQuestion({
         {number}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-sm leading-relaxed break-words">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 sm:gap-2">
+          <div className="text-sm leading-relaxed break-words flex-1">
             {renderInlineStyles(q.question_text)}
-            <span className="ml-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="ml-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
               [{q.marks} mark{q.marks > 1 ? "s" : ""}]
             </span>
           </div>
-          <div className="no-print flex shrink-0 items-center gap-0.5">
+          <div className="no-print flex shrink-0 items-center gap-1 self-end sm:self-start mt-0.5">
             {showAnswers && q.source === "ai" && (
               <Badge variant="outline" className="mr-1 gap-1 text-[10px]">
                 <Bot className="h-3 w-3" /> AI
@@ -1077,12 +1090,12 @@ function SortableQuestion({
             <button
               onClick={onRegenerate}
               disabled={regenerating}
-              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-emerald-600 disabled:opacity-50"
+              className="rounded-lg p-2 sm:p-1 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-emerald-600 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               aria-label="Regenerate question with AI"
               title="Regenerate with AI"
             >
               {regenerating ? (
-                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-400/40 border-t-emerald-600" />
+                <span className="inline-block h-3.5 w-3.5 motion-safe:animate-spin rounded-full border-2 border-emerald-400/40 border-t-emerald-600" />
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
@@ -1090,26 +1103,26 @@ function SortableQuestion({
             <button
               onClick={onExplain}
               disabled={explaining}
-              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-amber-600 disabled:opacity-50"
+              className="rounded-lg p-2 sm:p-1 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-amber-600 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
               aria-label="Explain answer with AI"
               title="Explain answer with AI"
             >
               {explaining ? (
-                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-amber-400/40 border-t-amber-600" />
+                <span className="inline-block h-3.5 w-3.5 motion-safe:animate-spin rounded-full border-2 border-amber-400/40 border-t-amber-600" />
               ) : (
                 <Lightbulb className="h-3.5 w-3.5" />
               )}
             </button>
             <button
               onClick={onEdit}
-              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-emerald-600"
+              className="rounded-lg p-2 sm:p-1 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-emerald-600 cursor-pointer"
               aria-label="Edit question"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={onDelete}
-              className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-lg p-2 sm:p-1 min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer"
               aria-label="Delete question"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -1143,7 +1156,7 @@ function SortableQuestion({
         {/* Short / Long answer */}
         {!options && showAnswers && (
           <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 text-sm dark:bg-emerald-950/30">
-            <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            <div className="mb-1 flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
               <KeyRound className="h-3 w-3" /> Model Answer
             </div>
             <div className="whitespace-pre-line leading-relaxed break-words">
@@ -1176,7 +1189,7 @@ function SortableQuestion({
           <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50/60 p-2.5 text-xs dark:border-amber-900/60 dark:bg-amber-950/20">
             <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="flex-1">
-              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+              <div className="mb-0.5 flex items-center gap-1 text-xs font-semibold text-amber-800 dark:text-amber-300">
                 <Bot className="h-3 w-3" /> AI Explanation
               </div>
               <div className="leading-relaxed text-amber-950 dark:text-amber-200 break-words">
@@ -1363,7 +1376,7 @@ function AddQuestionDialog({
           <button
             onClick={() => setTab("bank")}
             className={[
-              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               tab === "bank"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -1374,7 +1387,7 @@ function AddQuestionDialog({
           <button
             onClick={() => setTab("manual")}
             className={[
-              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               tab === "manual"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -1609,7 +1622,7 @@ function BankPicker({
             <ChevronLeft className="h-4 w-4" /> Prev
           </Button>
           <span className="text-xs text-muted-foreground">
-            {offset + 1}–{Math.min(offset + PAGE, total)} of {total}
+            {offset + 1} to {Math.min(offset + PAGE, total)} of {total}
           </span>
           <Button
             size="sm"
@@ -1746,14 +1759,14 @@ function ManualForm({
 function AnswerKeyPage({ test }: { test: GeneratedTest }) {
   return (
     <div className="mt-8 border-t-2 border-emerald-600 pt-4">
-      <h2 className="text-center text-lg font-bold uppercase tracking-wide">
+      <h2 className="text-center text-lg font-bold text-foreground">
         Answer Key
       </h2>
       <div className="mt-4 space-y-4">
         {test.sections.map((sec, si) => (
           <div key={sec.type_name}>
-            <div className="mb-2 border-b border-dashed pb-1 text-xs font-bold uppercase tracking-wide">
-              Section {String.fromCharCode(65 + si)} — {sec.type_name}
+            <div className="mb-2 border-b border-dashed pb-1 text-xs font-bold text-foreground">
+              Section {String.fromCharCode(65 + si)}: {sec.type_name}
             </div>
             <ol className="space-y-1.5">
               {sec.questions.map((q, qi) => (
@@ -2070,7 +2083,7 @@ function PracticeMode({
                   key={item.globalIndex}
                   onClick={() => setCurrent(i)}
                   className={[
-                    "relative h-8 w-8 rounded-md border text-xs font-semibold transition-all",
+                    "relative h-8 w-8 rounded-md border text-xs font-semibold transition-colors",
                     i === current
                       ? "border-emerald-600 bg-emerald-600 text-white"
                       : answered
@@ -2110,7 +2123,7 @@ function TimerRing({
   const dash = C * pct;
   const color = low ? "#ef4444" : "var(--primary)";
   return (
-    <svg width="28" height="28" viewBox="0 0 32 32" className="shrink-0">
+    <svg width="28" height="28" viewBox="0 0 32 32" className="shrink-0" aria-hidden="true">
       <circle
         cx="16"
         cy="16"
@@ -2182,7 +2195,7 @@ function PracticeIntro({
 
       {test.instructions && (
         <div className="w-full rounded-xl border bg-muted/30 p-4 text-left">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="mb-1 text-[11px] font-semibold text-muted-foreground">
             Instructions
           </div>
           <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed">{test.instructions}</p>
@@ -2192,7 +2205,7 @@ function PracticeIntro({
       {/* Two Choice Cards */}
       <div className="grid w-full grid-cols-1 sm:grid-cols-2 gap-4 text-left">
         {/* Option 1: Timed Exam */}
-        <div className="rounded-2xl border-2 border-emerald-500/30 bg-card p-5 shadow-sm hover:border-emerald-500 transition-all flex flex-col justify-between">
+        <div className="rounded-2xl border-2 border-emerald-500/30 bg-card p-5 shadow-sm hover:border-emerald-500 transition-[colors,border-color] duration-200 flex flex-col justify-between">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
@@ -2222,7 +2235,7 @@ function PracticeIntro({
         </div>
 
         {/* Option 2: MCQ Preparation Mode */}
-        <div className="rounded-2xl border-2 border-blue-500/30 bg-card p-5 shadow-sm hover:border-blue-500 transition-all flex flex-col justify-between">
+        <div className="rounded-2xl border-2 border-blue-500/30 bg-card p-5 shadow-sm hover:border-blue-500 transition-[colors,border-color] duration-200 flex flex-col justify-between">
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
@@ -2260,7 +2273,7 @@ function PracticeIntro({
 function IntroStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border bg-card p-3 text-center">
-      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="text-[10px] font-medium text-muted-foreground">
         {label}
       </div>
       <div className="mt-0.5 text-lg font-bold tabular-nums">{value}</div>
@@ -2350,12 +2363,12 @@ function MCQStudyView({
       <div className="rounded-2xl border-2 border-blue-500/30 bg-gradient-to-br from-blue-50/70 via-background to-card p-5 dark:from-blue-950/20 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
           <div>
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
-              <Lightbulb className="h-4 w-4" /> MCQ Preparation & Study Mode
-            </div>
-            <h2 className="text-lg font-bold text-foreground mt-0.5">{test.title}</h2>
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span>MCQ Preparation & Study Mode</span>
+            </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Self-paced preparation without timer stress. Click any option to test your recall, or reveal answers and explanations instantly.
+              {test.title}: Self-paced preparation without timer stress. Click any option to test your recall, or reveal answers and explanations instantly.
             </p>
           </div>
 
@@ -2391,23 +2404,23 @@ function MCQStudyView({
         {/* Live Scorebar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-4">
           <div className="rounded-xl border bg-background/80 p-2.5 text-center">
-            <div className="text-[10px] font-bold uppercase text-muted-foreground">Total MCQs</div>
+            <div className="text-[11px] font-medium text-muted-foreground">Total MCQs</div>
             <div className="text-xl font-black text-foreground mt-0.5">{mcqs.length}</div>
           </div>
           <div className="rounded-xl border bg-background/80 p-2.5 text-center">
-            <div className="text-[10px] font-bold uppercase text-muted-foreground">Attempted</div>
+            <div className="text-[11px] font-medium text-muted-foreground">Attempted</div>
             <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
               {answeredCount}/{mcqs.length}
             </div>
           </div>
           <div className="rounded-xl border bg-background/80 p-2.5 text-center">
-            <div className="text-[10px] font-bold uppercase text-muted-foreground">Correct</div>
+            <div className="text-[11px] font-medium text-muted-foreground">Correct</div>
             <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
               {correctCount}
             </div>
           </div>
           <div className="rounded-xl border bg-background/80 p-2.5 text-center">
-            <div className="text-[10px] font-bold uppercase text-muted-foreground">Accuracy</div>
+            <div className="text-[11px] font-medium text-muted-foreground">Accuracy</div>
             <div className="text-xl font-black text-foreground mt-0.5">
               {answeredCount > 0 ? `${accuracy}%` : "—"}
             </div>
@@ -2428,7 +2441,7 @@ function MCQStudyView({
           return (
             <Card
               key={item.globalIndex}
-              className={`transition-all border-2 ${
+              className={`transition-colors border-2 ${
                 isAnswered
                   ? isCorrect
                     ? "border-emerald-500/40 bg-emerald-50/10"
@@ -2508,10 +2521,10 @@ function MCQStudyView({
                           key={opt}
                           type="button"
                           onClick={() => handleSelectOption(idx, opt)}
-                          className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left text-xs transition-all ${style}`}
+                          className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left text-xs transition-colors ${style}`}
                         >
                           <span
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs font-bold transition-all ${
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-xs font-bold transition-colors ${
                               (isAnswered || isRevealed) && isOptionCorrect
                                 ? "border-emerald-600 bg-emerald-600 text-white"
                                 : isOptionChosen && !isOptionCorrect
@@ -2585,7 +2598,7 @@ function MCQStudyView({
                       Correct Answer: Option {correctOpt}
                       {q.options && (
                         <span className="font-medium text-foreground">
-                          — {q.options[`option_${correctOpt.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"]}
+                          : {q.options[`option_${correctOpt.toLowerCase()}` as "option_a" | "option_b" | "option_c" | "option_d"]}
                         </span>
                       )}
                     </div>
@@ -2610,18 +2623,18 @@ function MCQStudyView({
       </div>
 
       {/* Bottom Floating Bar */}
-      <div className="sticky bottom-4 rounded-2xl border bg-card/95 backdrop-blur-md p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="sticky bottom-[4.5rem] sm:bottom-4 rounded-2xl border bg-card/95 backdrop-blur-md p-3.5 sm:p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-xs text-muted-foreground text-center sm:text-left">
           Done reviewing? You can now test your knowledge under timed exam conditions.
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             onClick={onSwitchToExam}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex-1 sm:flex-none min-h-[44px]"
           >
             <Play className="mr-1.5 h-3.5 w-3.5 fill-current" /> Start Timed Exam
           </Button>
-          <Button variant="outline" onClick={onExit} className="text-xs">
+          <Button variant="outline" onClick={onExit} className="text-xs min-h-[44px] px-4">
             Exit
           </Button>
         </div>
@@ -2671,7 +2684,7 @@ function PracticeQuestion({
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+            className="h-full rounded-full bg-emerald-500 transition-opacity duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -2724,7 +2737,7 @@ function PracticeQuestion({
                     key={l}
                     onClick={() => onMcq(l)}
                     className={[
-                      "flex items-start gap-2.5 rounded-lg border p-3 text-left text-sm transition-all",
+                      "flex items-start gap-2.5 rounded-lg border p-3 text-left text-sm transition-colors",
                       selected
                         ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600 dark:bg-emerald-950/40"
                         : "border-border hover:border-emerald-400 hover:bg-accent",
@@ -2750,7 +2763,7 @@ function PracticeQuestion({
           {/* Written answer */}
           {!isMCQ && (
             <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label className="text-xs font-medium text-muted-foreground">
                 Your answer
               </Label>
               <Textarea
@@ -2761,7 +2774,7 @@ function PracticeQuestion({
                 className="resize-none"
               />
               <p className="text-[11px] text-muted-foreground">
-                Written answers are self-assessed — you&apos;ll compare with the model answer after submitting.
+                Written answers are self-assessed (compare with the model answer after submitting).
               </p>
             </div>
           )}
@@ -2845,10 +2858,10 @@ function PracticeResults({
       {/* Score hero */}
       <Card className="animate-fade-in-scale mb-4 overflow-hidden border-none bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-lg">
         <CardContent className="relative p-6 text-center sm:p-8">
-          <div className="absolute inset-0 bg-grid opacity-15" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
           <div className="relative z-10">
             <Award className="mx-auto h-10 w-10" />
-            <div className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-white/80">
+            <div className="mt-2 text-[11px] font-semibold text-white/80">
               Practice complete
             </div>
             <div className="mt-1 text-5xl font-bold tabular-nums">{grade.scorePct}%</div>
@@ -3037,7 +3050,7 @@ function ResultStat({
     <div className={["rounded-lg border p-3 text-center", colors[color]].join(" ")}>
       <Icon className="mx-auto h-5 w-5" />
       <div className="mt-1 text-2xl font-bold tabular-nums">{value}</div>
-      <div className="text-[10px] font-medium uppercase tracking-wide opacity-80">{label}</div>
+      <div className="text-[10px] font-medium opacity-80">{label}</div>
     </div>
   );
 }
@@ -3122,7 +3135,7 @@ function DedupeDialog({
         <div className="max-h-[70vh] overflow-y-auto scroll-fancy">
           {loading ? (
             <div className="flex flex-col items-center gap-4 py-12">
-              <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-emerald-400/40 border-t-emerald-600" />
+              <span className="inline-block h-8 w-8 motion-safe:animate-spin rounded-full border-3 border-emerald-400/40 border-t-emerald-600" />
               <p className="text-sm text-muted-foreground">
                 AI is analyzing {allQuestions.length} questions for similarity…
               </p>
@@ -3157,7 +3170,7 @@ function DedupeDialog({
                   <div className="mb-2 flex items-center justify-between">
                     <Badge
                       variant="outline"
-                      className={`text-[10px] uppercase ${simColor[p.similarity]}`}
+                      className={`text-[10px] capitalize ${simColor[p.similarity]}`}
                     >
                       {p.similarity} similarity
                     </Badge>
@@ -3278,7 +3291,7 @@ function ShareDialog({
           </DialogTitle>
           <DialogDescription>
             Send this link or code to a colleague. They can open, edit, print or practice
-            the test in their browser — no account needed.
+            the test in their browser (no account needed).
           </DialogDescription>
         </DialogHeader>
 
@@ -3333,7 +3346,7 @@ function ShareDialog({
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              The short code is a quick identifier — the full link contains the complete test.
+              The short code is a quick identifier, while the full link contains the complete test.
             </p>
           </div>
 
@@ -3363,8 +3376,7 @@ function ShareDialog({
           <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/50 p-2.5 text-xs text-blue-700 dark:bg-blue-950/20 dark:text-blue-300">
             <QrCode className="h-3.5 w-3.5 shrink-0" />
             <span>
-              The test ({sizeKb} KB) is embedded directly in the link — no server storage
-              needed. Links expire if the test is edited after sharing.
+              The test ({sizeKb} KB) is embedded directly in the link (no server storage needed). Links expire if the test is edited after sharing.
             </span>
           </div>
         </div>
@@ -3830,7 +3842,7 @@ function PrintCustomization(props: {
         <div className="space-y-3 border-t px-3 py-3">
           {/* Academy header */}
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="mb-1.5 text-[11px] font-semibold text-muted-foreground">
               Academy / School header
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -3892,7 +3904,7 @@ function PrintCustomization(props: {
           {/* Student info grid */}
           {props.printStudentInfo && (
             <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="mb-1.5 text-[11px] font-semibold text-muted-foreground">
                 Student info grid
               </div>
               <div className="space-y-2">
