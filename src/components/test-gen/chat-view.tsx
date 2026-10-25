@@ -846,8 +846,8 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         {/* Main Content Area */}
         {messages.length === 0 ? (
           /* Empty Hero State (Desktop Image 1 & Mobile Image 2) */
-          <div className="flex-1 overflow-y-auto px-4 py-4 sm:py-6 flex flex-col items-center max-w-4xl mx-auto w-full custom-scrollbar">
-            <div className="my-auto flex flex-col items-center text-center w-full max-w-2xl py-2">
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:py-6 flex flex-col items-center w-full custom-scrollbar">
+            <div className="my-auto flex flex-col items-center text-center w-full max-w-2xl sm:max-w-3xl mx-auto py-2">
               {/* Centered Sparkle Icon */}
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 mb-3.5 shrink-0 shadow-inner">
                 <Sparkles className="h-5 w-5" />
