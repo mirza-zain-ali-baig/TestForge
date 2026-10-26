@@ -1037,7 +1037,7 @@ export function GeneratorWizard({
               </div>
 
               {/* Chapters List with Collapsible Subtopics Cards */}
-              <div className="space-y-3.5">
+              <div className="space-y-3.5 pb-24 md:pb-28">
                 {chapters.map((chap, idx) => {
                   const isChecked = chapterIds.includes(chap.id);
                   const isExpanded = !!expandedChapters[chap.id];
@@ -1194,54 +1194,38 @@ export function GeneratorWizard({
                 })}
               </div>
 
-              {/* Sticky Bottom Continuation Bar */}
-              <div className="sticky bottom-[4.25rem] md:bottom-5 z-30 rounded-2xl border border-border bg-card/95 p-3.5 sm:p-4 shadow-md backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))] mt-6 mb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col">
-                      <div className="text-sm sm:text-base font-bold flex items-center gap-2">
-                        <span>{chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"} Selected</span>
-                        {chapterIds.length > 0 ? (
-                          <Badge className="bg-emerald-600 text-white text-[11px] font-semibold">Ready</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[11px] text-muted-foreground">Select a chapter</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {topicIds.length > 0
-                          ? `${topicIds.length} specific subtopics selected`
-                          : chapterIds.length > 0
-                          ? "All subtopics included across selected chapters"
-                          : "Choose at least one chapter to continue"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setStep("subject");
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="font-medium cursor-pointer min-h-[44px] h-10 px-3.5 text-xs sm:text-sm"
-                    >
-                      <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Subject
-                    </Button>
-                    <Button
-                      disabled={chapterIds.length === 0}
-                      onClick={() => {
-                        setStep("setup");
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs cursor-pointer min-h-[44px] h-10 px-5 text-xs sm:text-sm"
-                    >
-                      <span>Continue to Test Setup</span>
-                      <ArrowRight className="ml-1.5 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              {/* Fixed Floating Action Buttons */}
+              <div className="fixed bottom-20 md:bottom-8 right-4 sm:right-6 md:right-8 z-40 flex items-center gap-2.5 pb-[env(safe-area-inset-bottom)]">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStep("subject");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="rounded-full shadow-lg bg-card/95 hover:bg-accent backdrop-blur-md border border-border text-xs sm:text-sm font-semibold cursor-pointer min-h-[44px] h-11 px-3.5 sm:px-4.5"
+                >
+                  <ArrowLeft className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">Back to Subject</span>
+                  <span className="sm:hidden">Back</span>
+                </Button>
+                <Button
+                  disabled={chapterIds.length === 0}
+                  onClick={() => {
+                    setStep("setup");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="rounded-full shadow-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer min-h-[44px] h-11 px-4 sm:px-6 text-xs sm:text-sm border border-emerald-500/30"
+                >
+                  <span className="hidden sm:inline">Continue to Test Setup</span>
+                  <span className="sm:hidden">Continue</span>
+                  {chapterIds.length > 0 && (
+                    <span className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-white/25 px-1.5 text-[11px] font-bold">
+                      {chapterIds.length}
+                    </span>
+                  )}
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
