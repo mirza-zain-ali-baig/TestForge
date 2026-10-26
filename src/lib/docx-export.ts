@@ -39,10 +39,10 @@ export interface DocxExportOptions {
   printAnswerKey?: boolean;
 }
 
-export async function exportTestToDocxBlob(
+export function buildTestDocxDocument(
   test: GeneratedTest,
   opts: DocxExportOptions = {}
-): Promise<Blob> {
+): Document {
   const academyName = opts.academyName || "EXAMFORGE ACADEMY";
   const location = opts.academyLocation || "";
   const examLabel = opts.examLabel || test.title || "EXAMINATION PAPER";
@@ -256,7 +256,7 @@ export async function exportTestToDocxBlob(
               color: "111827",
             }),
             new TextRun({
-              text: q.question_text,
+              text: q.question_text || "",
               size: 21,
               font: "Calibri",
               color: "111827",
@@ -277,14 +277,14 @@ export async function exportTestToDocxBlob(
         const optionRows = [
           new TableRow({
             children: [
-              createOptionCell(`(A) ${q.options.option_a}`),
-              createOptionCell(`(B) ${q.options.option_b}`),
+              createOptionCell(`(A) ${q.options.option_a ?? ""}`),
+              createOptionCell(`(B) ${q.options.option_b ?? ""}`),
             ],
           }),
           new TableRow({
             children: [
-              createOptionCell(`(C) ${q.options.option_c}`),
-              createOptionCell(`(D) ${q.options.option_d}`),
+              createOptionCell(`(C) ${q.options.option_c ?? ""}`),
+              createOptionCell(`(D) ${q.options.option_d ?? ""}`),
             ],
           }),
         ];
@@ -386,7 +386,7 @@ export async function exportTestToDocxBlob(
         const qNum = ansCounter++;
         let ansText = "See model answer / textbook.";
         if (q.options?.correct_option) {
-          const optLetter = q.options.correct_option;
+          const optLetter = (q.options.correct_option || "").toUpperCase();
           const optText =
             optLetter === "A"
               ? q.options.option_a
@@ -395,7 +395,7 @@ export async function exportTestToDocxBlob(
               : optLetter === "C"
               ? q.options.option_c
               : q.options.option_d;
-          ansText = `Option (${optLetter}): ${optText}`;
+          ansText = `Option (${optLetter}): ${optText ?? ""}`;
         } else if (q.model_answer) {
           ansText = q.model_answer;
         }
@@ -495,7 +495,23 @@ export async function exportTestToDocxBlob(
     ],
   });
 
+  return doc;
+}
+
+export async function exportTestToDocxBlob(
+  test: GeneratedTest,
+  opts: DocxExportOptions = {}
+): Promise<Blob> {
+  const doc = buildTestDocxDocument(test, opts);
   return await Packer.toBlob(doc);
+}
+
+export async function exportTestToDocxBuffer(
+  test: GeneratedTest,
+  opts: DocxExportOptions = {}
+): Promise<Buffer> {
+  const doc = buildTestDocxDocument(test, opts);
+  return await Packer.toBuffer(doc);
 }
 
 function createMetaCell(text: string): TableCell {
