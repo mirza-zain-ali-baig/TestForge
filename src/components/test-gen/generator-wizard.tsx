@@ -1251,44 +1251,6 @@ export function GeneratorWizard({
           {/* ========================================================================= */}
           {step === "setup" && (
             <div className="space-y-6">
-              {/* Header: Executive & Clean */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Configure Examination
-                  </h2>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span>{currentClass?.class_name}</span>
-                    <span>·</span>
-                    <span>{currentSubject?.subject_name}</span>
-                    <span>·</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      {chapterIds.length} {chapterIds.length === 1 ? "Chapter" : "Chapters"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStepNavigate("syllabus")}
-                    className="h-8 text-xs font-semibold cursor-pointer rounded-lg"
-                  >
-                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Change Syllabus
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setAiOpen(true)}
-                    className="h-8 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>AI Suggester</span>
-                  </Button>
-                </div>
-              </div>
-
               {/* 2-Column Senior Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ================= LEFT COLUMN: MAIN STAGE ================= */}
@@ -1386,9 +1348,21 @@ export function GeneratorWizard({
                           <SquareStack className="h-4 w-4 text-emerald-600" /> Question Distribution
                         </h3>
                       </div>
-                      <div className="text-xs font-semibold text-muted-foreground">
-                        <span className="font-bold text-foreground">{totalQuestions}</span> Questions ·{" "}
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{totalMarks}</span> Marks
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAiOpen(true)}
+                          className="h-7 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer gap-1.5 px-2.5 rounded-lg border border-emerald-300 dark:border-emerald-800"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>AI Suggester</span>
+                        </Button>
+                        <div className="text-xs font-semibold text-muted-foreground hidden sm:block">
+                          <span className="font-bold text-foreground">{totalQuestions}</span> Qs ·{" "}
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{totalMarks}</span> Marks
+                        </div>
                       </div>
                     </div>
 
