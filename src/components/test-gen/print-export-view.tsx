@@ -1672,106 +1672,104 @@ export function PrintExportView({
 
         {/* Right: Consolidated Controls & Merged Print/Export Button */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Document Layout & Options Popover */}
-          {/* Layout Options (Desktop only; on mobile, customization lives in the dedicated tab) */}
-          <div className="hidden lg:block">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs gap-1.5 font-medium text-foreground hover:bg-accent border-border cursor-pointer"
-                  aria-label="Layout and Document Options"
-                >
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Layout Options</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 p-3 space-y-3">
-                <div className="font-semibold text-xs text-foreground pb-1 border-b">
-                  Document Layout & Content
-                </div>
+          {/* Document Layout & Options Popover (Accessible on Mobile & Desktop) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-medium text-foreground hover:bg-accent border-border cursor-pointer px-2 sm:px-3"
+                aria-label="Layout and Document Options"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden sm:inline">Layout Options</span>
+                <span className="sm:hidden">Layout</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-3.5 space-y-3 z-50">
+              <div className="font-semibold text-xs text-foreground pb-1 border-b">
+                Document Layout & Content
+              </div>
 
-                {/* Header Style Segmented Toggle */}
-                <div className="space-y-1">
-                  <div className="text-[11px] font-medium text-muted-foreground">Header Layout:</div>
-                  <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setHeaderLayout(1)}
-                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
-                        headerLayout === 1
-                          ? "bg-background text-foreground shadow-xs font-semibold"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Centered
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setHeaderLayout(2)}
-                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
-                        headerLayout === 2
-                          ? "bg-background text-foreground shadow-xs font-semibold"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      2-Column
-                    </button>
-                  </div>
+              {/* Header Style Segmented Toggle */}
+              <div className="space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">Header Layout:</div>
+                <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setHeaderLayout(1)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      headerLayout === 1
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Centered
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHeaderLayout(2)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      headerLayout === 2
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    2-Column
+                  </button>
                 </div>
+              </div>
 
-                {/* MCQ Style Segmented Toggle */}
-                <div className="space-y-1">
-                  <div className="text-[11px] font-medium text-muted-foreground">MCQ Layout:</div>
-                  <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setMcqLayout(1)}
-                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
-                        mcqLayout === 1
-                          ? "bg-background text-foreground shadow-xs font-semibold"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Standard
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMcqLayout(2)}
-                      className={`py-1 text-center text-xs font-medium rounded-md transition-colors ${
-                        mcqLayout === 2
-                          ? "bg-background text-foreground shadow-xs font-semibold"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Compact (2-Col)
-                    </button>
-                  </div>
+              {/* MCQ Style Segmented Toggle */}
+              <div className="space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground">MCQ Layout:</div>
+                <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMcqLayout(1)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      mcqLayout === 1
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMcqLayout(2)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      mcqLayout === 2
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Compact (2-Col)
+                  </button>
                 </div>
+              </div>
 
-                {/* Bubble Sheet Switch */}
-                <div className="flex items-center justify-between pt-1 border-t">
-                  <span className="text-xs font-medium text-foreground">Bubble Sheet</span>
-                  <Switch
-                    checked={showBubbleSheet}
-                    onCheckedChange={setShowBubbleSheet}
-                    className="scale-90"
-                  />
-                </div>
+              {/* Bubble Sheet Switch */}
+              <div className="flex items-center justify-between pt-1 border-t">
+                <span className="text-xs font-medium text-foreground">Bubble Sheet</span>
+                <Switch
+                  checked={showBubbleSheet}
+                  onCheckedChange={setShowBubbleSheet}
+                  className="scale-90"
+                />
+              </div>
 
-                {/* Answer Key Switch */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-foreground">Answer Key</span>
-                  <Switch
-                    checked={printAnswerKey}
-                    onCheckedChange={setPrintAnswerKey}
-                    className="scale-90"
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+              {/* Answer Key Switch */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground">Answer Key</span>
+                <Switch
+                  checked={printAnswerKey}
+                  onCheckedChange={setPrintAnswerKey}
+                  className="scale-90"
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Live Edit Toggle Button (Desktop header) */}
           <div className="hidden lg:block">
@@ -2071,6 +2069,64 @@ export function PrintExportView({
               title="Paper & Layout"
               defaultOpen
             >
+              {/* Header Style Segmented Toggle */}
+              <div className="space-y-1">
+                <Label className={labelCls}>Header Layout</Label>
+                <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setHeaderLayout(1)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      headerLayout === 1
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Centered
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHeaderLayout(2)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      headerLayout === 2
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    2-Column
+                  </button>
+                </div>
+              </div>
+
+              {/* MCQ Style Segmented Toggle */}
+              <div className="space-y-1">
+                <Label className={labelCls}>MCQ Layout</Label>
+                <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMcqLayout(1)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      mcqLayout === 1
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMcqLayout(2)}
+                    className={`py-1 text-center text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      mcqLayout === 2
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Compact (2-Col)
+                  </button>
+                </div>
+              </div>
+
               {/* Paper size */}
               <div>
                 <Label className={labelCls}>Paper size</Label>
