@@ -1000,9 +1000,16 @@ export function GeneratorWizard({
                     />
                     <span>{areAllChaptersExpanded ? "Collapse All" : "Expand All"}</span>
                   </Button>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={toggleSelectAllChapters}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleSelectAllChapters();
+                      }
+                    }}
                     className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs ${
                       areAllChaptersSelected
                         ? "border-emerald-600 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100 ring-1 ring-emerald-500/20"
@@ -1020,7 +1027,7 @@ export function GeneratorWizard({
                     <Badge variant="secondary" className="text-[10px] ml-1 font-bold">
                       {chapterIds.length}/{chapters.length}
                     </Badge>
-                  </button>
+                  </div>
                   <Button
                     size="sm"
                     disabled={chapterIds.length === 0}
