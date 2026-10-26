@@ -147,7 +147,7 @@ export function Dashboard({
                 <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
                 <span>Next-Gen Examination Paper Studio</span>
               </div>
-              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-[1.15] text-white">
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.12] text-white">
                 Create Custom Exam Papers & Blueprint Assessments
               </h1>
               <p className="text-sm sm:text-base text-emerald-50/90 leading-relaxed max-w-xl">
