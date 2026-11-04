@@ -769,24 +769,25 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         {/* Accessible screen reader heading */}
         <h1 className="sr-only">ExamForge AI: Academic and Exam Assistant</h1>
 
-        {/* Top Bar for Mobile & when Sidebar is collapsed on Desktop */}
-        <div className={`items-center justify-between p-3 border-b border-border shrink-0 bg-background ${sidebarOpen ? "hidden md:hidden" : "flex"}`}>
+        {/* Top Bar – always visible when sidebar is closed; hidden when sidebar is open on desktop */}
+        <div className={`flex items-center justify-between p-3 border-b border-border shrink-0 bg-background/95 backdrop-blur-sm ${sidebarOpen ? "hidden" : "flex"}`}>
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Dashboard</span>
             </button>
           )}
+          {!onBack && <div />}
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               aria-label="Open chat history"
               title="Open chat history"
             >
@@ -796,49 +797,12 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
             <button
               type="button"
               onClick={handleNewChat}
-              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 hover:border-emerald-500/60 px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               aria-label="New chat"
               title="New chat"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>New chat</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile-only Header when Sidebar is open (overlay mode) */}
-        <div className={`md:hidden flex items-center justify-between p-3 border-b border-border shrink-0 bg-background ${sidebarOpen ? "flex" : "hidden"}`}>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Dashboard</span>
-            </button>
-          )}
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/30 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
-              aria-label="Open chat history"
-              title="Open chat history"
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>History</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40 px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-              aria-label="New chat"
-              title="New chat"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>New chat</span>
+              <span>New Chat</span>
             </button>
           </div>
         </div>
