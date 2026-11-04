@@ -769,8 +769,10 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         {/* Accessible screen reader heading */}
         <h1 className="sr-only">ExamForge AI: Academic and Exam Assistant</h1>
 
-        {/* Top Bar – always visible when sidebar is closed; hidden when sidebar is open on desktop */}
-        <div className={`flex items-center justify-between p-3 border-b border-border shrink-0 bg-background/95 backdrop-blur-sm ${sidebarOpen ? "hidden" : "flex"}`}>
+        {/* Top Bar – only shown when sidebar is closed AND no active messages (empty state).
+            When messages exist, the in-chat action bar below takes over on desktop. */}
+        <div className={`items-center justify-between p-3 border-b border-border shrink-0 bg-background/95 backdrop-blur-sm
+          ${sidebarOpen ? "hidden" : messages.length === 0 ? "flex" : "flex md:hidden"}`}>
           {onBack && (
             <button
               type="button"
@@ -918,14 +920,25 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
         ) : (
           /* Active Chat Messages Stream */
           <>
-            {/* In-chat Desktop Top Action Bar */}
-            <div className="hidden md:flex items-center justify-between px-4 py-2.5 border-b border-border bg-card">
-              <div className="flex items-center gap-2">
+            {/* In-chat Desktop Top Action Bar – replaces the top bar on desktop when messages exist */}
+            <div className="hidden md:flex items-center justify-between px-4 py-2.5 border-b border-border bg-card/95 backdrop-blur-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                {onBack && !sidebarOpen && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 px-2.5 py-1 text-xs font-semibold text-foreground transition-colors cursor-pointer shrink-0"
+                    aria-label="Back to Dashboard"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <span>Dashboard</span>
+                  </button>
+                )}
                 {!sidebarOpen && (
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-2 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer mr-1"
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
                     aria-label="Open chat history"
                     title="Open chat history"
                   >
@@ -933,15 +946,15 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                     <span>History</span>
                   </button>
                 )}
-                <span className="text-xs font-semibold text-foreground truncate max-w-md">
+                <span className="text-xs font-semibold text-foreground truncate max-w-sm ml-1">
                   {activeSession?.title || "Conversation"}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Button
                   size="sm"
                   onClick={handleNewChat}
-                  className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs gap-1"
+                  className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs gap-1 cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>New Chat</span>
@@ -950,7 +963,7 @@ export function ChatView({ user, onBack, fullWindow = false, onSignIn }: ChatVie
                   variant="ghost"
                   size="sm"
                   onClick={handleClearCurrentChat}
-                  className="h-7 text-xs text-muted-foreground hover:text-destructive gap-1"
+                  className="h-7 text-xs text-muted-foreground hover:text-destructive gap-1 cursor-pointer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   <span>Clear</span>
