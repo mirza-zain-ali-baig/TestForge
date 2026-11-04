@@ -851,6 +851,20 @@ ${GOOGLE_FONTS_LINK}
     .it-val { min-width: 40px !important; padding: 2px 3px !important; }
   }
 
+  @media screen and (max-width: 650px) {
+    body { background: #f8fafc; }
+    .page {
+      width: calc(100vw - 8mm) !important;
+      max-width: 100vw !important;
+      min-height: auto !important;
+      padding: 8mm 5mm !important;
+      margin: 2mm auto !important;
+      box-sizing: border-box !important;
+      border-radius: 4px !important;
+      font-size: 90% !important;
+    }
+  }
+
   @media print {
     body { background: #fff !important; padding: 0 !important; }
     .page {

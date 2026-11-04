@@ -1560,16 +1560,19 @@ export function PrintExportView({
             </div>
           )}
 
-          <iframe
-            ref={iframeRef}
-            title="Paper preview"
-            srcDoc={effectiveSrcDoc}
-            className={`h-full w-full flex-1 min-h-0 rounded-lg border bg-white shadow-xl transition-colors ${
-              liveEdit
-                ? "border-emerald-500/80 ring-2 ring-emerald-500/30"
-                : "border-slate-300 dark:border-slate-700"
-            }`}
-          />
+          <div className="flex-1 min-h-0 overflow-auto rounded-lg">
+            <iframe
+              ref={iframeRef}
+              title="Paper preview"
+              srcDoc={effectiveSrcDoc}
+              className={`w-full min-h-full rounded-lg border bg-white shadow-xl transition-colors ${
+                liveEdit
+                  ? "border-emerald-500/80 ring-2 ring-emerald-500/30"
+                  : "border-slate-300 dark:border-slate-700"
+              }`}
+              style={{ height: "100%", minHeight: "600px" }}
+            />
+          </div>
 
           {/* Mobile Bottom Action Bar in Preview Mode (Clean: Edit Mode + Print/Export, no duplicate Settings) */}
           <div className="lg:hidden sticky bottom-2 z-20 mx-auto w-full max-w-sm rounded-2xl border border-border bg-card/95 p-2 shadow-md backdrop-blur-md flex items-center justify-between gap-2 mt-2">

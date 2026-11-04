@@ -525,32 +525,23 @@ export function TestPreview({
       {/* Toolbar */}
       <Card className="no-print sticky top-0 sm:top-2 z-30 bg-card/95 backdrop-blur-md shadow-sm sm:shadow-xs rounded-none sm:rounded-xl border-x-0 sm:border">
         <CardContent className="p-2.5 sm:p-4">
-          {/* Mobile & Tablet Compact View (< xl): Clean, balanced 2-row layout with zero collision or horizontal clipping */}
-          <div className="flex flex-col gap-2.5 xl:hidden">
-            {/* Row 1: Back Navigation, Assessment Metadata, Save, and Actions */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onBack}
-                  className="h-8 px-2.5 text-xs gap-1 sm:gap-1.5 font-medium cursor-pointer shrink-0"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  <span>Back<span className="hidden sm:inline"> to Setup</span></span>
-                </Button>
-                <Badge variant="secondary" className="text-[10px] sm:text-[11px] font-bold py-0.5 px-1.5 sm:px-2 shrink-0">
-                  {test.totalQuestions} Q · {test.totalMarks} m
-                </Badge>
-                <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground shrink-0">
-                  <Badge variant="outline" className="border-0 p-0 text-[11px] font-medium text-muted-foreground">
-                    {test.source === "bank" ? "Question Bank" : test.source === "ai" ? "AI Generated" : "Hybrid Mode"}
-                  </Badge>
-                  <span className="text-border">·</span>
-                  <span>{formatDuration(test.durationMins)}</span>
-                </div>
+          {/* Mobile & Tablet Compact View (< xl) */}
+          <div className="flex flex-col gap-2 xl:hidden">
+            {/* Row 1: Back + Metadata + Save + More */}
+            <div className="flex items-center gap-2 min-w-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onBack}
+                className="h-8 px-2.5 text-xs gap-1 font-medium cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Back</span>
+              </Button>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-foreground truncate leading-tight">{test.title || `${test.subjectName} Paper`}</div>
+                <div className="text-[11px] text-muted-foreground truncate">{test.totalQuestions} Q · {test.totalMarks} marks · {formatDuration(test.durationMins)}</div>
               </div>
-
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button
                   size="sm"
@@ -560,17 +551,11 @@ export function TestPreview({
                   className="h-8 text-xs px-2.5 font-medium cursor-pointer"
                 >
                   {saved ? (
-                    <>
-                      <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-600" /> Saved
-                    </>
+                    <><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> <span className="hidden sm:inline">Saved</span></>
                   ) : (
-                    <>
-                      <Save className="mr-1 h-3.5 w-3.5 text-muted-foreground" /> {saving ? "Saving…" : "Save"}
-                    </>
+                    <><Save className="h-3.5 w-3.5 text-muted-foreground" /> <span className="hidden sm:inline">{saving ? "Saving…" : "Save"}</span></>
                   )}
                 </Button>
-
-                {/* More Options Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground" aria-label="More actions">
@@ -610,31 +595,31 @@ export function TestPreview({
               </div>
             </div>
 
-            {/* Row 2: Practice Online, Print/Export Suite, and Answer Key Toggle */}
-            <div className="flex items-center gap-2">
+            {/* Row 2: Practice + Print/Export + Answer Key */}
+            <div className="flex items-center gap-1.5">
               <Button
                 size="sm"
                 onClick={() => setPracticing(true)}
-                className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5"
+                className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5 flex-1 min-w-0"
               >
                 <Play className="h-3.5 w-3.5 fill-current shrink-0" />
-                <span>Practice<span className="hidden sm:inline"> Online</span></span>
+                <span className="truncate">Practice</span>
               </Button>
               {onPrintExport ? (
-                <div className="flex flex-1 items-center rounded-lg shadow-xs overflow-hidden">
+                <div className="flex flex-1 min-w-0 items-center rounded-lg shadow-xs overflow-hidden">
                   <Button
                     size="sm"
                     onClick={onPrintExport}
-                    className="flex-1 h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-2 sm:px-3"
+                    className="flex-1 min-w-0 h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-2"
                   >
                     <FileDown className="h-3.5 w-3.5 shrink-0" />
-                    <span>Print & Export</span>
+                    <span className="truncate">Print & Export</span>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         size="sm"
-                        className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
+                        className="h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs px-1.5 rounded-l-none transition-colors cursor-pointer shrink-0"
                         aria-label="Direct export options"
                       >
                         <ChevronDown className="h-3.5 w-3.5" />
@@ -668,17 +653,14 @@ export function TestPreview({
                 <Button
                   size="sm"
                   onClick={handlePrint}
-                  className="flex-1 h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
+                  className="flex-1 h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
                 >
                   <Printer className="h-3.5 w-3.5" /> Print
                 </Button>
               )}
-              <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2 sm:px-2.5 py-1 text-xs h-8">
-                <KeyRound className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600" />
-                <Label htmlFor="ans-compact" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap">
-                  <span className="hidden sm:inline">Answer key</span>
-                  <span className="sm:hidden">Key</span>
-                </Label>
+              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs h-9">
+                <KeyRound className="h-3 w-3 text-emerald-600 shrink-0" />
+                <Label htmlFor="ans-compact" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap hidden sm:block">Key</Label>
                 <Switch
                   id="ans-compact"
                   checked={showAnswers}
