@@ -523,26 +523,32 @@ export function TestPreview({
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <Card className="no-print sticky top-0 sm:top-2 z-30 bg-card/95 backdrop-blur-md shadow-sm sm:shadow-xs rounded-none sm:rounded-xl border-x-0 sm:border">
-        <CardContent className="p-2.5 sm:p-4">
-          {/* Mobile & Tablet Compact View (< xl) */}
-          <div className="flex flex-col gap-2 xl:hidden">
-            {/* Row 1: Back + Metadata + Save + More */}
-            <div className="flex items-center gap-2 min-w-0">
+      <div className="no-print sticky top-0 sm:top-2 z-30 w-full rounded-none sm:rounded-2xl border-b sm:border border-border bg-card/95 backdrop-blur-md shadow-xs transition-all">
+        <div className="p-2.5 sm:p-3.5">
+          {/* Mobile & Tablet View (< xl) */}
+          <div className="flex flex-col gap-2.5 xl:hidden">
+            {/* Row 1: Back + Metadata Badges + Save + Actions */}
+            <div className="flex items-center justify-between gap-2">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={onBack}
-                className="h-8 px-2.5 text-xs gap-1 font-medium cursor-pointer shrink-0"
+                className="h-8 px-2 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Back</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
               </Button>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-foreground truncate leading-tight">{test.title || `${test.subjectName} Paper`}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{test.totalQuestions} Q · {test.totalMarks} marks · {formatDuration(test.durationMins)}</div>
+
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Badge variant="secondary" className="text-[11px] font-semibold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 truncate">
+                  {test.totalQuestions} Q · {test.totalMarks} M
+                </Badge>
+                <span className="text-[11px] text-muted-foreground hidden xs:inline-block truncate">
+                  · {formatDuration(test.durationMins)}
+                </span>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
+
+              <div className="flex items-center gap-1 shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
@@ -551,11 +557,18 @@ export function TestPreview({
                   className="h-8 text-xs px-2.5 font-medium cursor-pointer"
                 >
                   {saved ? (
-                    <><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> <span className="hidden sm:inline">Saved</span></>
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mr-1" />
+                      <span>Saved</span>
+                    </>
                   ) : (
-                    <><Save className="h-3.5 w-3.5 text-muted-foreground" /> <span className="hidden sm:inline">{saving ? "Saving…" : "Save"}</span></>
+                    <>
+                      <Save className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                      <span>{saving ? "Saving…" : "Save"}</span>
+                    </>
                   )}
                 </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-foreground" aria-label="More actions">
@@ -595,39 +608,32 @@ export function TestPreview({
               </div>
             </div>
 
-            {/* Row 2: Practice + Print/Export + Answer Key */}
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="sm"
-                onClick={() => setPracticing(true)}
-                className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5 flex-1 min-w-0"
-              >
-                <Play className="h-3.5 w-3.5 fill-current shrink-0" />
-                <span className="truncate">Practice</span>
-              </Button>
+            {/* Row 2: Print & Export + Practice + Answer Key */}
+            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+              {/* Primary CTA: Print & Export */}
               {onPrintExport ? (
-                <div className="flex flex-1 min-w-0 items-center rounded-lg shadow-xs overflow-hidden">
-                  <Button
-                    size="sm"
+                <div className="flex items-center rounded-xl shadow-xs overflow-hidden bg-emerald-600 text-white min-w-0">
+                  <button
+                    type="button"
                     onClick={onPrintExport}
-                    className="flex-1 min-w-0 h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-2"
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 transition-colors cursor-pointer truncate"
                   >
-                    <FileDown className="h-3.5 w-3.5 shrink-0" />
+                    <FileDown className="h-4 w-4 shrink-0" />
                     <span className="truncate">Print & Export</span>
-                  </Button>
+                  </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        className="h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs px-1.5 rounded-l-none transition-colors cursor-pointer shrink-0"
+                      <button
+                        type="button"
+                        className="h-9 px-2.5 bg-emerald-700 hover:bg-emerald-800 text-white transition-colors cursor-pointer border-l border-emerald-500/40 shrink-0"
                         aria-label="Direct export options"
                       >
                         <ChevronDown className="h-3.5 w-3.5" />
-                      </Button>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
-                        Instant Export
+                        Quick Export
                       </DropdownMenuLabel>
                       <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
                         <Printer className="mr-2 h-4 w-4 text-emerald-600" />
@@ -642,7 +648,7 @@ export function TestPreview({
                         <span>Word Document (.docx)</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={onPrintExport} className="cursor-pointer font-semibold text-emerald-700 dark:text-emerald-300">
+                      <DropdownMenuItem onClick={onPrintExport} className="cursor-pointer font-semibold text-emerald-600">
                         <FileDown className="mr-2 h-4 w-4" />
                         <span>Open Print & Export Studio</span>
                       </DropdownMenuItem>
@@ -653,25 +659,46 @@ export function TestPreview({
                 <Button
                   size="sm"
                   onClick={handlePrint}
-                  className="flex-1 h-9 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer"
+                  className="h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer rounded-xl"
                 >
-                  <Printer className="h-3.5 w-3.5" /> Print
+                  <Printer className="h-3.5 w-3.5 mr-1.5" /> Print
                 </Button>
               )}
-              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs h-9">
-                <KeyRound className="h-3 w-3 text-emerald-600 shrink-0" />
-                <Label htmlFor="ans-compact" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap hidden sm:block">Key</Label>
-                <Switch
-                  id="ans-compact"
-                  checked={showAnswers}
-                  onCheckedChange={setShowAnswers}
-                  className="scale-75"
+
+              {/* Secondary CTA: Practice Online */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPracticing(true)}
+                className="h-9 px-3 text-xs font-semibold rounded-xl border-border bg-card hover:bg-muted/60 text-foreground cursor-pointer gap-1.5 shrink-0"
+              >
+                <Play className="h-3.5 w-3.5 fill-current text-emerald-600 shrink-0" />
+                <span>Practice</span>
+              </Button>
+
+              {/* Answer Key Toggle Pill */}
+              <button
+                type="button"
+                onClick={() => setShowAnswers(!showAnswers)}
+                className={`flex items-center gap-1.5 px-3 h-9 rounded-xl border text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                  showAnswers
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 shadow-xs"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Toggle Answer Key"
+              >
+                <KeyRound className="h-3.5 w-3.5 shrink-0" />
+                <span>Key</span>
+                <span
+                  className={`h-2 w-2 rounded-full transition-colors ${
+                    showAnswers ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"
+                  }`}
                 />
-              </div>
+              </button>
             </div>
           </div>
 
-          {/* Desktop view (xl:flex): High-productivity single-row SaaS toolbar with natural wrapping */}
+          {/* Desktop view (xl:flex): High-productivity single-row SaaS toolbar */}
           <div className="hidden xl:flex flex-wrap items-center justify-between gap-3">
             {/* Left: Back button + Unified metadata pill */}
             <div className="flex items-center gap-2.5 shrink-0">
@@ -691,33 +718,44 @@ export function TestPreview({
               </div>
             </div>
 
-            {/* Right: Consolidated Action Suite (Zero overlapping, shrink-0 protected) */}
+            {/* Right: Consolidated Action Suite */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {/* Answer Key Toggle */}
-              <div className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs h-8 bg-card shrink-0">
-                <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
-                <Label htmlFor="ans" className="cursor-pointer text-xs font-medium text-foreground whitespace-nowrap">
-                  Answer key
-                </Label>
-                <Switch id="ans" checked={showAnswers} onCheckedChange={setShowAnswers} className="scale-75" />
-              </div>
+              {/* Answer Key Toggle Pill */}
+              <button
+                type="button"
+                onClick={() => setShowAnswers(!showAnswers)}
+                className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition-colors cursor-pointer shrink-0 ${
+                  showAnswers
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                    : "bg-card border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Toggle Answer Key"
+              >
+                <KeyRound className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span>Answer key</span>
+                <span
+                  className={`h-2 w-2 rounded-full transition-colors ${
+                    showAnswers ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"
+                  }`}
+                />
+              </button>
 
               {/* Practice Online */}
               <Button
                 size="sm"
                 onClick={() => setPracticing(true)}
-                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5 shrink-0"
+                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5 shrink-0 rounded-lg shadow-xs"
               >
                 <Play className="h-3.5 w-3.5 fill-current" /> Practice Online
               </Button>
 
               {/* Primary Print & Export Suite */}
               {onPrintExport ? (
-                <div className="flex items-center rounded-lg shadow-xs overflow-hidden shrink-0">
+                <div className="flex items-center rounded-lg shadow-xs overflow-hidden shrink-0 bg-emerald-600 text-white">
                   <Button
                     size="sm"
                     onClick={onPrintExport}
-                    className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-teal-700 transition-colors cursor-pointer px-3"
+                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 rounded-r-none border-r border-emerald-500/30 transition-colors cursor-pointer px-3"
                   >
                     <FileDown className="h-3.5 w-3.5" />
                     <span>Print & Export</span>
@@ -726,7 +764,7 @@ export function TestPreview({
                     <DropdownMenuTrigger asChild>
                       <Button
                         size="sm"
-                        className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
+                        className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 rounded-l-none transition-colors cursor-pointer"
                         aria-label="Direct export options"
                       >
                         <ChevronDown className="h-3.5 w-3.5" />
@@ -760,7 +798,7 @@ export function TestPreview({
                 <Button
                   size="sm"
                   onClick={handlePrint}
-                  className="h-8 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
+                  className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 cursor-pointer shrink-0 rounded-lg"
                 >
                   <Printer className="h-3.5 w-3.5" /> Print
                 </Button>
@@ -814,8 +852,8 @@ export function TestPreview({
               </DropdownMenu>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Meta warnings removed per user request */}
 

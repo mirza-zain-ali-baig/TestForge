@@ -501,30 +501,36 @@ ${GOOGLE_FONTS_LINK}
   html, body {
     margin: 0;
     padding: 0;
-    overflow-x: auto;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
+    min-width: 100%;
+    width: fit-content;
   }
   body {
-    background: #e2e8f0;
+    background: #cbd5e1;
     font-family: ${pf};
-    padding: 16px;
-    min-width: 0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: ${paperSize.width};
   }
   .page {
     background: #fff;
     width: ${paperSize.width};
-    max-width: 100%;
+    min-width: ${paperSize.width};
+    max-width: ${paperSize.width};
     min-height: ${paperSize.height};
     margin: 0 auto;
     padding: ${margins}mm;
     padding-top: ${tm}mm;
     position: relative;
-    overflow-x: auto;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     color: #111;
     line-height: 1.5;
     font-size: ${fs}pt;
     font-family: ${pf};
+    box-sizing: border-box;
   }
 
   .wm-text {
@@ -764,106 +770,6 @@ ${GOOGLE_FONTS_LINK}
   .ak-in { line-height: 2; font-family: ${pf}; }
   .aki { display: inline-block; min-width: 50px; }
   .akc { color: #000; }
-
-  @media screen and (max-width: 768px) {
-    body { padding: 8px 4px; }
-    .page {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-height: auto !important;
-      padding: 14px 10px !important;
-      margin: 0 !important;
-      border-radius: 4px;
-      overflow-x: auto;
-    }
-    .wm-text { font-size: 48pt !important; }
-    .academy {
-      flex-direction: column !important;
-      text-align: center !important;
-      gap: 8px !important;
-    }
-    .academy-logo { margin: 0 auto !important; }
-    .academy-l2 {
-      flex-direction: column !important;
-      text-align: center !important;
-      gap: 6px !important;
-    }
-    .academy-text-l2 { text-align: center !important; }
-    .info-grid {
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 6px !important;
-    }
-    .bs-grid {
-      display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      grid-auto-flow: row !important;
-      grid-template-rows: none !important;
-      gap: 0 !important;
-    }
-    .opts-2col {
-      grid-template-columns: 1fr !important;
-      margin-left: 10px !important;
-    }
-    .opts-1col { margin-left: 10px !important; }
-    .section-title .marks-formula,
-    .question-heading .marks-formula {
-      position: static !important;
-      display: block !important;
-      text-align: right !important;
-      margin-top: 2px !important;
-      font-size: 8.5pt !important;
-    }
-    .bubble-sheet {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table.qt, table.mcq-table {
-      width: 100% !important;
-      font-size: ${Math.max(fs - 1, 8.5)}pt !important;
-    }
-  }
-
-  @media screen and (max-width: 480px) {
-    body { padding: 4px 2px; }
-    .page { padding: 10px 6px !important; }
-    .info-grid {
-      grid-template-columns: 1fr 1fr !important;
-      gap: 4px !important;
-    }
-    .fld { padding: 2px 4px !important; }
-    .fld legend { font-size: 6.5pt !important; padding: 0 2px !important; }
-    .fld-val { font-size: ${Math.max(fs - 1, 8)}pt !important; }
-    .bs-cell {
-      padding: 3px 2px !important;
-      font-size: 8pt !important;
-      gap: 2px !important;
-    }
-    .bs-q { min-width: 16px !important; }
-    .bub {
-      width: 15px !important;
-      height: 15px !important;
-      line-height: 15px !important;
-      font-size: 7.5px !important;
-      margin-left: 1px !important;
-    }
-    .info-table { font-size: ${Math.max(fs - 2, 7.5)}pt !important; }
-    .info-table td { padding: 2px 4px !important; }
-    .it-val { min-width: 40px !important; padding: 2px 3px !important; }
-  }
-
-  @media screen and (max-width: 650px) {
-    body { background: #f8fafc; }
-    .page {
-      width: calc(100vw - 8mm) !important;
-      max-width: 100vw !important;
-      min-height: auto !important;
-      padding: 8mm 5mm !important;
-      margin: 2mm auto !important;
-      box-sizing: border-box !important;
-      border-radius: 4px !important;
-      font-size: 90% !important;
-    }
-  }
 
   @media print {
     body { background: #fff !important; padding: 0 !important; }

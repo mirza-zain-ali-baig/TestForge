@@ -192,6 +192,14 @@ export function PrintExportView({
   const [liveEdit, setLiveEdit] = useState(false);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 
+  /* ---- Zoom scale state (default 55% on mobile to fit the A4 page neatly without responsive distortion) ---- */
+  const [zoomLevel, setZoomLevel] = useState<number>(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return 0.55;
+    }
+    return 1;
+  });
+
   /* ---- iframe ref for direct printing ---- */
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -337,6 +345,7 @@ export function PrintExportView({
       try {
         const doc = iframe.contentWindow?.document;
         if (doc?.body) {
+          (doc.body.style as any).zoom = String(zoomLevel);
           doc.body.contentEditable = liveEdit ? "true" : "false";
           // Restore scroll position after reload
           if (savedScroll > 0) {
@@ -366,7 +375,7 @@ export function PrintExportView({
         // ignore
       }
     };
-  }, [liveEdit, previewHtml, editedHtml]);
+  }, [liveEdit, previewHtml, editedHtml, zoomLevel]);
 
   /* ---- The srcDoc for the iframe: always use fresh previewHtml so controls work.
    * Exports (PDF/Word/Excel) use editedHtml if set, otherwise previewHtml. */
@@ -1413,7 +1422,7 @@ export function PrintExportView({
             mobileTab === "settings" ? "hidden lg:flex" : "flex"
           }`}
         >
-          <div className="mb-2 flex items-center justify-between px-1">
+          <div className="mb-2 flex items-center justify-between px-1 gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${
@@ -1424,13 +1433,55 @@ export function PrintExportView({
               />
               <span className="text-[11px] font-medium text-muted-foreground truncate">
                 {liveEdit
-                  ? "Live edit active: click text in preview to format or edit, then click Done."
-                  : "Live paper preview updates in real-time"}
+                  ? "Live edit active: click text to format or edit, then click Done."
+                  : "Live paper preview"}
               </span>
             </div>
-            <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
-              {paperSize}, {marginPreset}, {fontSize}pt, {topMargin}mm top
-            </span>
+
+            {/* Zoom Controls for Mobile & Desktop */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] text-muted-foreground shrink-0 hidden md:inline mr-1">
+                {paperSize} · {fontSize}pt
+              </span>
+              <div className="flex items-center rounded-lg border border-border bg-card p-0.5 text-[11px] font-medium shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(0.55)}
+                  className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    zoomLevel === 0.55
+                      ? "bg-emerald-600 text-white font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Fit to Screen"
+                >
+                  Fit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(0.8)}
+                  className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    zoomLevel === 0.8
+                      ? "bg-emerald-600 text-white font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Medium View"
+                >
+                  80%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(1)}
+                  className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    zoomLevel === 1
+                      ? "bg-emerald-600 text-white font-bold shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="100% Real Print Size"
+                >
+                  100%
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Contextual Live Edit Formatting Toolbar (Project Scheme: Emerald / Slate / Shadcn) */}
